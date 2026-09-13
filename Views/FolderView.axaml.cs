@@ -1,0 +1,1030 @@
+using System.Collections.Specialized;
+using System.ComponentModel;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Avalonia.Media;
+using MacExplorer.Controls;
+using MacExplorer.Models;
+using MacExplorer.Native;
+using MacExplorer.Services;
+using MacExplorer.ViewModels;
+
+
+namespace MacExplorer.Views;
+
+public partial class FolderView : UserControl
+{
+    public static readonly StyledProperty<LayoutMetrics> MetricsProperty =
+        AvaloniaProperty.Register<FolderView, LayoutMetrics>(nameof(Metrics), LayoutMetrics.For(3));
+
+    public LayoutMetrics Metrics
+    {
+        get => GetValue(MetricsProperty);
+        set => SetValue(MetricsProperty, value);
+    }
+
+    public static readonly StyledProperty<DetailsColumns> ColumnsProperty =
+        AvaloniaProperty.Register<FolderView, DetailsColumns>(nameof(Columns), DetailsColumns.Shared);
+
+    public DetailsColumns Columns
+    {
+        get => GetValue(ColumnsProperty);
+        set => SetValue(ColumnsProperty, value);
+    }
+
+    private ExplorerTabViewModel? _boundTab;
+    private FileItem? _anchor;
+    private FileItem? _pressedItem;
+    private FileItem? _dropTarget;
+    private bool _marqueeArmed;
+    private bool _marqueeActive;
+    private bool _pointerSelecting;
+    private bool _dragArmed;
+    private bool _dragging;
+    private bool _deferSingleSelect;
+    private bool _syncing;
+    private bool _listSyncPosted;
+    private Point _marqueeOrigin;
+    private Point _marqueePointer;
+    private KeyModifiers _marqueeModifiers;
+    private DispatcherTimer? _marqueeScroll;
+    private FileItem[] _selectionSnapshot = [];
+    private IPointer? _captured;
+    private PointerPressedEventArgs? _pressArgs;
+
+
+    public FolderView()
+    {
+        InitializeComponent();
+        AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+        AddHandler(PointerMovedEvent, OnPreviewPointerMoved, RoutingStrategies.Tunnel);
+        AddHandler(PointerReleasedEvent, OnPreviewPointerReleased, RoutingStrategies.Tunnel);
+        AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragEnterEvent, OnDragOver);
+        AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
+        AddHandler(DragDrop.DropEvent, OnDrop);
+        AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+
+    }
+
+    private ExplorerTabViewModel? Tab => DataContext as ExplorerTabViewModel;
+
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        BindTab(Tab);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        BindTab(Tab);
+        HookFileLists();
+        ApplyGroupOverview(Tab?.IsGroupOverview == true);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        EndMarquee();
+        BindTab(null);
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    private void BindTab(ExplorerTabViewModel? tab)
+    {
+        if (ReferenceEquals(_boundTab, tab))
+            return;
+        if (_boundTab is not null)
+        {
+            _boundTab.SelectedItems.CollectionChanged -= OnTabSelectedItemsChanged;
+            _boundTab.ViewItems.CollectionChanged -= OnTabSelectedItemsChanged;
+            _boundTab.PropertyChanged -= OnTabPropertyChanged;
+        }
+
+        _boundTab = tab;
+        _anchor = null;
+        _pointerSelecting = false;
+        if (_boundTab is not null)
+        {
+            _boundTab.SelectedItems.CollectionChanged += OnTabSelectedItemsChanged;
+            _boundTab.ViewItems.CollectionChanged += OnTabSelectedItemsChanged;
+            _boundTab.PropertyChanged += OnTabPropertyChanged;
+            QueueListSync();
+            ApplyGroupOverview(_boundTab.IsGroupOverview);
+        }
+    }
+
+    private void OnTabSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) => QueueListSync();
+
+    private void OnTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ExplorerTabViewModel.Layout))
+            QueueListSync();
+        else if (e.PropertyName == nameof(ExplorerTabViewModel.IsGroupOverview))
+            ApplyGroupOverview(_boundTab?.IsGroupOverview == true);
+    }
+
+    private void QueueListSync()
+    {
+        if (_syncing || _listSyncPosted)
+            return;
+        _listSyncPosted = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _listSyncPosted = false;
+            SyncListFromTab();
+        }, DispatcherPriority.Loaded);
+    }
+
+    private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_syncing || _marqueeArmed || _marqueeActive || _pointerSelecting)
+            return;
+        if (sender is not ListBox list || Tab is null)
+            return;
+        ApplySelection(list.SelectedItems?.OfType<FileItem>().ToList() ?? []);
+        CaptureAnchor(list);
+    }
+
+    private async void OnOpen(object? sender, TappedEventArgs e)
+    {
+        if (Tab is null || _marqueeActive) return;
+        if (FindFileGroup(e.Source as Visual) is not null) return;
+        await Tab.OpenAsync();
+    }
+
+    private async void OnRenameKey(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox box || box.DataContext is not FileItem item || Tab is null)
+            return;
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            await Tab.CommitRenameAsync(item);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            item.IsRenaming = false;
+        }
+    }
+
+    private async void OnRenameLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not TextBox box || box.DataContext is not FileItem item || Tab is null)
+            return;
+        if (item.IsRenaming)
+            await Tab.CommitRenameAsync(item);
+    }
+
+    private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (Tab is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+        if (e.Source is TextBox || e.Source is not Visual visual || !IsInsideFileList(visual) || IsScrollChrome(visual))
+            return;
+        if (FindFileGroup(visual) is not null)
+        {
+            e.Handled = true;
+            Tab.IsGroupOverview = true;
+            return;
+        }
+
+        _selectionSnapshot = Tab.SelectedItems.ToArray();
+        var item = FindFileItem(visual);
+        _pressedItem = item;
+        _pointerSelecting = item is not null;
+        _deferSingleSelect = false;
+        _dragArmed = false;
+        _pressArgs = null;
+        _marqueeArmed = false;
+
+        if (item is not null && !item.IsRenaming && item.IsSelected
+            && !IsToggle(e.KeyModifiers) && !IsRange(e.KeyModifiers))
+        {
+            _deferSingleSelect = true;
+            _dragArmed = true;
+            _pressArgs = e;
+        }
+        else
+        {
+            if (item is not null)
+                ApplyItemPointer(item, e.KeyModifiers);
+            _marqueeArmed = true;
+        }
+
+        _marqueeActive = false;
+        _marqueeOrigin = e.GetPosition(MarqueeHost);
+    }
+
+
+    private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (Tab is null)
+            return;
+
+        if (_dragArmed && _pressArgs is not null)
+        {
+            var pos = e.GetPosition(MarqueeHost);
+            if (Math.Abs(pos.X - _marqueeOrigin.X) < FileDrag.Threshold &&
+                Math.Abs(pos.Y - _marqueeOrigin.Y) < FileDrag.Threshold)
+                return;
+
+            var press = _pressArgs;
+            _dragArmed = false;
+            _marqueeArmed = false;
+            _pressArgs = null;
+            _deferSingleSelect = false;
+            _ = StartFileDragAsync(press);
+            e.Handled = true;
+            return;
+        }
+
+        if (!_marqueeArmed)
+            return;
+
+        var marqueePos = e.GetPosition(MarqueeHost);
+        if (!_marqueeActive)
+        {
+            if (Math.Abs(marqueePos.X - _marqueeOrigin.X) < FileDrag.Threshold &&
+                Math.Abs(marqueePos.Y - _marqueeOrigin.Y) < FileDrag.Threshold)
+                return;
+            _marqueeActive = true;
+            MarqueeRect.IsVisible = true;
+            _captured = e.Pointer;
+            e.Pointer.Capture(this);
+            StartMarqueeScroll();
+        }
+
+        UpdateMarquee(marqueePos, e.KeyModifiers);
+        e.Handled = true;
+    }
+
+    private void OnPreviewPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        var startedOnItem = _pointerSelecting;
+        var defer = _deferSingleSelect;
+        var pressed = _pressedItem;
+        _pointerSelecting = false;
+        _dragArmed = false;
+        _pressArgs = null;
+        _pressedItem = null;
+        _deferSingleSelect = false;
+
+        if (defer && !_dragging && pressed is not null && Tab is not null)
+        {
+            ApplySelection([pressed]);
+            _anchor = pressed;
+        }
+
+        if (_marqueeArmed)
+        {
+            if (_marqueeActive)
+                e.Handled = true;
+            else if (!startedOnItem && !IsToggle(e.KeyModifiers) && !IsRange(e.KeyModifiers))
+            {
+                ApplySelection([]);
+                _anchor = null;
+            }
+        }
+
+        EndMarquee();
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        EndMarquee();
+        base.OnPointerCaptureLost(e);
+    }
+
+    private async Task StartFileDragAsync(PointerPressedEventArgs e)
+    {
+        if (Tab is null || _dragging)
+            return;
+        var paths = Tab.SelectedItems.Select(static i => i.Path).ToList();
+        if (paths.Count == 0)
+            return;
+        var top = TopLevel.GetTopLevel(this);
+        if (top is null)
+            return;
+
+        var transfer = await FileDrag.Create(top.StorageProvider, paths);
+        if (transfer is null)
+            return;
+
+        _dragging = true;
+        try
+        {
+            var effect = await DragDrop.DoDragDropAsync(
+                e, transfer, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
+            if (effect == DragDropEffects.Move)
+                await Tab.ReloadAsync();
+        }
+        finally
+        {
+            _dragging = false;
+            SetDropTarget(null);
+            FileDragTip.Hide();
+        }
+    }
+
+    private void OnDragOver(object? sender, DragEventArgs e)
+    {
+        var paths = FileDrag.Paths(e.DataTransfer);
+        var dest = DropDestination(e, paths);
+        SetDropTarget(dest?.Item);
+        if (dest is null || paths is null)
+        {
+            e.DragEffects = DragDropEffects.None;
+            FileDragTip.Hide();
+            e.Handled = true;
+            return;
+        }
+
+        e.DragEffects = FileDrag.Effect(paths, dest.Value.Path, e.DragEffects, e.KeyModifiers);
+        FileDragTip.Show(e, e.DragEffects, dest.Value.Path);
+        e.Handled = true;
+    }
+
+
+    private void OnDragLeave(object? sender, DragEventArgs e)
+    {
+        var p = e.GetPosition(this);
+        if (p.X >= 0 && p.Y >= 0 && p.X <= Bounds.Width && p.Y <= Bounds.Height)
+            return;
+        SetDropTarget(null);
+        FileDragTip.Hide();
+    }
+
+    private async void OnDrop(object? sender, DragEventArgs e)
+    {
+        var paths = FileDrag.Paths(e.DataTransfer);
+        var dest = DropDestination(e, paths);
+        SetDropTarget(null);
+        FileDragTip.Hide();
+        if (Tab is null || paths is null || dest is null)
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+
+        var effect = FileDrag.Effect(paths, dest.Value.Path, e.DragEffects, e.KeyModifiers);
+        e.DragEffects = effect;
+        e.Handled = true;
+        if (effect == DragDropEffects.None)
+            return;
+        await Tab.DropFilesAsync(paths, dest.Value.Path, effect == DragDropEffects.Move);
+    }
+
+    private (string Path, FileItem? Item)? DropDestination(DragEventArgs e, IReadOnlyList<string>? paths)
+    {
+        if (Tab is null || paths is null)
+            return null;
+
+        var item = FindFileItem(e.Source as Visual);
+        if (item is { IsNavigable: true } && FileDrag.CanAccept(paths, item.Path))
+            return (item.Path, item);
+        if (Tab.ShowFolder && FileDrag.CanAccept(paths, Tab.CurrentPath))
+            return (Tab.CurrentPath, null);
+        return null;
+    }
+
+    private void SetDropTarget(FileItem? item)
+    {
+        if (ReferenceEquals(_dropTarget, item))
+            return;
+        if (_dropTarget is not null)
+            _dropTarget.IsDropTarget = false;
+        _dropTarget = item;
+        if (_dropTarget is not null)
+            _dropTarget.IsDropTarget = true;
+    }
+
+
+    private void OnContextRequested(object? sender, ContextRequestedEventArgs e)
+    {
+        if (Tab is null)
+            return;
+        if ((e.Source as Visual)?.FindAncestorOfType<TextBox>(includeSelf: true) is not null)
+            return;
+        if (e.Source is Visual source && IsInsideDetailsHeader(source))
+        {
+            e.Handled = true;
+            MacContextMenu.Show(ColumnMenu());
+            return;
+        }
+        e.Handled = true;
+        _marqueeArmed = false;
+        _marqueeActive = false;
+        _pointerSelecting = false;
+        _dragArmed = false;
+        _pressArgs = null;
+        _pressedItem = null;
+        _deferSingleSelect = false;
+        MarqueeRect.IsVisible = false;
+        _captured?.Capture(null);
+        _captured = null;
+
+
+        var item = FindFileItem(e.Source as Visual);
+        if (item is not null)
+        {
+            if (!Tab.SelectedItems.Contains(item))
+            {
+                ApplySelection([item]);
+                _anchor = item;
+            }
+        }
+        else
+        {
+            ApplySelection([]);
+            _anchor = null;
+        }
+
+        var tab = Tab;
+        MacContextMenu.Show(item is not null ? ItemMenu(tab) : BackgroundMenu(tab));
+    }
+
+    private static MacMenuEntry[] ItemMenu(ExplorerTabViewModel tab)
+    {
+        var selected = tab.SelectedItems;
+        var common = selected
+            .Select(i => i.Tags.Select(t => t.Name))
+            .DefaultIfEmpty([])
+            .Aggregate((a, b) => a.Intersect(b, StringComparer.Ordinal))
+            .ToHashSet(StringComparer.Ordinal);
+        var tagItems = MacTags.All()
+            .Select(tag => new MacMenuEntry(
+                tag.Name,
+                () => tab.ToggleTag(tag.Name),
+                Checked: common.Contains(tag.Name),
+                Dot: tag.Argb))
+            .ToArray();
+
+        return
+        [
+            new("Open", () => tab.OpenCommand.Execute(null)),
+            new("Show in Finder", () => tab.RevealCommand.Execute(null)),
+            ..FavoriteEntry(selected),
+            new("", Separator: true),
+            new("Cut", () => tab.CutCommand.Execute(null)),
+            new("Copy", () => tab.CopyCommand.Execute(null)),
+            new("Paste", () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
+            new("", Separator: true),
+            new("Rename", () => tab.RenameCommand.Execute(null)),
+            new("Delete", () => tab.DeleteCommand.Execute(null)),
+            new("", Separator: true),
+            new("Tags", Children:
+            [
+                ..tagItems,
+                new("", Separator: true),
+                new("Remove Tags", () => _ = tab.RemoveTagsAsync(), selected.Any(i => i.HasTags)),
+            ]),
+            new("Share", Children:
+            [
+                new("AirDrop", () => tab.ShareCommand.Execute("com.apple.share.AirDrop.send")),
+                new("Mail", () => tab.ShareCommand.Execute("com.apple.share.Mail.compose")),
+                new("Messages", () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
+            ]),
+            new("", Separator: true),
+            new("Properties", () => OpenProperties(tab)),
+        ];
+    }
+
+    private static MacMenuEntry[] FavoriteEntry(IList<FileItem> selected)
+    {
+        if (selected.Count != 1 || !selected[0].IsDirectory)
+            return [];
+        var path = selected[0].Path;
+        return
+        [
+            new("", Separator: true),
+            MacFinder.IsFavorite(path)
+                ? new("Unfavorite", () => MacFinder.RemoveFavorite(path))
+                : new("Favorite", () => MacFinder.AddFavorite(path)),
+        ];
+    }
+
+    private static MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
+    [
+        new("New folder", () => tab.NewFolderCommand.Execute(null)),
+        new("New file", () => tab.NewFileCommand.Execute(null)),
+        new("", Separator: true),
+        new("Paste", () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
+        new("Group by", Children: GroupByMenu(tab)),
+        new("Refresh", () => tab.RefreshCommand.Execute(null)),
+        new("", Separator: true),
+        new("Properties", () => OpenProperties(tab)),
+    ];
+
+    private static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
+    {
+        var option = tab.GroupOption;
+        var unit = tab.GroupByDateUnit;
+        var grouped = option is not GroupOption.None;
+        var items = new List<MacMenuEntry>
+        {
+            new("None", () => tab.SetGroup("None"), Checked: option is GroupOption.None),
+            new("Name", () => tab.SetGroup("Name"), Checked: option is GroupOption.Name),
+            new("Date modified", Children:
+            [
+                new("Year", () => tab.SetGroup("DateModified:Year"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Year),
+                new("Month", () => tab.SetGroup("DateModified:Month"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Month),
+                new("Day", () => tab.SetGroup("DateModified:Day"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Day),
+            ]),
+            new("Date created", Children:
+            [
+                new("Year", () => tab.SetGroup("DateCreated:Year"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Year),
+                new("Month", () => tab.SetGroup("DateCreated:Month"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Month),
+                new("Day", () => tab.SetGroup("DateCreated:Day"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Day),
+            ]),
+            new("Type", () => tab.SetGroup("FileType"), Checked: option is GroupOption.FileType),
+            new("Size", () => tab.SetGroup("Size"), Checked: option is GroupOption.Size),
+            new("File tags", () => tab.SetGroup("FileTag"), Checked: option is GroupOption.FileTag),
+        };
+        if (tab.CanGroupByOriginalFolder)
+            items.Add(new("Original folder", () => tab.SetGroup("OriginalFolder"), Checked: option is GroupOption.OriginalFolder));
+        if (tab.CanGroupByDateDeleted)
+        {
+            items.Add(new("Date deleted", Children:
+            [
+                new("Year", () => tab.SetGroup("DateDeleted:Year"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Year),
+                new("Month", () => tab.SetGroup("DateDeleted:Month"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Month),
+                new("Day", () => tab.SetGroup("DateDeleted:Day"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Day),
+            ]));
+        }
+        if (tab.CanGroupByFolderPath)
+            items.Add(new("Folder path", () => tab.SetGroup("FolderPath"), Checked: option is GroupOption.FolderPath));
+        items.Add(new("", Separator: true));
+        items.Add(new("Ascending", () => tab.SetGroupDirection("Ascending"), grouped, Checked: tab.GroupDirection is SortDirection.Ascending));
+        items.Add(new("Descending", () => tab.SetGroupDirection("Descending"), grouped, Checked: tab.GroupDirection is SortDirection.Descending));
+        return [.. items];
+    }
+
+    private static MacMenuEntry[] ColumnMenu()
+    {
+        var columns = DetailsColumns.Shared;
+        return
+        [
+            new("Tags", () => columns.ShowTags = !columns.ShowTags, Checked: columns.ShowTags),
+            new("Date modified", () => columns.ShowDateModified = !columns.ShowDateModified, Checked: columns.ShowDateModified),
+            new("Date created", () => columns.ShowDateCreated = !columns.ShowDateCreated, Checked: columns.ShowDateCreated),
+            new("Type", () => columns.ShowType = !columns.ShowType, Checked: columns.ShowType),
+            new("Size", () => columns.ShowSize = !columns.ShowSize, Checked: columns.ShowSize),
+        ];
+    }
+
+    private static void OpenProperties(ExplorerTabViewModel _)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow is MainWindow window)
+                window.ShowProperties();
+        }, DispatcherPriority.Background);
+    }
+
+    private void UpdateMarquee(Point pos, KeyModifiers modifiers)
+    {
+        _marqueePointer = pos;
+        _marqueeModifiers = modifiers;
+        ScrollMarquee(pos);
+        DrawMarquee(pos);
+        ApplyMarqueeSelection(modifiers);
+    }
+
+    private void StartMarqueeScroll()
+    {
+        _marqueeScroll ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+        _marqueeScroll.Tick -= OnMarqueeScrollTick;
+        _marqueeScroll.Tick += OnMarqueeScrollTick;
+        _marqueeScroll.Start();
+    }
+
+    private void OnMarqueeScrollTick(object? sender, EventArgs e)
+    {
+        if (!_marqueeActive)
+        {
+            _marqueeScroll?.Stop();
+            return;
+        }
+
+        if (ScrollMarquee(_marqueePointer))
+        {
+            DrawMarquee(_marqueePointer);
+            ApplyMarqueeSelection(_marqueeModifiers);
+        }
+    }
+
+    private void EndMarquee()
+    {
+        _marqueeArmed = false;
+        _marqueeActive = false;
+        MarqueeRect.IsVisible = false;
+        _marqueeScroll?.Stop();
+        _captured?.Capture(null);
+        _captured = null;
+    }
+
+    private bool ScrollMarquee(Point pointer)
+    {
+        var list = VisibleList();
+        if (list is null)
+            return false;
+
+        var inner = ScrollerOf(list);
+        var horizontal = list.Classes.Contains("details") ? DetailsScroller : inner;
+        var vertical = inner;
+        var applied = default(Vector);
+        if (ReferenceEquals(horizontal, vertical))
+        {
+            if (horizontal is not null)
+                applied = ScrollTowardEdge(horizontal, pointer, x: true, y: true);
+        }
+        else
+        {
+            if (horizontal is not null)
+                applied += ScrollTowardEdge(horizontal, pointer, x: true, y: false);
+            if (vertical is not null)
+                applied += ScrollTowardEdge(vertical, pointer, x: false, y: true);
+        }
+
+        if (applied == default)
+            return false;
+        _marqueeOrigin = new Point(_marqueeOrigin.X - applied.X, _marqueeOrigin.Y - applied.Y);
+        return true;
+    }
+
+    private Vector ScrollTowardEdge(ScrollViewer sv, Point pointerInHost, bool x, bool y)
+    {
+        if (sv.TranslatePoint(default, MarqueeHost) is not { } origin)
+            return default;
+
+        var viewport = new Rect(origin, sv.Bounds.Size);
+        var dx = x ? EdgeDelta(pointerInHost.X, viewport.X, viewport.Width) : 0;
+        var dy = y ? EdgeDelta(pointerInHost.Y, viewport.Y, viewport.Height) : 0;
+        if (dx == 0 && dy == 0)
+            return default;
+
+        var maxX = Math.Max(0, sv.Extent.Width - sv.Viewport.Width);
+        var maxY = Math.Max(0, sv.Extent.Height - sv.Viewport.Height);
+        var next = new Vector(
+            Math.Clamp(sv.Offset.X + dx, 0, maxX),
+            Math.Clamp(sv.Offset.Y + dy, 0, maxY));
+        var applied = next - sv.Offset;
+        if (applied != default)
+            sv.Offset = next;
+        return applied;
+    }
+
+    private static double EdgeDelta(double pointer, double start, double length)
+    {
+        if (length <= 1)
+            return 0;
+        var zone = Math.Min(36, length / 3);
+        var before = start + zone;
+        var after = start + length - zone;
+        if (pointer < before)
+            return -ScrollStep(before - pointer, zone);
+        if (pointer > after)
+            return ScrollStep(pointer - after, zone);
+        return 0;
+    }
+
+    private static double ScrollStep(double overshoot, double zone)
+    {
+        var t = overshoot / Math.Max(zone, 1);
+        return Math.Clamp(3 + t * 10, 3, 28);
+    }
+
+    private static ScrollViewer? ScrollerOf(Control root) =>
+        root as ScrollViewer ?? root.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+
+    private void DrawMarquee(Point pos)
+    {
+        var x = Math.Min(_marqueeOrigin.X, pos.X);
+        var y = Math.Min(_marqueeOrigin.Y, pos.Y);
+        var w = Math.Abs(pos.X - _marqueeOrigin.X);
+        var h = Math.Abs(pos.Y - _marqueeOrigin.Y);
+        Canvas.SetLeft(MarqueeRect, x);
+        Canvas.SetTop(MarqueeRect, y);
+        MarqueeRect.Width = w;
+        MarqueeRect.Height = h;
+    }
+
+    private void ApplyMarqueeSelection(KeyModifiers modifiers)
+    {
+        var list = VisibleList();
+        if (list is null || Tab is null)
+            return;
+
+        var marquee = new Rect(
+            Canvas.GetLeft(MarqueeRect), Canvas.GetTop(MarqueeRect),
+            MarqueeRect.Width, MarqueeRect.Height);
+        var hits = new List<FileItem>();
+        var count = list.ItemCount;
+        for (var i = 0; i < count; i++)
+        {
+            if (list.Items[i] is not FileItem file)
+                continue;
+            if (list.ContainerFromIndex(i) is not Control container)
+                continue;
+            if (container.TranslatePoint(default, MarqueeHost) is not { } topLeft)
+                continue;
+            if (marquee.Intersects(new Rect(topLeft, container.Bounds.Size)))
+                hits.Add(file);
+        }
+
+        ApplySelection(MergeSelection(_selectionSnapshot, hits, modifiers));
+        if (!IsRange(modifiers) && !IsToggle(modifiers))
+            _anchor = hits.Count > 0 ? hits[^1] : null;
+    }
+
+    private void ApplyItemPointer(FileItem item, KeyModifiers modifiers)
+    {
+        if (Tab is null)
+            return;
+
+        var items = Tab.Items;
+        var index = items.IndexOf(item);
+        if (index < 0)
+            return;
+
+        if (IsRange(modifiers))
+        {
+            var from = _anchor is null ? index : items.IndexOf(_anchor);
+            if (from < 0)
+                from = index;
+            var range = RangeInclusive(items, from, index);
+            ApplySelection(IsToggle(modifiers) ? _selectionSnapshot.Union(range).ToList() : range);
+            return;
+        }
+
+        if (IsToggle(modifiers))
+        {
+            var set = _selectionSnapshot.ToHashSet();
+            if (!set.Add(item))
+                set.Remove(item);
+            ApplySelection(set.ToList());
+            _anchor = item;
+            return;
+        }
+
+        ApplySelection([item]);
+        _anchor = item;
+    }
+
+    private void ApplySelection(IReadOnlyList<FileItem> selected)
+    {
+        Tab?.SetSelection(selected);
+    }
+
+    private static List<FileItem> RangeInclusive(IList<FileItem> items, int a, int b)
+    {
+        if (items.Count == 0)
+            return [];
+        var lo = Math.Clamp(Math.Min(a, b), 0, items.Count - 1);
+        var hi = Math.Clamp(Math.Max(a, b), 0, items.Count - 1);
+        var result = new List<FileItem>(hi - lo + 1);
+        for (var i = lo; i <= hi; i++)
+            result.Add(items[i]);
+        return result;
+    }
+
+    private static bool IsToggle(KeyModifiers modifiers) =>
+        modifiers.HasFlag(KeyModifiers.Meta) || modifiers.HasFlag(KeyModifiers.Control);
+
+    private static bool IsRange(KeyModifiers modifiers) =>
+        modifiers.HasFlag(KeyModifiers.Shift);
+
+    private static List<FileItem> MergeSelection(
+        IReadOnlyList<FileItem> snapshot,
+        IReadOnlyList<FileItem> hits,
+        KeyModifiers modifiers)
+    {
+        if (IsToggle(modifiers))
+        {
+            var set = snapshot.ToHashSet();
+            foreach (var hit in hits)
+            {
+                if (!set.Add(hit))
+                    set.Remove(hit);
+            }
+
+            return set.ToList();
+        }
+
+        if (IsRange(modifiers))
+            return snapshot.Concat(hits).Distinct().ToList();
+
+        return hits.ToList();
+    }
+
+    private void SyncListFromTab()
+    {
+        if (Tab is null)
+            return;
+        var list = VisibleList();
+        if (list is null)
+            return;
+        SelectOnList(list, Tab.SelectedItems);
+    }
+
+    private void SelectOnList(ListBox list, IReadOnlyList<FileItem> selected)
+    {
+        var set = selected.ToHashSet();
+        if (!ListMatches(list, set))
+        {
+            _syncing = true;
+            try
+            {
+                list.SelectionMode = SelectionMode.Multiple;
+                list.Selection.Clear();
+                var count = list.ItemCount;
+                for (var i = 0; i < count; i++)
+                {
+                    if (list.Items[i] is FileItem item && set.Contains(item))
+                        list.Selection.Select(i);
+                }
+            }
+            finally
+            {
+                _syncing = false;
+            }
+        }
+
+        SetListAnchor(list);
+    }
+
+    private void CaptureAnchor(ListBox list)
+    {
+        var index = list.Selection.AnchorIndex;
+        if ((uint)index < (uint)list.ItemCount && list.Items[index] is FileItem item)
+            _anchor = item;
+    }
+
+    private void SetListAnchor(ListBox list)
+    {
+        if (_anchor is null)
+            return;
+        var count = list.ItemCount;
+        for (var i = 0; i < count; i++)
+        {
+            if (!ReferenceEquals(list.Items[i], _anchor))
+                continue;
+            list.Selection.AnchorIndex = i;
+            return;
+        }
+    }
+
+    private static bool ListMatches(ListBox list, HashSet<FileItem> selected)
+    {
+        var current = list.SelectedItems;
+        if (current is null)
+            return selected.Count == 0;
+        if (current.Count != selected.Count)
+            return false;
+        foreach (var item in current)
+        {
+            if (item is not FileItem file || !selected.Contains(file))
+                return false;
+        }
+
+        return true;
+    }
+
+    private ListBox? VisibleList() =>
+        this.GetVisualDescendants().OfType<ListBox>().FirstOrDefault(static l => l.IsEffectivelyVisible && l.Classes.Contains("FileList"));
+    private void HookFileLists()
+    {
+        foreach (var list in this.GetVisualDescendants().OfType<ListBox>())
+        {
+            if (!list.Classes.Contains("FileList"))
+                continue;
+            list.ContainerPrepared -= OnFileContainerPrepared;
+            list.ContainerPrepared += OnFileContainerPrepared;
+        }
+    }
+
+    private static void OnFileContainerPrepared(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (e.Container is not ListBoxItem item)
+            return;
+        var data = sender is ListBox list && (uint)e.Index < (uint)list.ItemCount
+            ? list.Items[e.Index]
+            : item.DataContext;
+        var group = data is FileGroup;
+        item.Classes.Set("group", group);
+        item.Focusable = true;
+        item.IsHitTestVisible = true;
+    }
+
+    private void OnOverviewTapped(object? sender, TappedEventArgs e)
+    {
+        if (Tab is null || FindFileGroup(e.Source as Visual) is not FileGroup group)
+            return;
+        Tab.IsGroupOverview = false;
+        Dispatcher.UIThread.Post(() => VisibleList()?.ScrollIntoView(group), DispatcherPriority.Loaded);
+    }
+
+    private void ApplyGroupOverview(bool overview)
+    {
+        if (FileContentHost.RenderTransform is not ScaleTransform fileScale
+            || GroupOverviewHost.RenderTransform is not ScaleTransform overviewScale)
+            return;
+
+        if (overview)
+        {
+            GroupOverviewHost.IsHitTestVisible = true;
+            GroupOverviewHost.Opacity = 1;
+            overviewScale.ScaleX = 1;
+            overviewScale.ScaleY = 1;
+            FileContentHost.IsHitTestVisible = false;
+            FileContentHost.Opacity = 0;
+            fileScale.ScaleX = 0.92;
+            fileScale.ScaleY = 0.92;
+            return;
+        }
+
+        FileContentHost.IsHitTestVisible = true;
+        FileContentHost.Opacity = 1;
+        fileScale.ScaleX = 1;
+        fileScale.ScaleY = 1;
+        GroupOverviewHost.IsHitTestVisible = false;
+        GroupOverviewHost.Opacity = 0;
+        overviewScale.ScaleX = 1.08;
+        overviewScale.ScaleY = 1.08;
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key is not Key.Escape || Tab is not { IsGroupOverview: true })
+            return;
+        Tab.IsGroupOverview = false;
+        e.Handled = true;
+    }
+
+    private static FileGroup? FindFileGroup(Visual? start)
+    {
+        for (var visual = start; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is ListBox list && list.Classes.Contains("FileList"))
+                return null;
+            if (visual is Control { DataContext: FileGroup group })
+                return group;
+        }
+
+        return null;
+    }
+
+    private static FileItem? FindFileItem(Visual? start)
+    {
+        for (var visual = start; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is Control { DataContext: FileItem item })
+                return item;
+        }
+
+        return null;
+    }
+
+    private static bool IsInsideFileList(Visual start)
+    {
+        for (var visual = start; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is ListBox list && list.Classes.Contains("FileList"))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsScrollChrome(Visual start)
+    {
+        for (var visual = start; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is ScrollBar)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsInsideDetailsHeader(Visual start)
+    {
+        for (var visual = start; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (ReferenceEquals(visual, DetailsHeader))
+                return true;
+        }
+
+        return false;
+    }
+}

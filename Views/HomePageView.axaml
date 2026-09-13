@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MacExplorer.ViewModels"
+             x:Class="MacExplorer.Views.HomePageView"
+             x:DataType="vm:HomeViewModel">
+    <ScrollViewer>
+        <StackPanel Margin="8,8,16,16" Spacing="20">
+            <StackPanel Spacing="8" IsVisible="{Binding ShowQuickAccess}">
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Quick Access" />
+                <ItemsControl ItemsSource="{Binding QuickAccess}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel ItemWidth="120" ItemHeight="80" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:HomeCard">
+                            <Button Classes="ToolbarButton" Width="112" Height="72" Margin="4"
+                                    Tag="{Binding Path}" Click="Card_OnClick">
+                                <StackPanel Spacing="4">
+                                    <Panel Width="32" Height="32" HorizontalAlignment="Center">
+                                        <Image Source="{Binding Icon}" Stretch="Uniform"
+                                               IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                   FontSize="20" Text="{Binding Glyph}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                                    </Panel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13"
+                                               TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel Spacing="8" IsVisible="{Binding ShowVolumes}">
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Drives" />
+                <ItemsControl ItemsSource="{Binding Drives}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel ItemWidth="120" ItemHeight="80" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:HomeCard">
+                            <Button Classes="ToolbarButton" Width="112" Height="72" Margin="4"
+                                    Tag="{Binding Path}" Click="Card_OnClick">
+                                <StackPanel Spacing="4">
+                                    <Panel Width="32" Height="32" HorizontalAlignment="Center">
+                                        <Image Source="{Binding Icon}" Stretch="Uniform"
+                                               IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                   FontSize="20" Text="{Binding Glyph}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   IsVisible="{Binding Icon, Converter={x:Static ObjectConverters.IsNull}}" />
+                                    </Panel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13"
+                                               TextAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <StackPanel Spacing="8" IsVisible="{Binding ShowRecents}">
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Recent files" />
+                <ItemsControl ItemsSource="{Binding Recents}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:HomeCard">
+                            <Button Classes="ToolbarButton" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left" Height="40" Margin="4,2"
+                                    Tag="{Binding Path}" Click="Card_OnClick">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Image Width="20" Height="20" Source="{Binding Icon}" />
+                                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Path}" Classes="ColSecondary"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

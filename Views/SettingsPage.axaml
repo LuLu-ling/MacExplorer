@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MacExplorer.ViewModels"
+             xmlns:conv="using:MacExplorer.Converters"
+             x:Class="MacExplorer.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel">
+    <Grid ColumnDefinitions="240,*">
+        <Border Background="{DynamicResource LayerFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="0,0,1,0">
+            <StackPanel Margin="8,16">
+                <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" Margin="12,0,12,16" />
+                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Appearance">
+                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="Appearance" />
+                </Button>
+                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Folders">
+                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="Folders" />
+                </Button>
+                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="About">
+                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="About" />
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="1" Padding="32">
+            <StackPanel MaxWidth="720" Spacing="16">
+                <StackPanel Spacing="12"
+                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Appearance}">
+                    <TextBlock Text="Appearance" FontSize="24" FontWeight="SemiBold" />
+                    <TextBlock Classes="Caption" Text="Theme" />
+                    <ComboBox SelectedIndex="{Binding ThemeIndex}" Width="240">
+                        <ComboBoxItem Content="Use system setting" />
+                        <ComboBoxItem Content="Light" />
+                        <ComboBoxItem Content="Dark" />
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Spacing="12"
+                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Folders}">
+                    <TextBlock Text="Folders" FontSize="24" FontWeight="SemiBold" />
+                    <CheckBox Content="Show hidden items" IsChecked="{Binding ShowHidden}" />
+                    <CheckBox Content="Show file extensions" IsChecked="{Binding ShowExtensions}" />
+                    <CheckBox Content="Show Quick Access widget" IsChecked="{Binding ShowQuickAccess}" />
+                    <CheckBox Content="Show Drives widget" IsChecked="{Binding ShowVolumes}" />
+                    <CheckBox Content="Show Recent files widget" IsChecked="{Binding ShowRecents}" />
+                </StackPanel>
+
+                <StackPanel Spacing="8"
+                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=About}">
+                    <TextBlock Text="About" FontSize="24" FontWeight="SemiBold" />
+                    <TextBlock Text="MacExplorer" FontSize="18" />
+                    <TextBlock Text="{Binding Version, StringFormat=Version {0}}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBlock TextWrapping="Wrap" MaxWidth="520"
+                               Text="A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash." />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

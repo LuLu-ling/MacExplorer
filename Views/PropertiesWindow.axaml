@@ -1,0 +1,238 @@
+<wnd:FAAppWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:vm="using:MacExplorer.ViewModels"
+                 xmlns:m="using:MacExplorer.Models"
+                 xmlns:wnd="using:FluentAvalonia.UI.Windowing"
+                 x:Class="MacExplorer.Views.PropertiesWindow"
+                 x:DataType="vm:PropertiesViewModel"
+                 Title="{Binding Title}"
+                 Width="720" Height="560"
+                 MinWidth="560" MinHeight="420"
+                 ExtendClientAreaToDecorationsHint="True"
+                 ExtendClientAreaTitleBarHeightHint="36"
+                 WindowStartupLocation="CenterScreen">
+    <Grid RowDefinitions="36,*">
+        <Border x:Name="TitleBarHost" Background="Transparent"
+                PointerPressed="TitleBar_OnPointerPressed">
+            <TextBlock Margin="78,10,16,0" VerticalAlignment="Center"
+                       Text="Properties" FontSize="12"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="200,*">
+            <Border Background="{DynamicResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,1,0">
+                <StackPanel Margin="8,12">
+                    <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="General"
+                            Classes.selected="{Binding IsGeneral}">
+                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="General" />
+                    </Button>
+                    <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Hashes"
+                            Classes.selected="{Binding IsHashes}"
+                            IsVisible="{Binding CanShowHashes}">
+                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="Hashes" />
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Column="1" RowDefinitions="*,Auto,52"
+                  Background="{DynamicResource LayerFillColorDefaultBrush}">
+                <ScrollViewer Padding="12" IsVisible="{Binding IsGeneral}">
+                    <StackPanel Spacing="8">
+                        <Border Padding="12" CornerRadius="4"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <Border Width="56" Height="56" HorizontalAlignment="Left" CornerRadius="4"
+                                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1">
+                                        <Image Width="48" Height="48" Source="{Binding Icon}" Stretch="Uniform" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
+                                        <TextBox Text="{Binding ItemName}"
+                                                 IsVisible="{Binding CanRename}"
+                                                 PlaceholderText="Name" />
+                                        <TextBlock Text="{Binding DisplayName}"
+                                                   IsVisible="{Binding !CanRename}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasItemType}">
+                                    <TextBlock FontWeight="SemiBold" Text="Type"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding ItemType}"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Padding="12" CornerRadius="4"
+                                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                                BorderThickness="1">
+                            <StackPanel Spacing="8">
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasLocation}">
+                                    <TextBlock FontWeight="SemiBold" Text="Location" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Location}" TextWrapping="Wrap" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasSize}">
+                                    <TextBlock FontWeight="SemiBold" Text="Size" />
+                                    <TextBlock Grid.Column="1" Text="{Binding SizeText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasSizeOnDisk}">
+                                    <TextBlock FontWeight="SemiBold" Text="Size on disk" />
+                                    <TextBlock Grid.Column="1" Text="{Binding SizeOnDiskText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasContents}">
+                                    <TextBlock FontWeight="SemiBold" Text="Contains" />
+                                    <TextBlock Grid.Column="1" Text="{Binding ContentsText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasPath}">
+                                    <TextBlock FontWeight="SemiBold" Text="Path" />
+                                    <TextBlock Grid.Column="1" Text="{Binding PathText}" TextWrapping="Wrap" />
+                                </Grid>
+                                <Border Height="1" Margin="-12,4"
+                                        Background="{DynamicResource DividerStrokeColorDefaultBrush}"
+                                        IsVisible="{Binding HasDates}" />
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasCreated}">
+                                    <TextBlock FontWeight="SemiBold" Text="Created" />
+                                    <TextBlock Grid.Column="1" Text="{Binding CreatedText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasModified}">
+                                    <TextBlock FontWeight="SemiBold" Text="Modified" />
+                                    <TextBlock Grid.Column="1" Text="{Binding ModifiedText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasAccessed}">
+                                    <TextBlock FontWeight="SemiBold" Text="Accessed" />
+                                    <TextBlock Grid.Column="1" Text="{Binding AccessedText}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasAttributes}">
+                                    <TextBlock FontWeight="SemiBold" Text="Attributes" />
+                                    <TextBlock Grid.Column="1" Text="{Binding AttributesText}" TextWrapping="Wrap" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Grid Margin="12" IsVisible="{Binding IsHashes}">
+                    <Border DataContext="{Binding Hashes}" x:DataType="vm:HashesViewModel"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1" CornerRadius="4">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Top" Padding="16,8,12,0"
+                                    BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1">
+                            <Grid Height="44" ColumnSpacing="12"
+                                  ColumnDefinitions="64,1,*,Auto">
+                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Algorithm" />
+                                <Border Grid.Column="1" Width="1" Height="36" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="SemiBold" Text="Hash value" />
+                                <Button Grid.Column="3" Padding="6" Background="Transparent" BorderThickness="0"
+                                        ToolTip.Tip="Select hashes to show">
+                                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE7B3;" FontSize="14" />
+                                    <Button.Flyout>
+                                        <MenuFlyout>
+                                            <MenuItem Header="CRC32" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[0].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="CRC32" />
+                                            <MenuItem Header="MD5" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[1].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="MD5" />
+                                            <MenuItem Header="SHA1" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[2].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA1" />
+                                            <MenuItem Header="SHA256" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[3].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA256" />
+                                            <MenuItem Header="SHA384" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[4].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA384" />
+                                            <MenuItem Header="SHA512" ToggleType="CheckBox"
+                                                      IsChecked="{Binding Hashes[5].IsEnabled, Mode=OneWay}"
+                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA512" />
+                                        </MenuFlyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </Grid>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Hashes}" Margin="0,4,0,8">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="m:HashInfoItem">
+                                        <Grid Height="40" ColumnSpacing="12" Margin="16,0,12,0"
+                                              ColumnDefinitions="64,1,*,Auto"
+                                              IsVisible="{Binding IsEnabled}">
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding Algorithm}" />
+                                            <Border Grid.Column="1" Width="1"
+                                                    Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                        IsVisible="{Binding IsCalculating}">
+                                                <TextBlock VerticalAlignment="Center" Text="Calculating" />
+                                                <ProgressBar Width="100" Margin="16,0,0,0" IsIndeterminate="True" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                                       IsVisible="{Binding !IsCalculating}"
+                                                       Text="{Binding HashValue}"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding HashValue}" />
+                                            <Button Grid.Column="3" Padding="6"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    IsVisible="{Binding IsCalculated}"
+                                                    Tag="{Binding HashValue}"
+                                                    Click="CopyHash_OnClick"
+                                                    ToolTip.Tip="Copy">
+                                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           Text="&#xE8C8;" FontSize="14" />
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Margin="12,8,12,0"
+                        MinHeight="48"
+                        Padding="16,0"
+                        CornerRadius="{DynamicResource ControlCornerRadius}"
+                        Background="{DynamicResource InfoBarErrorSeverityBackgroundBrush}"
+                        IsVisible="{Binding HasError}">
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Spacing="12">
+                        <Panel Width="16" Height="16" VerticalAlignment="Center">
+                            <Ellipse Width="16" Height="16"
+                                     Fill="{DynamicResource InfoBarErrorSeverityIconBackground}" />
+                            <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE10A;" FontSize="10"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource InfoBarInformationalSeverityIconForeground}" />
+                        </Panel>
+                        <TextBlock Text="{Binding Error}"
+                                   FontWeight="SemiBold" FontSize="14"
+                                   VerticalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Row="2"
+                        Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="0,1,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,0" Spacing="12">
+                        <Button Width="96" Classes="accent" Click="Save_OnClick" Content="Save" />
+                        <Button Width="96" Click="Cancel_OnClick" Content="Cancel" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</wnd:FAAppWindow>

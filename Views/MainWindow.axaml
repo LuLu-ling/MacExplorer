@@ -1,0 +1,590 @@
+<wnd:FAAppWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:vm="using:MacExplorer.ViewModels"
+                 xmlns:m="using:MacExplorer.Models"
+                 xmlns:views="using:MacExplorer.Views"
+                 xmlns:conv="using:MacExplorer.Converters"
+
+                 xmlns:wnd="using:FluentAvalonia.UI.Windowing"
+                 xmlns:ui="using:FluentAvalonia.UI.Controls"
+                 x:Class="MacExplorer.Views.MainWindow"
+                 x:DataType="vm:MainViewModel"
+                 Title="{Binding WindowTitle}"
+                 Width="1280" Height="800"
+                 MinWidth="720" MinHeight="480"
+                 TransparencyLevelHint="Mica,AcrylicBlur,None"
+                 ExtendClientAreaToDecorationsHint="True"
+                 ExtendClientAreaTitleBarHeightHint="48">
+    <wnd:FAAppWindow.KeyBindings>
+        <KeyBinding Gesture="Meta+T" Command="{Binding NewTabCommand}" />
+        <KeyBinding Gesture="Shift+Meta+N" Command="{Binding NewFolderCommand}" />
+        <KeyBinding Gesture="Meta+W" Command="{Binding CloseTabCommand}" />
+        <KeyBinding Gesture="Meta+C" Command="{Binding SelectedTab.CopyCommand}" />
+        <KeyBinding Gesture="Meta+X" Command="{Binding SelectedTab.CutCommand}" />
+        <KeyBinding Gesture="Meta+V" Command="{Binding SelectedTab.PasteCommand}" />
+        <KeyBinding Gesture="Meta+A" Command="{Binding SelectedTab.SelectAllCommand}" />
+        <KeyBinding Gesture="Meta+R" Command="{Binding SelectedTab.RefreshCommand}" />
+        <KeyBinding Gesture="Meta+L" Command="{Binding FocusPathCommand}" />
+        <KeyBinding Gesture="Meta+F" Command="{Binding FocusSearchCommand}" />
+        <KeyBinding Gesture="Meta+P" Command="{Binding ToggleInfoPaneCommand}" />
+        <KeyBinding Gesture="Meta+B" Command="{Binding ToggleSidebarCommand}" />
+        <KeyBinding Gesture="Meta+OemComma" Command="{Binding OpenSettingsCommand}" />
+        <KeyBinding Gesture="Meta+1" Command="{Binding SetLayoutCommand}" CommandParameter="Details" />
+        <KeyBinding Gesture="Meta+2" Command="{Binding SetLayoutCommand}" CommandParameter="List" />
+        <KeyBinding Gesture="Meta+3" Command="{Binding SetLayoutCommand}" CommandParameter="Cards" />
+        <KeyBinding Gesture="Meta+4" Command="{Binding SetLayoutCommand}" CommandParameter="Grid" />
+        <KeyBinding Gesture="Meta+Left" Command="{Binding SelectedTab.BackCommand}" />
+        <KeyBinding Gesture="Meta+Right" Command="{Binding SelectedTab.ForwardCommand}" />
+        <KeyBinding Gesture="Meta+Up" Command="{Binding SelectedTab.UpCommand}" />
+        <KeyBinding Gesture="Meta+Back" Command="{Binding SelectedTab.DeleteCommand}" />
+        <KeyBinding Gesture="F2" Command="{Binding SelectedTab.RenameCommand}" />
+        <KeyBinding Gesture="Alt+Enter" Command="{Binding OpenPropertiesCommand}" />
+        <KeyBinding Gesture="F5" Command="{Binding SelectedTab.RefreshCommand}" />
+    </wnd:FAAppWindow.KeyBindings>
+
+    <Grid RowDefinitions="48,48,*">
+        <Border x:Name="TitleBarHost" Background="Transparent" Height="48"
+                PointerPressed="TitleBar_OnPointerPressed">
+            <Grid ColumnDefinitions="Auto,Auto,*" Margin="78,10,0,0"
+                  PointerWheelChanged="TabStrip_OnPointerWheelChanged">
+                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                    <RepeatButton x:Name="TabScrollDecreaseButton" Classes="TabScrollButton"
+                                  Delay="50" Interval="100" Content="&#xEDD9;"
+                                  IsVisible="False" Click="TabScrollDecrease_OnClick" />
+                    <ScrollViewer x:Name="TabScroller"
+                                  HorizontalScrollBarVisibility="Hidden"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  ScrollChanged="TabScroller_OnScrollChanged">
+                        <ItemsControl x:Name="TabStrip" ItemsSource="{Binding Tabs}"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="2" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ExplorerTabViewModel">
+                                    <Border Classes="TabItem" Classes.selected="{Binding IsSelectedTab}"
+                                            Tag="{Binding}"
+                                            PointerPressed="Tab_OnPointerPressed"
+                                            PointerMoved="Tab_OnPointerMoved"
+                                            PointerReleased="Tab_OnPointerReleased"
+                                            PointerCaptureLost="Tab_OnPointerCaptureLost"
+                                            ContextRequested="Tab_OnContextRequested">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="10,0,6,0">
+                                            <Panel Width="16" Height="16" VerticalAlignment="Center">
+                                                <Ellipse Width="12" Height="12"
+                                                         Fill="{Binding Marker}"
+                                                         IsVisible="{Binding HasMarker}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           FontSize="16" Width="16" Text="{Binding Glyph}"
+                                                           IsVisible="{Binding !HasMarker}"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            </Panel>
+                                            <TextBlock Grid.Column="1" Classes="TabTitle" Text="{Binding Title}"
+                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                       FontSize="12" />
+                                            <Button Grid.Column="2" Classes="NavButton" Width="20" Height="20"
+                                                    Click="CloseTab_OnClick" Tag="{Binding}">
+                                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           Text="&#xE711;" FontSize="10" />
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <RepeatButton x:Name="TabScrollIncreaseButton" Classes="TabScrollButton"
+                                  Delay="50" Interval="100" Content="&#xEDDA;"
+                                  IsVisible="False" Click="TabScrollIncrease_OnClick" />
+                </StackPanel>
+                <Button x:Name="TabBarAddNewTabButton" Grid.Column="1" Width="30" Height="30"
+                        Margin="2,0" Padding="8"
+                        VerticalAlignment="Center"
+                        Background="Transparent" BorderThickness="0"
+                        Command="{Binding NewTabCommand}"
+                        ToolTip.Tip="New tab (⌘T)">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE710;" FontSize="12" />
+                </Button>
+                <Rectangle x:Name="DragAreaRectangle" Grid.Column="2" Fill="Transparent" />
+            </Grid>
+        </Border>
+
+        <!-- Address bar — Files NavigationToolbar.xaml: Height 48, Padding 4,0, Spacing 4; Omnibar 38×19 -->
+        <Grid Grid.Row="1" Height="48" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4" Margin="4,0">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <Button Classes="NavButton" Command="{Binding SelectedTab.BackCommand}" ToolTip.Tip="Back">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE76B;" FontSize="14" />
+                </Button>
+                <Button Classes="NavButton" Command="{Binding SelectedTab.ForwardCommand}" ToolTip.Tip="Forward">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE76C;" FontSize="14" />
+                </Button>
+                <Button Classes="NavButton" Command="{Binding SelectedTab.UpCommand}" ToolTip.Tip="Up">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE74A;" FontSize="14" />
+                </Button>
+                <Button Classes="NavButton" Command="{Binding SelectedTab.RefreshCommand}" ToolTip.Tip="Refresh">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE72C;" FontSize="14" />
+                </Button>
+            </StackPanel>
+
+            <Border Grid.Column="1" Classes="PathField"
+                    PointerPressed="PathField_OnPointerPressed">
+                <Grid>
+                    <ItemsControl ItemsSource="{Binding SelectedTab.Breadcrumbs}" VerticalAlignment="Center"
+                                  IsVisible="{Binding !SelectedTab.IsOmnibarFocused}"
+                                  Margin="8,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="0" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="m:BreadcrumbItem">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Classes="BreadcrumbItem" Classes.root="{Binding IsRoot}"
+                                            Height="32" Tag="{Binding Path}" Click="Breadcrumb_OnClick">
+                                        <TextBlock Text="{Binding Title}" FontSize="14"
+                                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    </Button>
+                                    <Button Classes="BreadcrumbChevron"
+                                            IsVisible="{Binding ShowChevron}" IsHitTestVisible="False">
+                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                   Text="&#xE76C;" FontSize="12" Opacity="0.6"
+                                                   VerticalAlignment="Center" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBox x:Name="PathBox" Classes="ChromeField"
+                             IsVisible="{Binding SelectedTab.IsOmnibarFocused}"
+                             Text="{Binding SelectedTab.PathText}"
+                             PlaceholderText="Enter a path"
+                             KeyDown="PathBox_OnKeyDown" LostFocus="PathBox_OnLostFocus" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2" Classes="SearchField" Width="240">
+                <Grid ColumnDefinitions="Auto,*">
+                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE721;" FontSize="14"
+                               Margin="12,0,0,0" VerticalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    <TextBox x:Name="SearchBox" Grid.Column="1" Classes="ChromeField"
+                             Text="{Binding SelectedTab.SearchText, Mode=TwoWay}"
+                             PlaceholderText="Search"
+                             KeyDown="SearchBox_OnKeyDown" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Sidebar + content -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding SidebarColumn, Mode=TwoWay}"
+                                  MinWidth="{Binding SidebarColumnMin}"
+                                  MaxWidth="{x:Static vm:MainViewModel.SidebarMax}" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" MinWidth="240" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="{Binding InfoPaneColumn, Mode=TwoWay}"
+                                  MinWidth="{Binding InfoPaneColumnMin}"
+                                  MaxWidth="{x:Static vm:MainViewModel.InfoPaneMax}" />
+            </Grid.ColumnDefinitions>
+            <Border x:Name="SidebarHost" IsVisible="{Binding IsSidebarOpen}"
+                    Background="{DynamicResource LayerFillColorDefaultBrush}"
+                    ClipToBounds="True">
+                <Grid RowDefinitions="*,Auto">
+                    <ScrollViewer Padding="0,8,0,0">
+                        <ItemsControl x:Name="SidebarList" Margin="4,0,4,16" ItemsSource="{Binding Sidebar.Items}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="m:SidebarItem">
+                                    <Button Classes="SidebarRow" IsVisible="{Binding IsVisible}"
+                                            Tag="{Binding}" Click="Sidebar_OnClick"
+                                            Classes.selected="{Binding IsSelected}">
+                                        <Grid ColumnDefinitions="3,Auto,16,Auto,*" Margin="0,2">
+                                            <Border Width="3" Height="16" CornerRadius="2"
+                                                    Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                                    IsVisible="{Binding IsSelected}" VerticalAlignment="Center" />
+                                            <Border Grid.Column="1" Width="{Binding Indent}" />
+                                            <TextBlock Grid.Column="2" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                       FontSize="10" Text="&#xE76C;" VerticalAlignment="Center"
+                                                       IsVisible="{Binding ShowChevron}"
+                                                       RenderTransformOrigin="50%,50%">
+                                                <TextBlock.RenderTransform>
+                                                    <RotateTransform Angle="90" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                            <Panel Grid.Column="3" Width="16" Height="16" Margin="4,0,0,0"
+                                                   VerticalAlignment="Center">
+                                                <Ellipse Width="12" Height="12"
+                                                         Fill="{Binding Marker}"
+                                                         IsVisible="{Binding HasMarker}"
+                                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                           FontSize="16" Width="16" Text="{Binding Glyph}"
+                                                           IsVisible="{Binding !HasMarker}"
+                                                           VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            </Panel>
+                                            <TextBlock Grid.Column="4" Text="{Binding Title}" Margin="12,0,12,0"
+                                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                                       FontWeight="{Binding IsSection, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=True}" />
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="1" Margin="4,2">
+                        <Border Height="1" Background="{DynamicResource ControlStrokeColorDefaultBrush}" Margin="8,4" />
+                        <Button Classes="SidebarRow" Command="{Binding OpenSettingsCommand}"
+                                Classes.selected="{Binding ShowSettings}">
+                            <Grid ColumnDefinitions="3,Auto,16,Auto,*">
+                                <TextBlock Grid.Column="3" FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                           Text="&#xE713;" FontSize="16" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="4" Text="Settings" Margin="12,0" VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+                          IsVisible="{Binding IsSidebarOpen}" ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" />
+
+            <Grid Grid.Column="2" Margin="2,0,4,8" RowDefinitions="Auto,*">
+                <!-- Inner toolbar -->
+                <Border Margin="0,0,0,4" Padding="4,2"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8"
+                        IsVisible="{Binding SelectedTab.ShowFolder}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="0">
+                            <Button Classes="ToolbarButton">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE710;" />
+                                    <TextBlock Text="New" />
+                                </StackPanel>
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Header="Folder" Command="{Binding NewFolderCommand}" />
+                                        <MenuItem Header="File" Command="{Binding NewFileCommand}" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                            <Rectangle Width="1" Height="18" Margin="4,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.CutCommand}" ToolTip.Tip="Cut">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8C6;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.CopyCommand}" ToolTip.Tip="Copy">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8C8;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.PasteCommand}" ToolTip.Tip="Paste">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE77F;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.RenameCommand}" ToolTip.Tip="Rename">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8AC;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.ShareCommand}" ToolTip.Tip="Share">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE72D;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.DeleteCommand}" ToolTip.Tip="Delete">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE74D;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding OpenPropertiesCommand}" ToolTip.Tip="Properties">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE946;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" Command="{Binding SelectedTab.EmptyTrashCommand}"
+                                    IsVisible="{Binding SelectedTab.IsTrash}" Content="Empty Trash" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Classes="ToolbarButton" ToolTip.Tip="Selection">
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Header="Select all" Command="{Binding SelectedTab.SelectAllCommand}" InputGesture="Meta+A" />
+                                        <MenuItem Header="Invert selection" Command="{Binding SelectedTab.InvertSelectionCommand}" />
+                                        <MenuItem Header="Clear selection" Command="{Binding SelectedTab.ClearSelectionCommand}" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8B3;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" ToolTip.Tip="Sort">
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Header="Sort by">
+                                            <MenuItem Header="Name" Command="{Binding SetSortCommand}" CommandParameter="Name" />
+                                            <MenuItem Header="Date modified" Command="{Binding SetSortCommand}" CommandParameter="DateModified" />
+                                            <MenuItem Header="Date created" Command="{Binding SetSortCommand}" CommandParameter="DateCreated" />
+                                            <MenuItem Header="Type" Command="{Binding SetSortCommand}" CommandParameter="Type" />
+                                            <MenuItem Header="Size" Command="{Binding SetSortCommand}" CommandParameter="Size" />
+                                        </MenuItem>
+                                        <MenuItem Header="Group by">
+                                            <MenuItem Header="None" Command="{Binding SetGroupCommand}" CommandParameter="None"
+                                                      ToggleType="Radio"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=None, Mode=OneWay}" />
+                                            <MenuItem Header="Name" Command="{Binding SetGroupCommand}" CommandParameter="Name"
+                                                      ToggleType="Radio"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Name, Mode=OneWay}" />
+                                            <MenuItem Header="Date modified">
+                                                <MenuItem Header="Year" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Year" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Year">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Month" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Month" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Month">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Day" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Day" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Day">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                            </MenuItem>
+                                            <MenuItem Header="Date created">
+                                                <MenuItem Header="Year" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Year" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Year">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Month" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Month" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Month">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Day" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Day" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Day">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                            </MenuItem>
+                                            <MenuItem Header="Type" Command="{Binding SetGroupCommand}" CommandParameter="FileType"
+                                                      ToggleType="Radio"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FileType, Mode=OneWay}" />
+                                            <MenuItem Header="Size" Command="{Binding SetGroupCommand}" CommandParameter="Size"
+                                                      ToggleType="Radio"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Size, Mode=OneWay}" />
+                                            <MenuItem Header="File tags" Command="{Binding SetGroupCommand}" CommandParameter="FileTag"
+                                                      ToggleType="Radio"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FileTag, Mode=OneWay}" />
+                                            <MenuItem Header="Original folder" Command="{Binding SetGroupCommand}" CommandParameter="OriginalFolder"
+                                                      ToggleType="Radio"
+                                                      IsVisible="{Binding SelectedTab.CanGroupByOriginalFolder}"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=OriginalFolder, Mode=OneWay}" />
+                                            <MenuItem Header="Date deleted" IsVisible="{Binding SelectedTab.CanGroupByDateDeleted}">
+                                                <MenuItem Header="Year" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Year" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Year">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Month" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Month" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Month">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                                <MenuItem Header="Day" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Day" ToggleType="Radio">
+                                                    <MenuItem.IsChecked>
+                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Day">
+                                                            <Binding Path="SelectedTab.GroupOption" />
+                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
+                                                        </MultiBinding>
+                                                    </MenuItem.IsChecked>
+                                                </MenuItem>
+                                            </MenuItem>
+                                            <MenuItem Header="Folder path" Command="{Binding SetGroupCommand}" CommandParameter="FolderPath"
+                                                      ToggleType="Radio"
+                                                      IsVisible="{Binding SelectedTab.CanGroupByFolderPath}"
+                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FolderPath, Mode=OneWay}" />
+                                            <Separator />
+                                            <MenuItem Header="Ascending" Command="{Binding SetGroupDirectionCommand}" CommandParameter="Ascending"
+                                                      ToggleType="Radio"
+                                                      IsEnabled="{Binding SelectedTab.IsGrouped}"
+                                                      IsChecked="{Binding SelectedTab.GroupDirection, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Ascending, Mode=OneWay}" />
+                                            <MenuItem Header="Descending" Command="{Binding SetGroupDirectionCommand}" CommandParameter="Descending"
+                                                      ToggleType="Radio"
+                                                      IsEnabled="{Binding SelectedTab.IsGrouped}"
+                                                      IsChecked="{Binding SelectedTab.GroupDirection, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Descending, Mode=OneWay}" />
+                                        </MenuItem>
+                                        <Separator />
+                                        <MenuItem Header="Show hidden items" Command="{Binding ToggleHiddenCommand}" />
+                                        <MenuItem Header="Show file extensions" Command="{Binding ToggleExtensionsCommand}" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8CB;" />
+                            </Button>
+                            <Button Classes="ToolbarButton" ToolTip.Tip="Layout">
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <StackPanel Spacing="12" Width="420">
+                                            <TextBlock FontWeight="Medium" Text="Layout" />
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
+                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Details, Mode=OneWay}"
+                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Details"
+                                                             ToolTip.Tip="Details (⌘1)">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
+                                                                   HorizontalAlignment="Center" Text="&#xE8A9;" />
+                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="Details"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                    </StackPanel>
+                                                </RadioButton>
+                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
+                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=List, Mode=OneWay}"
+                                                             Command="{Binding SetLayoutCommand}" CommandParameter="List"
+                                                             ToolTip.Tip="List (⌘2)">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
+                                                                   HorizontalAlignment="Center" Text="&#xE8A4;" />
+                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="List"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                    </StackPanel>
+                                                </RadioButton>
+                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
+                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Cards, Mode=OneWay}"
+                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Cards"
+                                                             ToolTip.Tip="Cards (⌘3)">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
+                                                                   HorizontalAlignment="Center" Text="&#xE8A1;" />
+                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="Cards"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                    </StackPanel>
+                                                </RadioButton>
+                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
+                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Grid, Mode=OneWay}"
+                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Grid"
+                                                             ToolTip.Tip="Grid (⌘4)">
+                                                    <StackPanel Spacing="4">
+                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
+                                                                   HorizontalAlignment="Center" Text="&#xE80A;" />
+                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="Grid"
+                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                                    </StackPanel>
+                                                </RadioButton>
+                                            </StackPanel>
+                                            <TextBlock FontWeight="Medium" Text="Size" />
+                                            <Slider Minimum="1" Maximum="5" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                    Value="{Binding SelectedTab.LayoutSize}" />
+                                            <CheckBox Content="Show hidden items" IsChecked="{Binding ShowHidden, Mode=TwoWay}" />
+                                            <CheckBox Content="Show file extensions" IsChecked="{Binding ShowExtensions, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8A9;" />
+                            </Button>
+                            <ToggleButton Classes="ToolbarButton" IsChecked="{Binding ShowInfoPane}" ToolTip.Tip="Info pane">
+                                <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xEA49;" />
+                            </ToggleButton>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="1" RowDefinitions="*,Auto">
+                    <Panel IsVisible="{Binding SelectedTab.IsHome}">
+                        <views:HomePageView DataContext="{Binding Home}" />
+                    </Panel>
+                    <Panel IsVisible="{Binding SelectedTab.IsSettings}">
+                        <views:SettingsPage DataContext="{Binding SettingsPage}" />
+                    </Panel>
+                    <Panel IsVisible="{Binding SelectedTab.ShowFolder}">
+                        <views:FolderView DataContext="{Binding SelectedTab}" />
+                    </Panel>
+
+                    <Border Grid.Row="1" MinHeight="32" Padding="8,0"
+                            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            IsVisible="{Binding !SelectedTab.IsHome}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding SelectedTab.StatusText}" />
+                                <Border Width="1" Height="18" Background="{DynamicResource DividerStrokeColorDefaultBrush}"
+                                        IsVisible="{Binding SelectedTab.HasSelection}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding SelectedTab.SelectionText}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="4" Background="Transparent"
+                          IsVisible="{Binding IsInfoPaneVisible}" ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" />
+
+            <Border Grid.Column="4" Margin="0,0,8,8"
+                        IsVisible="{Binding IsInfoPaneVisible}"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1" CornerRadius="8"
+                        ClipToBounds="True">
+                    <Grid>
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Text="No item selected"
+                                   IsVisible="{Binding SelectedTab.PreviewItem, Converter={x:Static ObjectConverters.IsNull}}" />
+                        <ScrollViewer x:Name="InfoPaneScroll"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      IsVisible="{Binding SelectedTab.PreviewItem, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <Grid MinHeight="{Binding Bounds.Height, ElementName=InfoPaneScroll}">
+                                <StackPanel Margin="16" Spacing="10" VerticalAlignment="Center">
+                                    <Image Width="96" Height="96" HorizontalAlignment="Center"
+                                           Source="{Binding SelectedTab.PreviewItem.Icon}" Stretch="Uniform" />
+                                    <TextBlock FontSize="20" FontWeight="Bold" TextAlignment="Center" TextWrapping="Wrap"
+                                               Text="{Binding SelectedTab.PreviewItem.DisplayName}" />
+                                    <TextBlock TextAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               Text="{Binding SelectedTab.PreviewItem.ItemType}" />
+                                    <TextBlock Classes="Caption" Text="Item type" />
+                                    <TextBlock Text="{Binding SelectedTab.PreviewItem.ItemType}" />
+                                    <TextBlock Classes="Caption" Text="Path" />
+                                    <TextBlock Text="{Binding SelectedTab.PreviewItem.Path}" TextWrapping="Wrap" />
+                                    <TextBlock Classes="Caption" Text="Size" />
+                                    <TextBlock Text="{Binding SelectedTab.PreviewItem.SizeText}" />
+                                    <TextBlock Classes="Caption" Text="Date modified" />
+                                    <TextBlock Text="{Binding SelectedTab.PreviewItem.ModifiedText}" />
+                                    <TextBlock Classes="Caption" Text="Date created" />
+                                    <TextBlock Text="{Binding SelectedTab.PreviewItem.CreatedText}" />
+                                </StackPanel>
+                            </Grid>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+        </Grid>
+    </Grid>
+</wnd:FAAppWindow>

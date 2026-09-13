@@ -1,0 +1,30 @@
+namespace MacExplorer.Configuration.Storage;
+
+public abstract class CommonFileProvider(string path) : IKeyValueFileProvider
+{
+    public string FilePath { get; set; } = path;
+
+    public abstract T Get<T>(string key);
+    public abstract void Set<T>(string key, T value);
+    public abstract bool Exists(string key);
+    public abstract void Remove(string key);
+    protected abstract void WriteToStream(Stream stream);
+
+    public void Sync()
+    {
+        var directory = Path.GetDirectoryName(FilePath);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        var tmpFile = $"{FilePath}.tmp{Random.Shared.Next(1, 99999):00000}";
+        var bakFile = $"{FilePath}.bak";
+        using (var stream = new FileStream(tmpFile, FileMode.Create, FileAccess.Write, FileShare.Read))
+        {
+            WriteToStream(stream);
+            stream.Flush(true);
+        }
+
+        if (File.Exists(FilePath)) File.Replace(tmpFile, FilePath, bakFile);
+        else File.Move(tmpFile, FilePath);
+    }
+}

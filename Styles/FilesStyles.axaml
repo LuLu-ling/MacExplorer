@@ -1,0 +1,375 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:ctrl="using:MacExplorer.Controls">
+    <Styles.Resources>
+        <ControlTheme x:Key="FileListItemTheme" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="MinHeight" Value="1" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="ClipToBounds" Value="False" />
+            <Setter Property="UseLayoutRounding" Value="False" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusAdorner" Value="{x:Null}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      ClipToBounds="False"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </Styles.Resources>
+
+    <Style Selector="Button.NavButton">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource App.Theme.IconBaseBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.NavButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.NavButton:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+
+    <Style Selector="ToggleButton.NavButton">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource App.Theme.IconBaseBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ToggleButton.NavButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.NavButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style Selector="Button.ToolbarButton">
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.ToolbarButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.ToolbarButton:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+    <Style Selector="Button.ColHeader">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Button.ColHeader.ColTags">
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="ToggleButton.ToolbarButton">
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="ToggleButton.ToolbarButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style Selector="RadioButton.LayoutPicker">
+        <Setter Property="Width" Value="76" />
+        <Setter Property="Height" Value="72" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <ContentPresenter Name="PART_ContentPresenter"
+                                  Background="{TemplateBinding Background}"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  BorderThickness="{TemplateBinding BorderThickness}"
+                                  CornerRadius="{TemplateBinding CornerRadius}"
+                                  Content="{TemplateBinding Content}"
+                                  Padding="{TemplateBinding Padding}"
+                                  HorizontalContentAlignment="Center"
+                                  VerticalContentAlignment="Center" />
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.LayoutPicker:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="RadioButton.LayoutPicker:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+    </Style>
+
+    <Style Selector="Button.SidebarRow">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Margin" Value="0,1" />
+    </Style>
+    <Style Selector="Button.SidebarRow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.SidebarRow.selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}" />
+    </Style>
+
+    <Style Selector="ListBox.FileList">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8,0,8,12" />
+        <Setter Property="SelectionMode" Value="Multiple" />
+        <Setter Property="AutoScrollToSelectedItem" Value="False" />
+    </Style>
+    <Style Selector="ListBox.FileList ListBoxItem">
+        <Setter Property="Theme" Value="{StaticResource FileListItemTheme}" />
+    </Style>
+    <Style Selector="ListBox.FileList.Wrap ListBoxItem, ListBox.FileList.details ListBoxItem">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="ListBox.FileList ListBoxItem.group">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="IsHitTestVisible" Value="True" />
+    </Style>
+    <Style Selector="ctrl|GroupHeader:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="ListBox.GroupOverview">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="12,8" />
+    </Style>
+    <Style Selector="ListBox.GroupOverview ListBoxItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
+    <Style Selector="ListBox.FileList.grid ListBoxItem">
+        <Setter Property="Margin" Value="4,0" />
+    </Style>
+    <Style Selector="ListBox.FileList.list">
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
+    </Style>
+    <Style Selector="Border.FileRow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="ClipToBounds" Value="False" />
+        <Setter Property="UseLayoutRounding" Value="False" />
+    </Style>
+    <Style Selector="Border.FileRow.details">
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Border.FileRow.list">
+        <Setter Property="Margin" Value="0" />
+    </Style>
+    <Style Selector="Border.FileRow:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="Border.FileRow.selected">
+        <Setter Property="Background" Value="{StaticResource FileSelectionFillBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Border.FileRow.selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource FileSelectionFillBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Border.FileRow.card">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+        <Setter Property="Margin" Value="4" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="Border.FileRow.card.selected">
+        <Setter Property="Background" Value="{StaticResource FileSelectionFillBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Border.FileRow.drop">
+        <Setter Property="Background" Value="{StaticResource FileSelectionFillBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Border.FileDragTip">
+        <Setter Property="Background" Value="{DynamicResource AcrylicBackgroundFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="BoxShadow" Value="0 2 12 0 #40000000" />
+    </Style>
+
+
+
+    <Style Selector="TextBlock.ColSecondary">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Opacity" Value="0.6" />
+        <Setter Property="TextAlignment" Value="Left" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="TextBlock.Caption">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+
+
+    <Style Selector="Button.BreadcrumbItem">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="2,0,0,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.BreadcrumbItem.root">
+        <Setter Property="Padding" Value="16,0,8,0" />
+        <Setter Property="CornerRadius" Value="16,2,2,16" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+    <Style Selector="Button.BreadcrumbItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.BreadcrumbItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
+    </Style>
+
+    <Style Selector="Button.BreadcrumbChevron">
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="IsTabStop" Value="False" />
+    </Style>
+
+    <Style Selector="Border.TabItem">
+        <Setter Property="MinWidth" Value="140" />
+        <Setter Property="MaxWidth" Value="240" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.TabItem:pointerover">
+        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+    </Style>
+    <Style Selector="Border.TabItem.selected">
+        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+    </Style>
+    <Style Selector="Border.TabItem.selected TextBlock.TabTitle">
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="RepeatButton.TabScrollButton">
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="FontFamily" Value="{StaticResource SymbolThemeFontFamily}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+
+    <Style Selector="Border.PathField">
+        <Setter Property="Height" Value="38" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="CornerRadius" Value="19" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Border.SearchField">
+        <Setter Property="Height" Value="38" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="CornerRadius" Value="19" />
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="TextBox.ChromeField">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="Padding" Value="12,0" />
+    </Style>
+    <Style Selector="ctrl|ColumnSplitter">
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="ctrl|ColumnSplitter:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+    </Style>
+</Styles>

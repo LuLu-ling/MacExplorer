@@ -1,0 +1,369 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MacExplorer.ViewModels"
+             xmlns:m="using:MacExplorer.Models"
+             xmlns:conv="using:MacExplorer.Converters"
+             xmlns:ctrl="using:MacExplorer.Controls"
+             x:Class="MacExplorer.Views.FolderView"
+             x:DataType="vm:ExplorerTabViewModel"
+             x:Name="Root"
+             Metrics="{Binding Metrics}"
+             Columns="{Binding Columns}"
+             KeyDown="OnKeyDown">
+    <Panel x:Name="RootPanel" ClipToBounds="True">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,125,0,0"
+                    IsVisible="{Binding IsEmpty}">
+            <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="48"
+                       Text="&#xE8B7;" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            <TextBlock Margin="0,12,0,0" Text="{Binding EmptyText}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="24,125,24,0" MaxWidth="400"
+                    IsVisible="{Binding UnavailableTitle, Converter={x:Static ObjectConverters.IsNotNull}}">
+            <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="48"
+                       Text="&#xE946;" HorizontalAlignment="Center"
+                       Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+            <TextBlock Margin="0,12,0,0" FontSize="20" FontWeight="SemiBold"
+                       Text="{Binding UnavailableTitle}" HorizontalAlignment="Center" />
+            <TextBlock Margin="0,8,0,0" Text="{Binding UnavailableMessage}" TextWrapping="Wrap"
+                       TextAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <Panel x:Name="FileContentHost" ClipToBounds="True" RenderTransformOrigin="50%,50%">
+            <Panel.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </Panel.Transitions>
+            <Panel.RenderTransform>
+                <ScaleTransform ScaleX="1" ScaleY="1">
+                    <ScaleTransform.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="ScaleX" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                            <DoubleTransition Property="ScaleY" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </ScaleTransform.Transitions>
+                </ScaleTransform>
+            </Panel.RenderTransform>
+        <ScrollViewer x:Name="DetailsScroller"
+                      IsVisible="{Binding Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Details}"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Disabled">
+        <DockPanel MinWidth="{Binding Columns.TotalWidth}">
+            <Grid x:Name="DetailsHeader" DockPanel.Dock="Top" Height="40" Margin="8,0" Background="Transparent">
+                <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                        BorderThickness="0,0,0,1" />
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="{x:Static vm:DetailsColumns.Icon}" />
+                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Name}"
+                            Command="{Binding SetSortCommand}" CommandParameter="Name">
+                        <TextBlock Text="Name" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Name}" MinColumnWidth="80" MaxColumnWidth="1000" />
+                    <Button Classes="ToolbarButton ColHeader ColTags" Width="{Binding Columns.Tags}"
+                            IsVisible="{Binding Columns.ShowTags}">
+                        <TextBlock Text="Tags" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Tags}"
+                                         IsVisible="{Binding Columns.ShowTags}" />
+                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateModified}"
+                            IsVisible="{Binding Columns.ShowDateModified}"
+                            Command="{Binding SetSortCommand}" CommandParameter="DateModified">
+                        <TextBlock Text="Date modified" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateModified}"
+                                         IsVisible="{Binding Columns.ShowDateModified}" />
+                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateCreated}"
+                            IsVisible="{Binding Columns.ShowDateCreated}"
+                            Command="{Binding SetSortCommand}" CommandParameter="DateCreated">
+                        <TextBlock Text="Date created" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateCreated}"
+                                         IsVisible="{Binding Columns.ShowDateCreated}" />
+                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Type}"
+                            IsVisible="{Binding Columns.ShowType}"
+                            Command="{Binding SetSortCommand}" CommandParameter="Type">
+                        <TextBlock Text="Type" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Type}"
+                                         IsVisible="{Binding Columns.ShowType}" />
+                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Size}"
+                            IsVisible="{Binding Columns.ShowSize}"
+                            Command="{Binding SetSortCommand}" CommandParameter="Size">
+                        <TextBlock Text="Size" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Size}"
+                                         IsVisible="{Binding Columns.ShowSize}" />
+                </StackPanel>
+            </Grid>
+            <ListBox Classes="FileList details" SelectionMode="Multiple" ItemsSource="{Binding ViewItems}"
+                     DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.DataTemplates>
+                    <DataTemplate x:DataType="m:FileGroup">
+                        <ctrl:GroupHeader />
+                    </DataTemplate>
+                    <DataTemplate x:DataType="m:FileItem">
+                        <Border Classes="FileRow details" Classes.selected="{Binding IsSelected}"
+                                Classes.drop="{Binding IsDropTarget}"
+                                Width="{Binding #Root.Columns.TotalWidth}">
+                            <StackPanel Orientation="Horizontal"
+                                        Height="{Binding #Root.Metrics.DetailsRowHeight}"
+                                        Opacity="{Binding CutOpacity}">
+                                <Border Width="{x:Static vm:DetailsColumns.Icon}">
+                                    <Image Width="{Binding #Root.Metrics.DetailsIconSize}"
+                                           Height="{Binding #Root.Metrics.DetailsIconSize}"
+                                           Source="{Binding Icon}" Stretch="Uniform"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="True">
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                               TextAlignment="Left"
+                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="8,0"
+                                               FontSize="{Binding #Root.Metrics.FontSize}"
+                                               IsVisible="{Binding !IsRenaming}" />
+                                    <TextBox Text="{Binding RenameText}" VerticalAlignment="Center" Margin="8,0"
+                                             IsVisible="{Binding IsRenaming}"
+                                             KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                <Panel Width="{Binding #Root.Columns.Tags}" ClipToBounds="True"
+                                       IsVisible="{Binding #Root.Columns.ShowTags}">
+                                    <ctrl:TagDots ItemsSource="{Binding Tags}" HorizontalAlignment="Center" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
+                                        IsVisible="{Binding #Root.Columns.ShowTags}" />
+                                <Panel Width="{Binding #Root.Columns.DateModified}" ClipToBounds="True"
+                                       IsVisible="{Binding #Root.Columns.ShowDateModified}">
+                                    <TextBlock Classes="ColSecondary" Text="{Binding ModifiedText}" Margin="8,0"
+                                               TextWrapping="NoWrap" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
+                                        IsVisible="{Binding #Root.Columns.ShowDateModified}" />
+                                <Panel Width="{Binding #Root.Columns.DateCreated}" ClipToBounds="True"
+                                       IsVisible="{Binding #Root.Columns.ShowDateCreated}">
+                                    <TextBlock Classes="ColSecondary" Text="{Binding CreatedText}" Margin="8,0"
+                                               TextWrapping="NoWrap" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
+                                        IsVisible="{Binding #Root.Columns.ShowDateCreated}" />
+                                <Panel Width="{Binding #Root.Columns.Type}" ClipToBounds="True"
+                                       IsVisible="{Binding #Root.Columns.ShowType}">
+                                    <TextBlock Classes="ColSecondary" Text="{Binding ItemType}" Margin="8,0"
+                                               TextWrapping="NoWrap" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
+                                        IsVisible="{Binding #Root.Columns.ShowType}" />
+                                <Panel Width="{Binding #Root.Columns.Size}" ClipToBounds="True"
+                                       IsVisible="{Binding #Root.Columns.ShowSize}">
+                                    <TextBlock Classes="ColSecondary" Text="{Binding SizeText}" Margin="8,0"
+                                               TextWrapping="NoWrap" />
+                                </Panel>
+                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
+                                        IsVisible="{Binding #Root.Columns.ShowSize}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.DataTemplates>
+            </ListBox>
+        </DockPanel>
+        </ScrollViewer>
+
+        <ListBox Classes="FileList Wrap list" SelectionMode="Multiple"
+                 IsVisible="{Binding Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=List}"
+                 ItemsSource="{Binding ViewItems}" DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 ScrollViewer.VerticalScrollBarVisibility="Disabled">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel Orientation="Vertical" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.DataTemplates>
+                <DataTemplate x:DataType="m:FileGroup">
+                    <ctrl:GroupHeader />
+                </DataTemplate>
+                <DataTemplate x:DataType="m:FileItem">
+                    <Border Classes="FileRow list" Classes.selected="{Binding IsSelected}"
+                            Classes.drop="{Binding IsDropTarget}"
+                            Width="260"
+                            Height="{Binding #Root.Metrics.ListRowHeight}"
+                            Padding="12,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            CornerRadius="{DynamicResource ControlCornerRadius}"
+                            Opacity="{Binding CutOpacity}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Grid Width="{Binding #Root.Metrics.ListIconBoxSize}"
+                                  Height="{Binding #Root.Metrics.ListIconBoxSize}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center">
+                                <Image Margin="2"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Source="{Binding Icon}"
+                                       Stretch="Uniform" />
+                            </Grid>
+                            <DockPanel Grid.Column="1">
+                                <ctrl:TagDots DockPanel.Dock="Left" Margin="5,0,4,0"
+                                              ItemsSource="{Binding NameDots}"
+                                              IsVisible="{Binding HasNameDots}" />
+                                <Panel>
+                                    <TextBlock Margin="5,0"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding DisplayName}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               IsVisible="{Binding !IsRenaming}" />
+                                    <TextBox Text="{Binding RenameText}"
+                                             HorizontalAlignment="Stretch"
+                                             VerticalAlignment="Center"
+                                             TextWrapping="Wrap"
+                                             IsVisible="{Binding IsRenaming}"
+                                             KeyDown="OnRenameKey"
+                                             LostFocus="OnRenameLostFocus" />
+                                </Panel>
+                            </DockPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.DataTemplates>
+        </ListBox>
+
+
+        <ListBox Classes="FileList Wrap" SelectionMode="Multiple"
+                 IsVisible="{Binding Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Cards}"
+                 ItemsSource="{Binding ViewItems}" DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ctrl:GroupWrapPanel />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.DataTemplates>
+                <DataTemplate x:DataType="m:FileGroup">
+                    <ctrl:GroupHeader />
+                </DataTemplate>
+                <DataTemplate x:DataType="m:FileItem">
+                    <Border Classes="FileRow card" Classes.selected="{Binding IsSelected}"
+                            Classes.drop="{Binding IsDropTarget}"
+                            Width="{Binding #Root.Metrics.CardWidth}"
+                            Height="{Binding #Root.Metrics.CardHeight}"
+                            Padding="8"
+                            Opacity="{Binding CutOpacity}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                            <Image Width="{Binding #Root.Metrics.CardIconSize}"
+                                   Height="{Binding #Root.Metrics.CardIconSize}"
+                                   Source="{Binding Icon}" Stretch="Uniform" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <DockPanel>
+                                    <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,6,0"
+                                                  ItemsSource="{Binding NameDots}"
+                                                  IsVisible="{Binding HasNameDots}" />
+                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                               FontSize="{Binding #Root.Metrics.FontSize}" />
+                                </DockPanel>
+                                <TextBlock Classes="ColSecondary" Text="{Binding TypeAndSize}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.DataTemplates>
+        </ListBox>
+
+        <ListBox Classes="FileList Wrap grid" SelectionMode="Multiple"
+                 IsVisible="{Binding Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Grid}"
+                 ItemsSource="{Binding ViewItems}" DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ctrl:GroupWrapPanel />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.DataTemplates>
+                <DataTemplate x:DataType="m:FileGroup">
+                    <ctrl:GroupHeader />
+                </DataTemplate>
+                <DataTemplate x:DataType="m:FileItem">
+                    <Border Classes="FileRow" Classes.selected="{Binding IsSelected}"
+                            Classes.drop="{Binding IsDropTarget}" Padding="6">
+                        <StackPanel Width="{Binding #Root.Metrics.GridItemSize}"
+                                    Opacity="{Binding CutOpacity}">
+                            <Image Width="{Binding #Root.Metrics.GridItemSize}"
+                                   Height="{Binding #Root.Metrics.GridItemSize}"
+                                   Source="{Binding Icon}" Stretch="Uniform" HorizontalAlignment="Center" />
+                            <DockPanel Margin="0,4,0,0" HorizontalAlignment="Center">
+                                <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,4,0"
+                                              ItemsSource="{Binding NameDots}"
+                                              IsVisible="{Binding HasNameDots}" />
+                                <TextBlock Text="{Binding DisplayName}" TextAlignment="Center"
+                                           TextTrimming="CharacterEllipsis"
+                                           FontSize="{Binding #Root.Metrics.FontSize}" />
+                            </DockPanel>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ListBox.DataTemplates>
+        </ListBox>
+
+
+        <Canvas x:Name="MarqueeHost" IsHitTestVisible="False" ClipToBounds="False">
+            <Rectangle x:Name="MarqueeRect"
+                       Stroke="{DynamicResource AccentFillColorDefaultBrush}"
+                       StrokeThickness="1"
+                       Fill="{DynamicResource AccentFillColorDefaultBrush}"
+                       Opacity="0.22"
+                       IsVisible="False" />
+        </Canvas>
+        </Panel>
+
+        <Border x:Name="GroupOverviewHost"
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                Opacity="0"
+                IsHitTestVisible="False"
+                ZIndex="1"
+                ClipToBounds="True"
+                RenderTransformOrigin="50%,50%">
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+            <Border.RenderTransform>
+                <ScaleTransform ScaleX="1.08" ScaleY="1.08">
+                    <ScaleTransform.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="ScaleX" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                            <DoubleTransition Property="ScaleY" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </ScaleTransform.Transitions>
+                </ScaleTransform>
+            </Border.RenderTransform>
+            <ListBox Classes="GroupOverview" ItemsSource="{Binding Groups}"
+                     SelectionMode="Single" Tapped="OnOverviewTapped">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="m:FileGroup">
+                        <StackPanel Margin="0,4" Orientation="Horizontal" Spacing="8"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                            <Image Height="36" Width="36" Stretch="Uniform" VerticalAlignment="Center"
+                                   Source="{Binding Lead.Icon}"
+                                   IsVisible="{Binding ShowImage}" />
+                            <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="32"
+                                       Text="{Binding Icon}" VerticalAlignment="Center"
+                                       IsVisible="{Binding ShowGlyph}" />
+                            <Ellipse Width="12" Height="12" VerticalAlignment="Center"
+                                     Fill="{Binding Marker}"
+                                     IsVisible="{Binding Marker, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                            <TextBlock FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Text="{Binding Text}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding CountText}" Classes="ColSecondary" />
+                            <TextBlock FontSize="14" VerticalAlignment="Center" Text="{Binding Subtext}"
+                                       IsVisible="{Binding ShowCountTextBelow}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+    </Panel>
+</UserControl>
