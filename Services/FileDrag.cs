@@ -1,5 +1,8 @@
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
 using MacExplorer.Models;
 using MacExplorer.Native;
 
@@ -8,6 +11,25 @@ namespace MacExplorer.Services;
 internal static class FileDrag
 {
     public const double Threshold = 6;
+
+    public static bool SuppressToolTips { get; private set; }
+
+    public static void Begin(Visual? origin = null)
+    {
+        SuppressToolTips = true;
+        CloseOpen(origin);
+    }
+
+    public static void End() => SuppressToolTips = false;
+
+    public static void CloseOpen(Visual? origin)
+    {
+        for (var visual = origin; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is Control control && ToolTip.GetIsOpen(control))
+                ToolTip.SetIsOpen(control, false);
+        }
+    }
 
     public static bool PreferMove(IReadOnlyList<string> sources, string destination, KeyModifiers modifiers)
     {

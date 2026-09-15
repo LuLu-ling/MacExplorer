@@ -49,6 +49,17 @@ public sealed partial class FileItem : ObservableObject
     public double CutOpacity => IsCut ? 0.45 : 1;
     public string ModifiedText => Modified.ToString("yyyy/MM/dd HH:mm");
     public string CreatedText => Created.ToString("yyyy/MM/dd HH:mm");
+    public string ItemTooltipText
+    {
+        get
+        {
+            var text =
+                $"Name: {DisplayName}{Environment.NewLine}Type: {ItemType}{Environment.NewLine}Date modified: {Modified:g}";
+            if (!IsDirectory || SizeKnown)
+                text += $"{Environment.NewLine}Size: {FormatSize(Size)}";
+            return text;
+        }
+    }
 
     private static string FormatSize(long bytes) => bytes switch
     {
@@ -68,5 +79,6 @@ public sealed partial class FileItem : ObservableObject
     {
         OnPropertyChanged(nameof(SizeText));
         OnPropertyChanged(nameof(TypeAndSize));
+        OnPropertyChanged(nameof(ItemTooltipText));
     }
 }

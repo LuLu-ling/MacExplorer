@@ -1,7 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="using:FluentAvalonia.UI.Controls"
-        xmlns:ctrl="using:MacExplorer.Controls">
+        xmlns:ctrl="using:MacExplorer.Controls"
+        xmlns:m="using:MacExplorer.Models">
     <Styles.Resources>
         <ControlTheme x:Key="FileListItemTheme" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent" />
@@ -201,7 +202,7 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
     </Style>
-    <Style Selector="Border.FileRow">
+    <Style Selector="Border.FileRow" x:DataType="m:FileItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
@@ -209,6 +210,9 @@
         <Setter Property="Margin" Value="0,1" />
         <Setter Property="ClipToBounds" Value="False" />
         <Setter Property="UseLayoutRounding" Value="False" />
+        <Setter Property="ToolTip.Placement" Value="Pointer" />
+        <Setter Property="ToolTip.ShowDelay" Value="1000" />
+        <Setter Property="ToolTip.Tip" Value="{Binding ItemTooltipText}" />
     </Style>
     <Style Selector="Border.FileRow.details">
         <Setter Property="HorizontalAlignment" Value="Left" />

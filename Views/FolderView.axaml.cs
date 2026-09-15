@@ -321,6 +321,7 @@ public partial class FolderView : UserControl
             return;
 
         _dragging = true;
+        FileDrag.Begin(e.Source as Visual);
         try
         {
             var effect = await DragDrop.DoDragDropAsync(
@@ -331,6 +332,7 @@ public partial class FolderView : UserControl
         finally
         {
             _dragging = false;
+            FileDrag.End();
             SetDropTarget(null);
             FileDragTip.Hide();
         }

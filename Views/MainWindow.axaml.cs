@@ -20,6 +20,8 @@ namespace MacExplorer.Views;
 
 public partial class MainWindow : FAAppWindow
 {
+    private readonly DragHoverOpen _dragHoverOpen = new();
+
     public MainWindow()
     {
         InitializeComponent();
@@ -30,6 +32,7 @@ public partial class MainWindow : FAAppWindow
         Closed += (_, _) =>
         {
             LogWrapper.Info("Window", $"Main window closing {Width:0}x{Height:0}");
+            _dragHoverOpen.Cancel();
             PersistWindow();
         };
         Activated += (_, _) => RefreshFinderPlaces();
@@ -39,7 +42,14 @@ public partial class MainWindow : FAAppWindow
         SidebarHost.AddHandler(DragDrop.DragLeaveEvent, Sidebar_OnDragLeave);
         SidebarHost.AddHandler(DragDrop.DropEvent, Sidebar_OnDrop);
         SidebarHost.AddHandler(ContextRequestedEvent, Sidebar_OnContextRequested, RoutingStrategies.Tunnel);
-
+        DragDrop.SetAllowDrop(AddressBar, true);
+        AddressBar.AddHandler(DragDrop.DragOverEvent, AddressBar_OnDragOver);
+        AddressBar.AddHandler(DragDrop.DragLeaveEvent, AddressBar_OnDragLeave);
+        AddressBar.AddHandler(DragDrop.DropEvent, AddressBar_OnDrop);
+        AddHandler(ToolTip.ToolTipOpeningEvent, OnToolTipOpening, RoutingStrategies.Tunnel);
+        AddHandler(DragDrop.DragEnterEvent, OnWindowDragEnter, RoutingStrategies.Tunnel);
+        AddHandler(DragDrop.DropEvent, OnWindowDragEnd, RoutingStrategies.Tunnel);
+        AddHandler(DragDrop.DragLeaveEvent, OnWindowDragLeave, RoutingStrategies.Tunnel);
     }
 
     private void TitleBar_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -49,6 +59,23 @@ public partial class MainWindow : FAAppWindow
         if (IsInteractiveCaption(e.Source as Visual))
             return;
         BeginMoveDrag(e);
+    }
+
+    private static void OnToolTipOpening(object? sender, RoutedEventArgs e)
+    {
+        if (FileDrag.SuppressToolTips)
+            e.Handled = true;
+    }
+
+    private void OnWindowDragEnter(object? sender, DragEventArgs e) =>
+        FileDrag.Begin(e.Source as Visual);
+
+    private void OnWindowDragEnd(object? sender, DragEventArgs e) => FileDrag.End();
+
+    private void OnWindowDragLeave(object? sender, DragEventArgs e)
+    {
+        if (!StillInside(this, e))
+            FileDrag.End();
     }
 
     private static bool IsInteractiveCaption(Visual? start)
@@ -399,6 +426,7 @@ public partial class MainWindow : FAAppWindow
         var item = SidebarItemAt(e);
         if (FavoriteDrop(e, item, paths, e.DragEffects, out var effect, out var dest))
         {
+            _dragHoverOpen.Cancel();
             e.DragEffects = effect;
             FileDragTip.Show(e, dest is null ? DragDropEffects.None : DragDropEffects.Link, dest);
             e.Handled = true;
@@ -406,6 +434,7 @@ public partial class MainWindow : FAAppWindow
         }
 
         dest = SidebarDropPath(item);
+        TrackHoverOpen(dest);
         e.DragEffects = dest is null || paths is null
             ? DragDropEffects.None
             : FileDrag.Effect(paths, dest, e.DragEffects, e.KeyModifiers);
@@ -413,18 +442,20 @@ public partial class MainWindow : FAAppWindow
         e.Handled = true;
     }
 
-
     private void Sidebar_OnDragLeave(object? sender, DragEventArgs e)
     {
+        if (StillInside(SidebarHost, e))
+            return;
+        _dragHoverOpen.Cancel();
         FileDragTip.Hide();
         e.Handled = true;
     }
-
 
     private async void Sidebar_OnDrop(object? sender, DragEventArgs e)
     {
         var paths = FileDrag.Paths(e.DataTransfer);
         var item = SidebarItemAt(e);
+        _dragHoverOpen.Cancel();
         FileDragTip.Hide();
 
         if (FavoriteDrop(e, item, paths, e.DragEffects, out var effect, out _))
@@ -436,19 +467,50 @@ public partial class MainWindow : FAAppWindow
             return;
         }
 
-        var dest = SidebarDropPath(item);
-        if (VM?.SelectedTab is null || dest is null || paths is null)
+        await DropAtAsync(paths, SidebarDropPath(item), e);
+    }
+
+    private void AddressBar_OnDragOver(object? sender, DragEventArgs e)
+    {
+        if (AddressBar.IsEditing)
         {
+            _dragHoverOpen.Cancel();
             e.DragEffects = DragDropEffects.None;
+            FileDragTip.Hide();
+            e.Handled = true;
             return;
         }
 
-        effect = FileDrag.Effect(paths, dest, e.DragEffects, e.KeyModifiers);
-        e.DragEffects = effect;
-        e.Handled = true;
-        if (effect == DragDropEffects.None)
+        var paths = FileDrag.Paths(e.DataTransfer);
+        var dest = AddressBarPathAt(e);
+        TrackHoverOpen(dest);
+        if (dest is null || paths is null)
+        {
+            e.DragEffects = DragDropEffects.None;
+            FileDragTip.Hide();
+            e.Handled = true;
             return;
-        await VM.SelectedTab.DropFilesAsync(paths, dest, effect == DragDropEffects.Move);
+        }
+
+        e.DragEffects = FileDrag.Effect(paths, dest, e.DragEffects, e.KeyModifiers);
+        FileDragTip.Show(e, e.DragEffects, dest);
+        e.Handled = true;
+    }
+
+    private void AddressBar_OnDragLeave(object? sender, DragEventArgs e)
+    {
+        if (StillInside(AddressBar, e))
+            return;
+        _dragHoverOpen.Cancel();
+        FileDragTip.Hide();
+        e.Handled = true;
+    }
+
+    private async void AddressBar_OnDrop(object? sender, DragEventArgs e)
+    {
+        _dragHoverOpen.Cancel();
+        FileDragTip.Hide();
+        await DropAtAsync(FileDrag.Paths(e.DataTransfer), AddressBar.IsEditing ? null : AddressBarPathAt(e), e);
     }
 
     private bool FavoriteDrop(
@@ -532,6 +594,42 @@ public partial class MainWindow : FAAppWindow
 
     private static string? SidebarDropPath(SidebarItem? item) =>
         item is { Path.Length: > 0 } && Directory.Exists(item.Path) ? item.Path : null;
+
+    private static string? AddressBarPathAt(DragEventArgs e)
+    {
+        for (var visual = e.Source as Visual; visual is not null && visual is not Controls.AddressBar; visual = visual.GetVisualParent())
+        {
+            if (visual is Control { Tag: string path } && path.Length > 0)
+                return path;
+        }
+
+        return null;
+    }
+
+    private void TrackHoverOpen(string? path) =>
+        _dragHoverOpen.Update(path, VM?.SelectedTab?.CurrentPath, target => _ = VM?.OpenPathAsync(target));
+
+    private static bool StillInside(Visual host, DragEventArgs e)
+    {
+        var p = e.GetPosition(host);
+        return p.X >= 0 && p.Y >= 0 && p.X <= host.Bounds.Width && p.Y <= host.Bounds.Height;
+    }
+
+    private async Task DropAtAsync(IReadOnlyList<string>? paths, string? dest, DragEventArgs e)
+    {
+        if (VM?.SelectedTab is null || dest is null || paths is null)
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+
+        var effect = FileDrag.Effect(paths, dest, e.DragEffects, e.KeyModifiers);
+        e.DragEffects = effect;
+        e.Handled = true;
+        if (effect == DragDropEffects.None)
+            return;
+        await VM.SelectedTab.DropFilesAsync(paths, dest, effect == DragDropEffects.Move);
+    }
 
 
     private void FocusPathBox() => AddressBar.BeginEdit();
