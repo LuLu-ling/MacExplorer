@@ -6,15 +6,17 @@ using MacExplorer.Infrastructure;
 using MacExplorer.Lifecycle;
 using MacExplorer.Models;
 using MacExplorer.Native;
-using MacExplorer.ViewModels;
-using MacExplorer.Views;
+using MacExplorer.Services;
 
 namespace MacExplorer;
 
 public partial class App : Application
 {
-    public override void Initialize() => AvaloniaXamlLoader.Load(this);
-
+    public override void Initialize()
+    {
+        Name = "MacExplorer";
+        AvaloniaXamlLoader.Load(this);
+    }
     public override void OnFrameworkInitializationCompleted()
     {
         AppLifecycle.RegisterDispatcherHook();
@@ -29,12 +31,16 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = AppServices.Get<MainViewModel>(),
-                Width = Config.Window.Width,
-                Height = Config.Window.Height
-            };
+            desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnExplicitShutdown;
+            var windows = AppServices.Get<WindowService>();
+            windows.OpenWindow();
+            MacApplicationMenu.Install(windows);
+            if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activation)
+                activation.Activated += (_, e) =>
+                {
+                    if (e.Kind == ActivationKind.Reopen)
+                        windows.Reopen();
+                };
         }
 
         base.OnFrameworkInitializationCompleted();

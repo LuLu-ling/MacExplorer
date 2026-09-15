@@ -11,7 +11,7 @@ using MacExplorer.Services;
 
 namespace MacExplorer.ViewModels;
 
-public sealed partial class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase, IDisposable
 {
     private readonly FileService _files;
     private readonly ListingService _listing;
@@ -19,6 +19,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly DialogCallbacks _dialogs;
     private readonly VolumeService _volumes;
     private ExplorerTabViewModel? _trackedTab;
+    private bool _disposed;
 
     public MainViewModel(
         FileService files,
@@ -42,8 +43,7 @@ public sealed partial class MainViewModel : ViewModelBase
         InfoPaneWidth = Config.InfoPane.Width;
         ShowHidden = Config.Files.ShowHidden;
         ShowExtensions = Config.Files.ShowExtensions;
-        NewTab(SpecialFolders.HomeKey);
-        MacFinder.FavoritesChanged += () => Dispatcher.UIThread.Post(RefreshPlaces, DispatcherPriority.Background);
+        MacFinder.FavoritesChanged += OnFavoritesChanged;
     }
 
     public ObservableCollection<ExplorerTabViewModel> Tabs { get; }
@@ -63,10 +63,11 @@ public sealed partial class MainViewModel : ViewModelBase
     public Action? RequestFocusPath { get; set; }
     public Action? RequestFocusSearch { get; set; }
     public Func<Task>? RequestProperties { get; set; }
+    public Action? RequestCloseWindow { get; set; }
 
     [ObservableProperty] public partial bool ShowSettings { get; set; }
 
-    public bool CanCloseTab => Tabs.Count > 1;
+    public bool CanCloseTab => Tabs.Count > 0;
     public string WindowTitle => SelectedTab?.Title is { Length: > 0 } t ? $"{t} – MacExplorer" : "MacExplorer";
     public bool IsInfoPaneVisible => ShowInfoPane && SelectedTab is not { IsSettings: true };
 
@@ -147,7 +148,12 @@ public sealed partial class MainViewModel : ViewModelBase
     public void CloseTab(ExplorerTabViewModel? tab = null)
     {
         tab ??= SelectedTab;
-        if (tab is null || Tabs.Count <= 1) return;
+        if (tab is null || !Tabs.Contains(tab)) return;
+        if (Tabs.Count == 1)
+        {
+            RequestCloseWindow?.Invoke();
+            return;
+        }
         var index = Tabs.IndexOf(tab);
         LogWrapper.Info("Window", $"Close tab {tab.CurrentPath}");
         Tabs.Remove(tab);
@@ -262,6 +268,12 @@ public sealed partial class MainViewModel : ViewModelBase
         if (SpecialFolders.IsVirtual(path) || !Directory.Exists(path)) return;
         MacFinder.ToggleFavorite(path);
     }
+
+    private void OnFavoritesChanged() => Dispatcher.UIThread.Post(() =>
+    {
+        if (!_disposed)
+            RefreshPlaces();
+    }, DispatcherPriority.Background);
 
     public void RefreshPlaces()
     {
@@ -382,6 +394,21 @@ public sealed partial class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsInfoPaneVisible));
         OnPropertyChanged(nameof(InfoPaneColumn));
         OnPropertyChanged(nameof(InfoPaneColumnMin));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        MacFinder.FavoritesChanged -= OnFavoritesChanged;
+        SelectedTab = null;
+        foreach (var tab in Tabs)
+            tab.Dispose();
+        Tabs.Clear();
+        RequestFocusPath = null;
+        RequestFocusSearch = null;
+        RequestProperties = null;
+        RequestCloseWindow = null;
     }
 }
 

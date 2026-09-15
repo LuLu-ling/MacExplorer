@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Avalonia.Media;
 using MacExplorer.Controls;
+using MacExplorer.Lifecycle;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
@@ -452,7 +453,7 @@ public partial class FolderView : UserControl
         MacContextMenu.Show(item is not null ? ItemMenu(tab) : BackgroundMenu(tab));
     }
 
-    private static MacMenuEntry[] ItemMenu(ExplorerTabViewModel tab)
+    private MacMenuEntry[] ItemMenu(ExplorerTabViewModel tab)
     {
         var selected = tab.SelectedItems;
         var common = selected
@@ -471,6 +472,7 @@ public partial class FolderView : UserControl
         return
         [
             new("Open", () => tab.OpenCommand.Execute(null)),
+            ..OpenWindowEntry(selected),
             new("Show in Finder", () => tab.RevealCommand.Execute(null)),
             ..FavoriteEntry(selected),
             new("", Separator: true),
@@ -494,7 +496,20 @@ public partial class FolderView : UserControl
                 new("Messages", () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
             ]),
             new("", Separator: true),
-            new("Properties", () => OpenProperties(tab)),
+            new("Properties", OpenProperties),
+        ];
+    }
+
+    private static MacMenuEntry[] OpenWindowEntry(IList<FileItem> selected)
+    {
+        var folders = selected.Where(i => i.IsDirectory).Select(i => i.Path).ToArray();
+        return folders.Length == 0 ? [] :
+        [
+            new("Open in New Window", () =>
+            {
+                foreach (var path in folders)
+                    AppServices.Get<WindowService>().OpenWindow(path);
+            })
         ];
     }
 
@@ -512,8 +527,10 @@ public partial class FolderView : UserControl
         ];
     }
 
-    private static MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
+    private MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
     [
+        new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
+        new("", Separator: true),
         new("New folder", () => tab.NewFolderCommand.Execute(null)),
         new("New file", () => tab.NewFileCommand.Execute(null)),
         new("", Separator: true),
@@ -521,7 +538,7 @@ public partial class FolderView : UserControl
         new("Group by", Children: GroupByMenu(tab)),
         new("Refresh", () => tab.RefreshCommand.Execute(null)),
         new("", Separator: true),
-        new("Properties", () => OpenProperties(tab)),
+        new("Properties", OpenProperties),
     ];
 
     private static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
@@ -581,14 +598,10 @@ public partial class FolderView : UserControl
         ];
     }
 
-    private static void OpenProperties(ExplorerTabViewModel _)
+    private void OpenProperties()
     {
-        Dispatcher.UIThread.Post(() =>
-        {
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
-                && desktop.MainWindow is MainWindow window)
-                window.ShowProperties();
-        }, DispatcherPriority.Background);
+        if (TopLevel.GetTopLevel(this) is MainWindow window)
+            _ = window.ShowProperties();
     }
 
     private void UpdateMarquee(Point pos, KeyModifiers modifiers)

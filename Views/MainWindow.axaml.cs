@@ -23,6 +23,7 @@ public partial class MainWindow : FAAppWindow
     public MainWindow()
     {
         InitializeComponent();
+        AddressBar.MenuService = new BreadcrumbMenuService(AppServices.Get<VolumeService>());
         TitleBar.ExtendsContentIntoTitleBar = true;
         TitleBar.Height = 48;
         DataContextChanged += (_, _) => BindDialogs();
@@ -76,12 +77,9 @@ public partial class MainWindow : FAAppWindow
         LogWrapper.Info("Window", $"Main window opened {Width:0}x{Height:0}");
         if (VM is null) return;
         VM.RequestFocusPath = FocusPathBox;
-        VM.RequestFocusSearch = () =>
-        {
-            SearchBox.Focus();
-            SearchBox.SelectAll();
-        };
+        VM.RequestFocusSearch = () => SearchBox.FocusEditor();
         VM.RequestProperties = ShowProperties;
+        VM.RequestCloseWindow = Close;
         UpdateTabStripOverflow();
     }
 
@@ -142,6 +140,8 @@ public partial class MainWindow : FAAppWindow
         MacContextMenu.Show(
         [
             new("New tab", () => VM.NewTab()),
+            new("New Window", () => AppServices.Get<WindowService>().OpenWindow()),
+            new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
             new("Duplicate tab", () => VM.DuplicateTab()),
             new("Close tab", () => VM.CloseTab(tab), VM.CanCloseTab),
         ]);
@@ -372,7 +372,7 @@ public partial class MainWindow : FAAppWindow
     {
         if (item.Path is not { Length: > 0 } path)
             return [];
-        return item.Kind switch
+        MacMenuEntry[] actions = item.Kind switch
         {
             SidebarKind.Favorite =>
             [
@@ -388,6 +388,9 @@ public partial class MainWindow : FAAppWindow
             ],
             _ => []
         };
+        if (item.IsSection)
+            return actions;
+        return [new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(path)), ..actions];
     }
 
     private void Sidebar_OnDragOver(object? sender, DragEventArgs e)
@@ -531,58 +534,17 @@ public partial class MainWindow : FAAppWindow
         item is { Path.Length: > 0 } && Directory.Exists(item.Path) ? item.Path : null;
 
 
-    private async void Breadcrumb_OnClick(object? sender, RoutedEventArgs e)
+    private void FocusPathBox() => AddressBar.BeginEdit();
+
+    private async void AddressBar_OnPathSubmitted(object? sender, string path)
     {
-        if (sender is Button { Tag: string path })
-            await (VM?.OpenPathAsync(path) ?? Task.CompletedTask);
+        if (VM?.SelectedTab is { } tab)
+            await tab.OpenAddressAsync(path);
     }
 
-    private void PathField_OnPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.Source is Button)
-            return;
-        FocusPathBox();
-    }
+    private void AddressBar_OnOpenInNewWindowRequested(object? sender, string path) =>
+        AppServices.Get<WindowService>().OpenWindow(path);
 
-    private void FocusPathBox()
-    {
-        if (VM?.SelectedTab is null) return;
-        VM.SelectedTab.IsOmnibarFocused = true;
-        PathBox.Focus();
-        PathBox.SelectAll();
-    }
-
-    private async void PathBox_OnKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (VM?.SelectedTab is null) return;
-        if (e.Key == Key.Escape)
-        {
-            e.Handled = true;
-            VM.SelectedTab.IsOmnibarFocused = false;
-            return;
-        }
-
-        if (e.Key != Key.Enter) return;
-        e.Handled = true;
-        await VM.SelectedTab.SubmitOmnibarAsync();
-    }
-
-    private void PathBox_OnLostFocus(object? sender, RoutedEventArgs e)
-    {
-        if (VM?.SelectedTab is not null)
-            VM.SelectedTab.IsOmnibarFocused = false;
-    }
-
-    private void SearchBox_OnKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Escape)
-        {
-            e.Handled = true;
-            SearchBox.Clear();
-            if (VM?.SelectedTab is not null)
-                VM.SelectedTab.SearchText = string.Empty;
-        }
-    }
 
     private async Task<bool> ConfirmAsync(string title, string message, string primary, string close)
     {

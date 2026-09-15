@@ -59,7 +59,8 @@ internal static class PathUtil
                 {
                     Title = title,
                     Path = path,
-                    IsRoot = true
+                    IsRoot = true,
+                    ShowChevron = false
                 }
             ];
         }
@@ -79,18 +80,6 @@ internal static class PathUtil
                     items.Add(new BreadcrumbItem { Title = segment, Path = current });
                 }
             }
-        }
-
-        if (items.Count > 0)
-        {
-            var last = items[^1];
-            items[^1] = new BreadcrumbItem
-            {
-                Title = last.Title,
-                Path = last.Path,
-                IsRoot = last.IsRoot,
-                ShowChevron = false
-            };
         }
 
         return items;

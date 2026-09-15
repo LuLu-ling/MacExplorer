@@ -7,13 +7,18 @@ namespace MacExplorer.Controls;
 
 public sealed class GroupWrapPanel : WrapPanel
 {
+    public GroupWrapPanel()
+    {
+        VerticalAlignment = VerticalAlignment.Top;
+    }
+
     protected override Size MeasureOverride(Size availableSize)
     {
         if (Orientation is Orientation.Vertical || double.IsInfinity(availableSize.Width))
             return base.MeasureOverride(availableSize);
 
         var width = availableSize.Width;
-        double x = 0, y = 0, rowH = 0, maxW = 0;
+        double x = 0, y = 0, rowH = 0;
         foreach (var child in Children)
         {
             if (!child.IsVisible)
@@ -29,7 +34,6 @@ public sealed class GroupWrapPanel : WrapPanel
 
                 child.Measure(new Size(width, availableSize.Height));
                 y += child.DesiredSize.Height;
-                maxW = Math.Max(maxW, width);
                 continue;
             }
 
@@ -44,10 +48,9 @@ public sealed class GroupWrapPanel : WrapPanel
 
             x += size.Width;
             rowH = Math.Max(rowH, size.Height);
-            maxW = Math.Max(maxW, x);
         }
 
-        return new Size(maxW, y + rowH);
+        return new Size(width, y + rowH);
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -55,7 +58,7 @@ public sealed class GroupWrapPanel : WrapPanel
         if (Orientation is Orientation.Vertical)
             return base.ArrangeOverride(finalSize);
 
-        double x = 0, y = 0, rowH = 0, maxW = 0;
+        double x = 0, y = 0, rowH = 0;
         foreach (var child in Children)
         {
             if (!child.IsVisible)
@@ -72,7 +75,6 @@ public sealed class GroupWrapPanel : WrapPanel
 
                 child.Arrange(new Rect(0, y, finalSize.Width, size.Height));
                 y += size.Height;
-                maxW = Math.Max(maxW, finalSize.Width);
                 continue;
             }
 
@@ -86,10 +88,9 @@ public sealed class GroupWrapPanel : WrapPanel
             child.Arrange(new Rect(x, y, size.Width, size.Height));
             x += size.Width;
             rowH = Math.Max(rowH, size.Height);
-            maxW = Math.Max(maxW, x);
         }
 
-        return new Size(maxW, y + rowH);
+        return new Size(finalSize.Width, y + rowH);
     }
 
     private static bool IsGroup(Control child) =>

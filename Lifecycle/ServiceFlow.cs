@@ -14,12 +14,13 @@ public static partial class ServiceFlow
     private static Task Start()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<DialogCallbacks>();
+        services.AddScoped<DialogCallbacks>();
         services.AddSingleton<FileService>();
         services.AddSingleton<ListingService>();
         services.AddSingleton<IconService>();
         services.AddSingleton<VolumeService>();
-        services.AddSingleton<MainViewModel>();
+        services.AddScoped<MainViewModel>();
+        services.AddSingleton<WindowService>();
         AppServices.Provider = services.BuildServiceProvider();
         LogWrapper.Info("Services", "Service provider initialized");
         return Task.CompletedTask;

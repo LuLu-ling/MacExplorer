@@ -1,7 +1,9 @@
 using System.Runtime.InteropServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace MacExplorer.Native;
 
@@ -31,6 +33,8 @@ internal static class MacContextMenu
     private static IntPtr _targetClass;
     private static bool _registered;
     private static bool _installed;
+    private static IntPtr _openMenu;
+    private static Control? _anchor;
 
     public static void Install()
     {
@@ -46,20 +50,77 @@ internal static class MacContextMenu
         Dispatcher.UIThread.Post(() => ShowCore(entries), DispatcherPriority.Input);
     }
 
-    private static void ShowCore(IReadOnlyList<MacMenuEntry> entries)
+    public static void ShowAt(Control anchor, IReadOnlyList<MacMenuEntry> entries, Func<bool>? isCurrent = null)
     {
+        Install();
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (anchor.IsEffectivelyVisible && anchor.IsEffectivelyEnabled &&
+                TopLevel.GetTopLevel(anchor) is not null && (isCurrent?.Invoke() ?? true))
+                ShowCore(entries, anchor);
+        }, DispatcherPriority.Input);
+    }
+
+    public static void Close(Control owner)
+    {
+        Dispatcher.UIThread.VerifyAccess();
+        if (_openMenu != IntPtr.Zero && _anchor is not null &&
+            (owner == _anchor || owner.IsVisualAncestorOf(_anchor)))
+            ObjC.Call(_openMenu, "cancelTracking");
+    }
+
+    private static void ShowCore(IReadOnlyList<MacMenuEntry> entries, Control? anchor = null)
+    {
+        if (_openMenu != IntPtr.Zero)
+            return;
         using var pool = new AutoreleasePool();
         EnsureTarget();
-        _actions = [];
-        var target = ObjC.Call(_targetClass, "new");
-        var menu = BuildMenu(entries, target);
-        var location = MouseLocation(ObjC.Class("NSEvent"), ObjC.Sel("mouseLocation"));
-        PopUp(menu, ObjC.Sel("popUpMenuPositioningItem:atLocation:inView:"), IntPtr.Zero, location, IntPtr.Zero);
+        _actions.Clear();
+        var target = ObjC.Call(ObjC.Call(_targetClass, "new"), "autorelease");
+        try
+        {
+            var menu = BuildMenu(entries, target);
+            var view = IntPtr.Zero;
+            CGPoint location;
+            if (anchor is null)
+                location = MouseLocation(ObjC.Class("NSEvent"), ObjC.Sel("mouseLocation"));
+            else
+            {
+                if (TopLevel.GetTopLevel(anchor) is not { } topLevel)
+                    return;
+                var point = anchor.TranslatePoint(new Point(0, anchor.Bounds.Height), topLevel);
+                var handle = topLevel.TryGetPlatformHandle();
+                view = handle?.HandleDescriptor switch
+                {
+                    "NSWindow" => ObjC.Call(handle.Handle, "contentView"),
+                    "NSView" => handle.Handle,
+                    _ => IntPtr.Zero
+                };
+                if (view == IntPtr.Zero || point is null)
+                    return;
+                location = new CGPoint
+                {
+                    X = point.Value.X,
+                    Y = ObjC.MsgSendBool(view, ObjC.Sel("isFlipped"))
+                        ? point.Value.Y : topLevel.ClientSize.Height - point.Value.Y
+                };
+            }
+            _openMenu = menu;
+            _anchor = anchor;
+            PopUp(menu, ObjC.Sel("popUpMenuPositioningItem:atLocation:inView:"), IntPtr.Zero, location, view);
+        }
+        finally
+        {
+            _actions.Clear();
+            _openMenu = IntPtr.Zero;
+            _anchor = null;
+        }
     }
 
     private static IntPtr BuildMenu(IReadOnlyList<MacMenuEntry> entries, IntPtr target)
     {
         var menu = ObjC.Call(ObjC.Call(ObjC.Class("NSMenu"), "alloc"), "initWithTitle:", ObjC.NsString(""));
+        ObjC.Call(menu, "autorelease");
         SetBool(menu, ObjC.Sel("setAutoenablesItems:"), false);
         foreach (var entry in entries)
             ObjC.Call(menu, "addItem:", CreateItem(entry, target));
@@ -77,6 +138,7 @@ internal static class MacContextMenu
             ObjC.NsString(entry.Title),
             entry.Children is { Length: > 0 } ? IntPtr.Zero : ObjC.Sel("invoke:"),
             ObjC.NsString(""));
+        ObjC.Call(item, "autorelease");
         ObjC.Call(item, "setTarget:", target);
         SetBool(item, ObjC.Sel("setEnabled:"), entry.Enabled);
         if (entry.Checked)
@@ -176,6 +238,7 @@ internal static class MacContextMenu
         var image = ObjC.MsgSend(ObjC.Call(ObjC.Class("NSImage"), "alloc"), ObjC.Sel("initWithSize:"), new NSSize(16, 16));
         if (image == IntPtr.Zero)
             return IntPtr.Zero;
+        ObjC.Call(image, "autorelease");
         ObjC.Call(image, "lockFocus");
         var a = ((argb >> 24) & 255) / 255.0;
         if (a == 0)

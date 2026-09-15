@@ -17,5 +17,6 @@
     <Application.Styles>
         <sty:FluentAvaloniaTheme PreferSystemTheme="True" PreferUserAccentColor="True" />
         <StyleInclude Source="/Styles/FilesStyles.axaml" />
+        <StyleInclude Source="/Styles/AddressBarStyles.axaml" />
     </Application.Styles>
 </Application>

@@ -23,6 +23,8 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     private CancellationTokenSource? _iconCts;
     private CancellationTokenSource? _sizeCts;
     private DispatcherTimer? _watchTimer;
+    private bool _disposed;
+    private int _listingVersion;
 
     public ExplorerTabViewModel(
         FileService files,
@@ -64,26 +66,12 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty] public partial string? UnavailableMessage { get; set; }
     [ObservableProperty] public partial LayoutKind Layout { get; set; }
     [ObservableProperty] public partial int LayoutSize { get; set; }
-    [ObservableProperty] public partial OmnibarMode OmnibarMode { get; set; } = OmnibarMode.Path;
     [ObservableProperty] public partial string SearchText { get; set; } = string.Empty;
-    [ObservableProperty] public partial string CommandText { get; set; } = string.Empty;
-    [ObservableProperty] public partial bool IsOmnibarFocused { get; set; }
     [ObservableProperty] public partial GroupOption GroupOption { get; set; }
     [ObservableProperty] public partial SortDirection GroupDirection { get; set; }
     [ObservableProperty] public partial GroupByDateUnit GroupByDateUnit { get; set; }
     [ObservableProperty] public partial bool IsGroupOverview { get; set; }
 
-    public bool ShowBreadcrumbs => OmnibarMode == OmnibarMode.Path && !IsOmnibarFocused;
-    public bool ShowPathFocused => OmnibarMode == OmnibarMode.Path && IsOmnibarFocused;
-    public bool IsPathMode => OmnibarMode == OmnibarMode.Path;
-    public bool IsCommandMode => OmnibarMode == OmnibarMode.Command;
-    public bool IsSearchMode => OmnibarMode == OmnibarMode.Search;
-    public string OmnibarPlaceholder => OmnibarMode switch
-    {
-        OmnibarMode.Command => "Type a command",
-        OmnibarMode.Search => "Search",
-        _ => "Enter a path"
-    };
     [ObservableProperty] public partial IReadOnlyList<BreadcrumbItem> Breadcrumbs { get; set; }
     [ObservableProperty] public partial FileItem? PreviewItem { get; set; }
     [ObservableProperty] public partial string StatusText { get; set; } = string.Empty;
@@ -117,6 +105,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     public async Task NavigateAsync(string path, bool record = true)
     {
+        if (_disposed) return;
         path = Normalize(path);
         if (record && !string.Equals(CurrentPath, path, StringComparison.OrdinalIgnoreCase))
         {
@@ -136,6 +125,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         NotifyGroupingAvailability();
         NormalizeGrouping();
         await ReloadAsync();
+        if (_disposed) return;
         OnPropertyChanged(nameof(ShowFolder));
         OnPropertyChanged(nameof(IsTrash));
         OnPropertyChanged(nameof(IsTag));
@@ -150,11 +140,14 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     public async Task ReloadAsync()
     {
+        if (_disposed) return;
+        var version = ++_listingVersion;
         AttachWatcher();
         UnavailableTitle = null;
         UnavailableMessage = null;
         if (IsHome || IsSettings)
         {
+            IsBusy = false;
             ClearItems();
             SetSelection([]);
             StatusText = string.Empty;
@@ -166,7 +159,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         try
         {
             var keep = SelectedItems.Select(i => i.Path).ToHashSet(StringComparer.Ordinal);
-            var listed = await Task.Run(() => _listing.List(CurrentPath));
+            var path = CurrentPath;
+            var listed = await Task.Run(() => _listing.List(path));
+            if (_disposed || version != _listingVersion) return;
             listed = _listing.Filter(listed, SearchText);
             Items.Clear();
             foreach (var item in listed)
@@ -181,6 +176,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
         catch (UnauthorizedAccessException ex)
         {
+            if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
             UnavailableTitle = "Access denied";
@@ -189,6 +185,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
         catch (DirectoryNotFoundException ex)
         {
+            if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
             UnavailableTitle = "Location is unavailable";
@@ -197,6 +194,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
         catch (Exception ex)
         {
+            if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
             UnavailableTitle = "Couldn't open this folder";
@@ -205,12 +203,15 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
         finally
         {
-            IsBusy = false;
-            OnPropertyChanged(nameof(IsEmpty));
-            OnPropertyChanged(nameof(IsTrash));
-            OnPropertyChanged(nameof(CanGroupByOriginalFolder));
-            OnPropertyChanged(nameof(CanGroupByDateDeleted));
-            OnPropertyChanged(nameof(CanGroupByFolderPath));
+            if (!_disposed && version == _listingVersion)
+            {
+                IsBusy = false;
+                OnPropertyChanged(nameof(IsEmpty));
+                OnPropertyChanged(nameof(IsTrash));
+                OnPropertyChanged(nameof(CanGroupByOriginalFolder));
+                OnPropertyChanged(nameof(CanGroupByDateDeleted));
+                OnPropertyChanged(nameof(CanGroupByFolderPath));
+            }
         }
     }
 
@@ -501,43 +502,39 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         Grouping.NotifySettingsChanged();
     }
 
-    [RelayCommand]
-    public async Task SubmitOmnibarAsync()
+    public async Task OpenAddressAsync(string address)
     {
-        switch (OmnibarMode)
+        var path = address.Trim();
+        if (path.Length == 0 || _disposed) return;
+        if (path.Equals("Home", StringComparison.OrdinalIgnoreCase))
+            path = SpecialFolders.HomeKey;
+        else if (path.Equals("Settings", StringComparison.OrdinalIgnoreCase))
+            path = SpecialFolders.SettingsKey;
+        if (SpecialFolders.IsVirtual(path))
         {
-            case OmnibarMode.Path:
-                var path = PathText.Trim();
-                if (path.Equals("Home", StringComparison.OrdinalIgnoreCase))
-                    await NavigateAsync(SpecialFolders.HomeKey);
-                else if (Directory.Exists(path) || File.Exists(path))
-                {
-                    if (File.Exists(path))
-                        _files.Open(path);
-                    else
-                        await NavigateAsync(path);
-                }
-                break;
-            case OmnibarMode.Search:
-                await ReloadAsync();
-                break;
+            await NavigateAsync(path);
+            return;
         }
 
-        IsOmnibarFocused = false;
-    }
-
-    partial void OnOmnibarModeChanged(OmnibarMode value) => NotifyOmnibarChrome();
-
-    partial void OnIsOmnibarFocusedChanged(bool value) => NotifyOmnibarChrome();
-
-    private void NotifyOmnibarChrome()
-    {
-        OnPropertyChanged(nameof(ShowBreadcrumbs));
-        OnPropertyChanged(nameof(ShowPathFocused));
-        OnPropertyChanged(nameof(IsPathMode));
-        OnPropertyChanged(nameof(IsCommandMode));
-        OnPropertyChanged(nameof(IsSearchMode));
-        OnPropertyChanged(nameof(OmnibarPlaceholder));
+        if (path == "~" || path.StartsWith("~/", StringComparison.Ordinal))
+            path = SpecialFolders.UserHome + path[1..];
+        else if (Uri.TryCreate(path, UriKind.Absolute, out var uri) && uri.IsFile)
+            path = uri.LocalPath;
+        try
+        {
+            path = Path.GetFullPath(path, SpecialFolders.IsVirtual(CurrentPath) ? SpecialFolders.UserHome : CurrentPath);
+        }
+        catch (ArgumentException)
+        {
+            await _dialogs.Error("Invalid address", "Enter a valid folder path.");
+            return;
+        }
+        if (Directory.Exists(path))
+            await NavigateAsync(path);
+        else if (File.Exists(path))
+            _files.Open(path);
+        else
+            await _dialogs.Error("Location is unavailable", $"“{path}” could not be found.");
     }
 
     partial void OnSearchTextChanged(string value)
@@ -638,6 +635,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+        ++_listingVersion;
         _watcher?.Dispose();
         _iconCts?.Cancel();
         _iconCts?.Dispose();
@@ -651,6 +651,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     {
         Dispatcher.UIThread.Post(() =>
         {
+            if (_disposed) return;
             SyncGroupingFromConfig();
             RebuildView();
         });
@@ -837,6 +838,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     {
         Dispatcher.UIThread.Post(() =>
         {
+            if (_disposed) return;
             _watchTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
             _watchTimer.Tick -= WatchTick;
             _watchTimer.Tick += WatchTick;

@@ -273,35 +273,6 @@
 
 
 
-    <Style Selector="Button.BreadcrumbItem">
-        <Setter Property="Height" Value="32" />
-        <Setter Property="Padding" Value="8,0" />
-        <Setter Property="Margin" Value="2,0,0,0" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="2" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-    </Style>
-    <Style Selector="Button.BreadcrumbItem.root">
-        <Setter Property="Padding" Value="16,0,8,0" />
-        <Setter Property="CornerRadius" Value="16,2,2,16" />
-        <Setter Property="Margin" Value="0" />
-    </Style>
-    <Style Selector="Button.BreadcrumbItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
-    </Style>
-    <Style Selector="Button.BreadcrumbItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
-    </Style>
-
-    <Style Selector="Button.BreadcrumbChevron">
-        <Setter Property="Padding" Value="4,0" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="2" />
-        <Setter Property="IsTabStop" Value="False" />
-    </Style>
 
     <Style Selector="Border.TabItem">
         <Setter Property="MinWidth" Value="140" />
@@ -337,33 +308,6 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-
-    <Style Selector="Border.PathField">
-        <Setter Property="Height" Value="38" />
-        <Setter Property="MinHeight" Value="38" />
-        <Setter Property="CornerRadius" Value="19" />
-        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="ClipToBounds" Value="True" />
-    </Style>
-    <Style Selector="Border.SearchField">
-        <Setter Property="Height" Value="38" />
-        <Setter Property="MinHeight" Value="38" />
-        <Setter Property="CornerRadius" Value="19" />
-        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="ClipToBounds" Value="True" />
-    </Style>
-    <Style Selector="TextBox.ChromeField">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinHeight" Value="34" />
-        <Setter Property="Padding" Value="12,0" />
-    </Style>
     <Style Selector="ctrl|ColumnSplitter">
         <Setter Property="Width" Value="12" />
         <Setter Property="Background" Value="Transparent" />

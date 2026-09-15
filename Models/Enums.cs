@@ -53,12 +53,6 @@ public enum FolderPriority
     Mixed
 }
 
-public enum OmnibarMode
-{
-    Path,
-    Command,
-    Search
-}
 
 public enum ConflictDecision
 {
