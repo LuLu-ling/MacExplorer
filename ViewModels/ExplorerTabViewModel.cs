@@ -785,27 +785,29 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         _sizeCts = new CancellationTokenSource();
         var token = _sizeCts.Token;
         var folders = Items.Where(static i => i.IsDirectory).ToArray();
+        if (folders.Length == 0)
+            return;
         try
         {
-            await Parallel.ForEachAsync(folders, new ParallelOptions
-            {
-                MaxDegreeOfParallelism = 2,
-                CancellationToken = token
-            }, async (item, ct) =>
-            {
-                var size = await Task.Run(() => ListingService.DirectorySize(item.Path), ct);
-                await Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    item.Size = size;
-                    item.SizeKnown = true;
-                });
-            });
-            if (GroupOption is GroupOption.Size)
-                RebuildView();
+            await Task.WhenAll(folders.Select(item => FillSizeAsync(item, token)));
+            if (!token.IsCancellationRequested && GroupOption is GroupOption.Size)
+                await Dispatcher.UIThread.InvokeAsync(RebuildView);
         }
         catch (OperationCanceledException)
         {
         }
+    }
+
+    private static async Task FillSizeAsync(FileItem item, CancellationToken token)
+    {
+        var size = await FolderSize.ComputeAsync(item.Path, token);
+        if (token.IsCancellationRequested)
+            return;
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            item.Size = size;
+            item.SizeKnown = true;
+        });
     }
 
     private void AttachWatcher()
@@ -836,6 +838,11 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     private void OnFsEvent(object sender, FileSystemEventArgs e)
     {
+        FolderSize.Invalidate(CurrentPath);
+        if (!string.IsNullOrEmpty(e.FullPath))
+            FolderSize.Invalidate(e.FullPath);
+        if (e is RenamedEventArgs renamed)
+            FolderSize.Invalidate(renamed.OldFullPath);
         Dispatcher.UIThread.Post(() =>
         {
             if (_disposed) return;

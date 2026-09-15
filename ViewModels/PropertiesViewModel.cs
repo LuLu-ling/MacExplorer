@@ -153,7 +153,7 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
                 long total = 0;
                 foreach (var item in Items)
                 {
-                    try { total += item.IsDirectory ? ListingService.DirectorySize(item.Path) : new FileInfo(item.Path).Length; }
+                    try { total += SizeOf(item); }
                     catch { /* skip */ }
                 }
 
@@ -170,11 +170,11 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
                 var entries = Directory.GetFileSystemEntries(path);
                 var dirs = entries.Count(Directory.Exists);
                 var files = entries.Length - dirs;
-                var size = FormatSize(ListingService.DirectorySize(path));
+                var size = FormatSize(SizeOf(primary));
                 return new Inspected(size, size, $"{files} files, {dirs} folders", accessed, attributes, null);
             }
 
-            var length = FormatSize(new FileInfo(path).Length);
+            var length = FormatSize(primary.SizeKnown ? primary.Size : new FileInfo(path).Length);
             return new Inspected(length, length, string.Empty, accessed, attributes, null);
         }
         catch (Exception ex)
@@ -183,6 +183,11 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
         }
     }
 
+
+    private static long SizeOf(FileItem item) =>
+        item.IsDirectory
+            ? item.SizeKnown ? item.Size : FolderSize.Of(item.Path)
+            : item.SizeKnown ? item.Size : new FileInfo(item.Path).Length;
 
     private static string FormatSize(long bytes) => bytes switch
     {

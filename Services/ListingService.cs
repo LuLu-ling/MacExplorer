@@ -95,26 +95,6 @@ public sealed class ListingService
         return item;
     }
 
-
-    public static long DirectorySize(string path)
-    {
-        long size = 0;
-        try
-        {
-            foreach (var file in Directory.EnumerateFiles(path))
-            {
-                try { size += new FileInfo(file).Length; }
-                catch { /* skip */ }
-            }
-
-            foreach (var dir in Directory.EnumerateDirectories(path))
-                size += DirectorySize(dir);
-        }
-        catch { /* skip */ }
-
-        return size;
-    }
-
     public static IReadOnlyList<FileItem> Sort(IEnumerable<FileItem> items) =>
         items.OrderBy(static i => i, FileItemComparer.Instance).ToList();
 
