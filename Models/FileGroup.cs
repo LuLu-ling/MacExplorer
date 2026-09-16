@@ -1,6 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-
+using MacExplorer.Localization;
 namespace MacExplorer.Models;
 
 public sealed partial class FileGroup : ObservableObject
@@ -21,5 +21,7 @@ public sealed partial class FileGroup : ObservableObject
     public bool ShowGlyph => !string.IsNullOrEmpty(Icon);
 
     public void UpdateCount() =>
-        CountText = Items.Count == 1 ? $"{Items.Count} item" : $"{Items.Count} items";
+        CountText = Items.Count == 1
+            ? Lang.Text("Group.Count.Item", Items.Count)
+            : Lang.Text("Group.Count.Items", Items.Count);
 }

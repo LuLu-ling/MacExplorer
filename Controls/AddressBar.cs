@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
@@ -52,7 +53,12 @@ public sealed class AddressBar : TemplatedControl
         Focusable = true;
         IsTabStop = true;
         KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Once);
-        AutomationProperties.SetName(this, "Address");
+        AutomationProperties.SetName(this, Lang.Text("Address.AutomationName"));
+        WeakLanguageChanged.Add(this, static bar =>
+        {
+            AutomationProperties.SetName(bar, Lang.Text("Address.AutomationName"));
+            bar.RebuildBreadcrumbs();
+        });
     }
 
     // Path is the host's committed location. Editing never writes back to its binding.
@@ -341,8 +347,8 @@ public sealed class AddressBar : TemplatedControl
 
         _breadcrumbPanel.Children.Clear();
         _overflowButton = new Button { Content = "\u2026", Classes = { "AddressSegment", "AddressOverflow" } };
-        AutomationProperties.SetName(_overflowButton, "Show hidden path components");
-        ToolTip.SetTip(_overflowButton, "Show hidden path components");
+        AutomationProperties.SetName(_overflowButton, Lang.Text("Address.ShowHiddenComponents"));
+        ToolTip.SetTip(_overflowButton, Lang.Text("Address.ShowHiddenComponents"));
         _overflowButton.Click += (_, _) => ShowOverflow();
         _breadcrumbPanel.Children.Add(_overflowButton);
 
@@ -368,8 +374,8 @@ public sealed class AddressBar : TemplatedControl
                     Classes = { "AddressSegment", "AddressArrow" },
                     Content = new PathIcon { Data = ChevronGeometry, Classes = { "AddressChevron" } }
                 };
-                AutomationProperties.SetName(arrow, $"Show subfolders of {item.Title}");
-                ToolTip.SetTip(arrow, $"Show subfolders of {item.Title}");
+                AutomationProperties.SetName(arrow, Lang.Text("Address.ShowSubfolders", item.Title));
+                ToolTip.SetTip(arrow, Lang.Text("Address.ShowSubfolders", item.Title));
                 arrow.Click += OnArrowClick;
                 arrow.ContextRequested += OnArrowContextRequested;
                 Grid.SetColumn(arrow, 1);
@@ -401,7 +407,7 @@ public sealed class AddressBar : TemplatedControl
         e.Handled = true;
         var cancellationToken = StartMenu();
         MacContextMenu.ShowAt(anchor,
-            [new("Open in New Window", () => InvokeMenuPath(path, true, cancellationToken))],
+            [new(Lang.Text("Tab.OpenInNewWindow"), () => InvokeMenuPath(path, true, cancellationToken))],
             () => IsCurrentMenu(cancellationToken));
     }
 
@@ -470,7 +476,7 @@ public sealed class AddressBar : TemplatedControl
         if (newWindowEntries.Count > 0)
         {
             entries.Add(new("", Separator: true));
-            entries.Add(new("Open in New Window", Children: newWindowEntries.ToArray()));
+            entries.Add(new(Lang.Text("Tab.OpenInNewWindow"), Children: newWindowEntries.ToArray()));
         }
         MacContextMenu.ShowAt(anchor, entries, () => IsCurrentMenu(cancellationToken));
     }

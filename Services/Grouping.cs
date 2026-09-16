@@ -1,6 +1,6 @@
 using System.Globalization;
+using MacExplorer.Localization;
 using MacExplorer.Models;
-
 namespace MacExplorer.Services;
 
 internal static class Grouping
@@ -82,14 +82,14 @@ internal static class Grouping
                 : char.ToUpperInvariant(name[0]).ToString();
         },
         GroupOption.Size => static x => x.IsDirectory
-            ? x.SizeKnown ? x.SizeText : "Item size not calculated"
+            ? x.SizeKnown ? x.SizeText : Lang.Text("Group.Size.NotCalculated")
             : SizeKey(x.Size),
         GroupOption.DateCreated => x => ToTimeSpanLabel(x.Created, unit).Text,
         GroupOption.DateModified => x => ToTimeSpanLabel(x.Modified, unit).Text,
         GroupOption.FileType => static x => x.IsDirectory
             ? x.ItemType
             : string.IsNullOrEmpty(x.Extension) ? " " : x.Extension.ToLowerInvariant(),
-        GroupOption.FileTag => static x => x.Tags.Count > 0 ? x.Tags[0].Name : "Untagged",
+        GroupOption.FileTag => static x => x.Tags.Count > 0 ? x.Tags[0].Name : Lang.Text("Group.Untagged"),
         GroupOption.OriginalFolder => static x => x.OriginalFolder,
         GroupOption.DateDeleted => x => ToTimeSpanLabel(x.DateDeleted, unit).Text,
         GroupOption.FolderPath => static x => ParentDir(x.Path),
@@ -133,7 +133,7 @@ internal static class Grouping
                 }
                 else
                 {
-                    group.Text = "Untagged";
+                    group.Text = Lang.Text("Group.Untagged");
                     group.Marker = FileTagPalette.Brush(FileTagColor.Gray);
                 }
                 break;
@@ -170,28 +170,28 @@ internal static class Grouping
         var diff = now - offset;
 
         if (now.Date < local.Date)
-            return new("Future", "\uED28", 1000000006);
+            return new(Lang.Text("Group.Date.Future"), "\uED28", 1000000006);
         if (now.Date == local.Date)
-            return new("Today", "\uE8D1", 1000000005);
+            return new(Lang.Text("Group.Date.Today"), "\uE8D1", 1000000005);
         if (now.AddDays(-1).Date == local.Date)
-            return new("Yesterday", "\uE8BF", 1000000004);
+            return new(Lang.Text("Group.Date.Yesterday"), "\uE8BF", 1000000004);
         if (unit is GroupByDateUnit.Day)
             return new(local.ToString("D", CultureInfo.CurrentCulture), "\uE8BF", local.Year * 10000 + local.Month * 100 + local.Day);
         if (diff.Days <= 7 && WeekOfYear(now) == WeekOfYear(local))
-            return new("Earlier this week", "\uE8C0", 1000000003);
+            return new(Lang.Text("Group.Date.EarlierThisWeek"), "\uE8C0", 1000000003);
         if (diff.Days <= 14 && WeekOfYear(now.AddDays(-7)) == WeekOfYear(local))
-            return new("Last week", "\uE8C0", 1000000002);
+            return new(Lang.Text("Group.Date.LastWeek"), "\uE8C0", 1000000002);
         if (now.Year == local.Year && now.Month == local.Month)
-            return new("Earlier this month", "\uE787", 1000000001);
+            return new(Lang.Text("Group.Date.EarlierThisMonth"), "\uE787", 1000000001);
         if (now.AddMonths(-1).Year == local.Year && now.AddMonths(-1).Month == local.Month)
-            return new("Last month", "\uE787", 1000000000);
+            return new(Lang.Text("Group.Date.LastMonth"), "\uE787", 1000000000);
         if (unit is GroupByDateUnit.Month)
             return new(local.ToString("Y", CultureInfo.CurrentCulture), "\uE787", local.Year * 10000 + local.Month * 100);
         if (now.Year == local.Year)
-            return new("Earlier this year", "\uEC92", 10000001);
+            return new(Lang.Text("Group.Date.EarlierThisYear"), "\uEC92", 10000001);
         if (now.AddYears(-1).Year == local.Year)
-            return new("Last year", "\uEC92", 10000000);
-        return new($"Year {local.Year}", "\uEC92", local.Year);
+            return new(Lang.Text("Group.Date.LastYear"), "\uEC92", 10000000);
+        return new(Lang.Text("Group.Date.Year", local.Year), "\uEC92", local.Year);
     }
 
     private static int WeekOfYear(DateTimeOffset t)
@@ -201,13 +201,13 @@ internal static class Grouping
             t.DateTime, CalendarWeekRule.FirstFullWeek, culture.DateTimeFormat.FirstDayOfWeek);
     }
 
-    private static readonly (long Size, string Text, string SizeText)[] SizeGroups =
+    private static readonly (long Size, string Key, string SizeText)[] SizeGroups =
     [
-        (5_000_000_000, "Huge", "5 GiB"),
-        (1_000_000_000, "Very large", "1 GiB"),
-        (128_000_000, "Large", "128 MiB"),
-        (1_000_000, "Medium", "1 MiB"),
-        (16_000, "Small", "16 KiB"),
+        (5_000_000_000, "Group.Size.Huge", "5 GiB"),
+        (1_000_000_000, "Group.Size.VeryLarge", "1 GiB"),
+        (128_000_000, "Group.Size.Large", "128 MiB"),
+        (1_000_000, "Group.Size.Medium", "1 MiB"),
+        (16_000, "Group.Size.Small", "16 KiB"),
     ];
 
     public static string SizeKey(long size)
@@ -229,14 +229,16 @@ internal static class Grouping
             var group = SizeGroups[i];
             if (size > group.Size)
             {
-                var range = i > 0 ? $"{group.SizeText} - {SizeGroups[i - 1].SizeText}" : $"{group.SizeText} +";
-                return (group.Size.ToString(), group.Text, range, SizeGroups.Length - i);
+                var range = i > 0
+                    ? Lang.Text("Group.Size.Range", group.SizeText, SizeGroups[i - 1].SizeText)
+                    : Lang.Text("Group.Size.RangePlus", group.SizeText);
+                return (group.Size.ToString(), Lang.Text(group.Key), range, SizeGroups.Length - i);
             }
 
             last = group.SizeText;
         }
 
-        return ("0", "Tiny", $"0 B - {last}", 0);
+        return ("0", Lang.Text("Group.Size.Tiny"), Lang.Text("Group.Size.RangeTiny", last), 0);
     }
 
     private static string? ParentDir(string path)

@@ -15,7 +15,7 @@
         <Border x:Name="TitleBarHost" Background="Transparent"
                 PointerPressed="TitleBar_OnPointerPressed">
             <TextBlock Margin="78,10,16,0" VerticalAlignment="Center"
-                       Text="Properties" FontSize="12"
+                       Text="{DynamicResource Properties.Title}" FontSize="12"
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </Border>
 
@@ -26,12 +26,12 @@
                 <StackPanel Margin="8,12">
                     <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="General"
                             Classes.selected="{Binding IsGeneral}">
-                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="General" />
+                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Properties.General}" />
                     </Button>
                     <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Hashes"
                             Classes.selected="{Binding IsHashes}"
                             IsVisible="{Binding CanShowHashes}">
-                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="Hashes" />
+                        <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Properties.Hashes}" />
                     </Button>
                 </StackPanel>
             </Border>
@@ -54,13 +54,13 @@
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="8">
                                         <TextBox Text="{Binding ItemName}"
                                                  IsVisible="{Binding CanRename}"
-                                                 PlaceholderText="Name" />
+                                                 PlaceholderText="{DynamicResource Properties.Name}" />
                                         <TextBlock Text="{Binding DisplayName}"
                                                    IsVisible="{Binding !CanRename}" />
                                     </StackPanel>
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasItemType}">
-                                    <TextBlock FontWeight="SemiBold" Text="Type"
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Type}"
                                                VerticalAlignment="Center" />
                                     <TextBlock Grid.Column="1"
                                                Text="{Binding ItemType}"
@@ -75,42 +75,42 @@
                                 BorderThickness="1">
                             <StackPanel Spacing="8">
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasLocation}">
-                                    <TextBlock FontWeight="SemiBold" Text="Location" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Location}" />
                                     <TextBlock Grid.Column="1" Text="{Binding Location}" TextWrapping="Wrap" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasSize}">
-                                    <TextBlock FontWeight="SemiBold" Text="Size" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Size}" />
                                     <TextBlock Grid.Column="1" Text="{Binding SizeText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasSizeOnDisk}">
-                                    <TextBlock FontWeight="SemiBold" Text="Size on disk" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.SizeOnDisk}" />
                                     <TextBlock Grid.Column="1" Text="{Binding SizeOnDiskText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasContents}">
-                                    <TextBlock FontWeight="SemiBold" Text="Contains" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Contains}" />
                                     <TextBlock Grid.Column="1" Text="{Binding ContentsText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasPath}">
-                                    <TextBlock FontWeight="SemiBold" Text="Path" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Path}" />
                                     <TextBlock Grid.Column="1" Text="{Binding PathText}" TextWrapping="Wrap" />
                                 </Grid>
                                 <Border Height="1" Margin="-12,4"
                                         Background="{DynamicResource DividerStrokeColorDefaultBrush}"
                                         IsVisible="{Binding HasDates}" />
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasCreated}">
-                                    <TextBlock FontWeight="SemiBold" Text="Created" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Created}" />
                                     <TextBlock Grid.Column="1" Text="{Binding CreatedText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasModified}">
-                                    <TextBlock FontWeight="SemiBold" Text="Modified" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Modified}" />
                                     <TextBlock Grid.Column="1" Text="{Binding ModifiedText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasAccessed}">
-                                    <TextBlock FontWeight="SemiBold" Text="Accessed" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Accessed}" />
                                     <TextBlock Grid.Column="1" Text="{Binding AccessedText}" />
                                 </Grid>
                                 <Grid ColumnDefinitions="120,*" IsVisible="{Binding HasAttributes}">
-                                    <TextBlock FontWeight="SemiBold" Text="Attributes" />
+                                    <TextBlock FontWeight="SemiBold" Text="{DynamicResource Properties.Attributes}" />
                                     <TextBlock Grid.Column="1" Text="{Binding AttributesText}" TextWrapping="Wrap" />
                                 </Grid>
                             </StackPanel>
@@ -129,12 +129,12 @@
                                     BorderThickness="0,0,0,1">
                             <Grid Height="44" ColumnSpacing="12"
                                   ColumnDefinitions="64,1,*,Auto">
-                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Algorithm" />
+                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="{DynamicResource Properties.Algorithm}" />
                                 <Border Grid.Column="1" Width="1" Height="36" VerticalAlignment="Bottom"
                                         Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
-                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="SemiBold" Text="Hash value" />
+                                <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="SemiBold" Text="{DynamicResource Properties.HashValue}" />
                                 <Button Grid.Column="3" Padding="6" Background="Transparent" BorderThickness="0"
-                                        ToolTip.Tip="Select hashes to show">
+                                        ToolTip.Tip="{DynamicResource Properties.SelectHashes}">
                                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE7B3;" FontSize="14" />
                                     <Button.Flyout>
                                         <MenuFlyout>
@@ -172,7 +172,7 @@
                                                     Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
                                             <StackPanel Grid.Column="2" Orientation="Horizontal"
                                                         IsVisible="{Binding IsCalculating}">
-                                                <TextBlock VerticalAlignment="Center" Text="Calculating" />
+                                                <TextBlock VerticalAlignment="Center" Text="{DynamicResource Properties.Calculating}" />
                                                 <ProgressBar Width="100" Margin="16,0,0,0" IsIndeterminate="True" />
                                             </StackPanel>
                                             <TextBlock Grid.Column="2" VerticalAlignment="Center"
@@ -185,7 +185,7 @@
                                                     IsVisible="{Binding IsCalculated}"
                                                     Tag="{Binding HashValue}"
                                                     Click="CopyHash_OnClick"
-                                                    ToolTip.Tip="Copy">
+                                                    ToolTip.Tip="{DynamicResource Common.Action.Copy}">
                                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                            Text="&#xE8C8;" FontSize="14" />
                                             </Button>
@@ -228,8 +228,8 @@
                         BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                         BorderThickness="0,1,0,0">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,0" Spacing="12">
-                        <Button Width="96" Classes="accent" Click="Save_OnClick" Content="Save" />
-                        <Button Width="96" Click="Cancel_OnClick" Content="Cancel" />
+                        <Button Width="96" Classes="accent" Click="Save_OnClick" Content="{DynamicResource Common.Action.Save}" />
+                        <Button Width="96" Click="Cancel_OnClick" Content="{DynamicResource Common.Action.Cancel}" />
                     </StackPanel>
                 </Border>
             </Grid>

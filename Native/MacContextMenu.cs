@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using MacExplorer.Localization;
 
 namespace MacExplorer.Native;
 
@@ -180,14 +181,14 @@ internal static class MacContextMenu
         e.Handled = true;
         Show(
         [
-            new("Undo", box.Undo, box.CanUndo),
-            new("Redo", box.Redo, box.CanRedo),
+            new(Lang.Text("Common.Action.Undo"), box.Undo, box.CanUndo),
+            new(Lang.Text("Common.Action.Redo"), box.Redo, box.CanRedo),
             new("", Separator: true),
-            new("Cut", box.Cut, box.CanCut),
-            new("Copy", box.Copy, box.CanCopy),
-            new("Paste", box.Paste, box.CanPaste),
+            new(Lang.Text("Common.Action.Cut"), box.Cut, box.CanCut),
+            new(Lang.Text("Common.Action.Copy"), box.Copy, box.CanCopy),
+            new(Lang.Text("Common.Action.Paste"), box.Paste, box.CanPaste),
             new("", Separator: true),
-            new("Select All", box.SelectAll, box.Text is { Length: > 0 }),
+            new(Lang.Text("Common.Action.SelectAll"), box.SelectAll, box.Text is { Length: > 0 }),
         ]);
     }
 

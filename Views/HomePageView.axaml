@@ -6,7 +6,7 @@
     <ScrollViewer>
         <StackPanel Margin="8,8,16,16" Spacing="20">
             <StackPanel Spacing="8" IsVisible="{Binding ShowQuickAccess}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Quick Access" />
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.QuickAccess}" />
                 <ItemsControl ItemsSource="{Binding QuickAccess}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -36,7 +36,7 @@
             </StackPanel>
 
             <StackPanel Spacing="8" IsVisible="{Binding ShowVolumes}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Drives" />
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.Drives}" />
                 <ItemsControl ItemsSource="{Binding Drives}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -66,7 +66,7 @@
             </StackPanel>
 
             <StackPanel Spacing="8" IsVisible="{Binding ShowRecents}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="Recent files" />
+                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.RecentFiles}" />
                 <ItemsControl ItemsSource="{Binding Recents}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:HomeCard">

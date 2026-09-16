@@ -10,6 +10,7 @@ using Avalonia.VisualTree;
 using Avalonia.Media;
 using MacExplorer.Controls;
 using MacExplorer.Lifecycle;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
@@ -473,32 +474,32 @@ public partial class FolderView : UserControl
 
         return
         [
-            new("Open", () => tab.OpenCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Open"), () => tab.OpenCommand.Execute(null)),
             ..OpenWindowEntry(selected),
-            new("Show in Finder", () => tab.RevealCommand.Execute(null)),
+            new(Lang.Text("Context.ShowInFinder"), () => tab.RevealCommand.Execute(null)),
             ..FavoriteEntry(selected),
             new("", Separator: true),
-            new("Cut", () => tab.CutCommand.Execute(null)),
-            new("Copy", () => tab.CopyCommand.Execute(null)),
-            new("Paste", () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
+            new(Lang.Text("Common.Action.Cut"), () => tab.CutCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Copy"), () => tab.CopyCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
             new("", Separator: true),
-            new("Rename", () => tab.RenameCommand.Execute(null)),
-            new("Delete", () => tab.DeleteCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Rename"), () => tab.RenameCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Delete"), () => tab.DeleteCommand.Execute(null)),
             new("", Separator: true),
-            new("Tags", Children:
+            new(Lang.Text("Context.Tags"), Children:
             [
                 ..tagItems,
                 new("", Separator: true),
-                new("Remove Tags", () => _ = tab.RemoveTagsAsync(), selected.Any(i => i.HasTags)),
+                new(Lang.Text("Context.RemoveTags"), () => _ = tab.RemoveTagsAsync(), selected.Any(i => i.HasTags)),
             ]),
-            new("Share", Children:
+            new(Lang.Text("Context.Share"), Children:
             [
-                new("AirDrop", () => tab.ShareCommand.Execute("com.apple.share.AirDrop.send")),
-                new("Mail", () => tab.ShareCommand.Execute("com.apple.share.Mail.compose")),
-                new("Messages", () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
+                new(Lang.Text("Context.AirDrop"), () => tab.ShareCommand.Execute("com.apple.share.AirDrop.send")),
+                new(Lang.Text("Context.Mail"), () => tab.ShareCommand.Execute("com.apple.share.Mail.compose")),
+                new(Lang.Text("Context.Messages"), () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
             ]),
             new("", Separator: true),
-            new("Properties", OpenProperties),
+            new(Lang.Text("Toolbar.Properties"), OpenProperties),
         ];
     }
 
@@ -507,7 +508,7 @@ public partial class FolderView : UserControl
         var folders = selected.Where(i => i.IsDirectory).Select(i => i.Path).ToArray();
         return folders.Length == 0 ? [] :
         [
-            new("Open in New Window", () =>
+            new(Lang.Text("Tab.OpenInNewWindow"), () =>
             {
                 foreach (var path in folders)
                     AppServices.Get<WindowService>().OpenWindow(path);
@@ -524,23 +525,23 @@ public partial class FolderView : UserControl
         [
             new("", Separator: true),
             MacFinder.IsFavorite(path)
-                ? new("Unfavorite", () => MacFinder.RemoveFavorite(path))
-                : new("Favorite", () => MacFinder.AddFavorite(path)),
+                ? new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path))
+                : new(Lang.Text("Context.Favorite"), () => MacFinder.AddFavorite(path)),
         ];
     }
 
     private MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
     [
-        new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
+        new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
         new("", Separator: true),
-        new("New folder", () => tab.NewFolderCommand.Execute(null)),
-        new("New file", () => tab.NewFileCommand.Execute(null)),
+        new(Lang.Text("Context.NewFolder"), () => tab.NewFolderCommand.Execute(null)),
+        new(Lang.Text("Context.NewFile"), () => tab.NewFileCommand.Execute(null)),
         new("", Separator: true),
-        new("Paste", () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
-        new("Group by", Children: GroupByMenu(tab)),
-        new("Refresh", () => tab.RefreshCommand.Execute(null)),
+        new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
+        new(Lang.Text("Group.By"), Children: GroupByMenu(tab)),
+        new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null)),
         new("", Separator: true),
-        new("Properties", OpenProperties),
+        new(Lang.Text("Toolbar.Properties"), OpenProperties),
     ];
 
     private static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
@@ -550,40 +551,40 @@ public partial class FolderView : UserControl
         var grouped = option is not GroupOption.None;
         var items = new List<MacMenuEntry>
         {
-            new("None", () => tab.SetGroup("None"), Checked: option is GroupOption.None),
-            new("Name", () => tab.SetGroup("Name"), Checked: option is GroupOption.Name),
-            new("Date modified", Children:
+            new(Lang.Text("Group.None"), () => tab.SetGroup("None"), Checked: option is GroupOption.None),
+            new(Lang.Text("Group.Name"), () => tab.SetGroup("Name"), Checked: option is GroupOption.Name),
+            new(Lang.Text("Group.DateModified"), Children:
             [
-                new("Year", () => tab.SetGroup("DateModified:Year"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Year),
-                new("Month", () => tab.SetGroup("DateModified:Month"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Month),
-                new("Day", () => tab.SetGroup("DateModified:Day"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Day),
+                new(Lang.Text("Group.Year"), () => tab.SetGroup("DateModified:Year"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Year),
+                new(Lang.Text("Group.Month"), () => tab.SetGroup("DateModified:Month"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Month),
+                new(Lang.Text("Group.Day"), () => tab.SetGroup("DateModified:Day"), Checked: option is GroupOption.DateModified && unit is GroupByDateUnit.Day),
             ]),
-            new("Date created", Children:
+            new(Lang.Text("Group.DateCreated"), Children:
             [
-                new("Year", () => tab.SetGroup("DateCreated:Year"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Year),
-                new("Month", () => tab.SetGroup("DateCreated:Month"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Month),
-                new("Day", () => tab.SetGroup("DateCreated:Day"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Day),
+                new(Lang.Text("Group.Year"), () => tab.SetGroup("DateCreated:Year"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Year),
+                new(Lang.Text("Group.Month"), () => tab.SetGroup("DateCreated:Month"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Month),
+                new(Lang.Text("Group.Day"), () => tab.SetGroup("DateCreated:Day"), Checked: option is GroupOption.DateCreated && unit is GroupByDateUnit.Day),
             ]),
-            new("Type", () => tab.SetGroup("FileType"), Checked: option is GroupOption.FileType),
-            new("Size", () => tab.SetGroup("Size"), Checked: option is GroupOption.Size),
-            new("File tags", () => tab.SetGroup("FileTag"), Checked: option is GroupOption.FileTag),
+            new(Lang.Text("Group.Type"), () => tab.SetGroup("FileType"), Checked: option is GroupOption.FileType),
+            new(Lang.Text("Group.Size"), () => tab.SetGroup("Size"), Checked: option is GroupOption.Size),
+            new(Lang.Text("Group.FileTags"), () => tab.SetGroup("FileTag"), Checked: option is GroupOption.FileTag),
         };
         if (tab.CanGroupByOriginalFolder)
-            items.Add(new("Original folder", () => tab.SetGroup("OriginalFolder"), Checked: option is GroupOption.OriginalFolder));
+            items.Add(new(Lang.Text("Group.OriginalFolder"), () => tab.SetGroup("OriginalFolder"), Checked: option is GroupOption.OriginalFolder));
         if (tab.CanGroupByDateDeleted)
         {
-            items.Add(new("Date deleted", Children:
+            items.Add(new(Lang.Text("Group.DateDeleted"), Children:
             [
-                new("Year", () => tab.SetGroup("DateDeleted:Year"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Year),
-                new("Month", () => tab.SetGroup("DateDeleted:Month"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Month),
-                new("Day", () => tab.SetGroup("DateDeleted:Day"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Day),
+                new(Lang.Text("Group.Year"), () => tab.SetGroup("DateDeleted:Year"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Year),
+                new(Lang.Text("Group.Month"), () => tab.SetGroup("DateDeleted:Month"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Month),
+                new(Lang.Text("Group.Day"), () => tab.SetGroup("DateDeleted:Day"), Checked: option is GroupOption.DateDeleted && unit is GroupByDateUnit.Day),
             ]));
         }
         if (tab.CanGroupByFolderPath)
-            items.Add(new("Folder path", () => tab.SetGroup("FolderPath"), Checked: option is GroupOption.FolderPath));
+            items.Add(new(Lang.Text("Group.FolderPath"), () => tab.SetGroup("FolderPath"), Checked: option is GroupOption.FolderPath));
         items.Add(new("", Separator: true));
-        items.Add(new("Ascending", () => tab.SetGroupDirection("Ascending"), grouped, Checked: tab.GroupDirection is SortDirection.Ascending));
-        items.Add(new("Descending", () => tab.SetGroupDirection("Descending"), grouped, Checked: tab.GroupDirection is SortDirection.Descending));
+        items.Add(new(Lang.Text("Group.Ascending"), () => tab.SetGroupDirection("Ascending"), grouped, Checked: tab.GroupDirection is SortDirection.Ascending));
+        items.Add(new(Lang.Text("Group.Descending"), () => tab.SetGroupDirection("Descending"), grouped, Checked: tab.GroupDirection is SortDirection.Descending));
         return [.. items];
     }
 
@@ -592,11 +593,11 @@ public partial class FolderView : UserControl
         var columns = DetailsColumns.Shared;
         return
         [
-            new("Tags", () => columns.ShowTags = !columns.ShowTags, Checked: columns.ShowTags),
-            new("Date modified", () => columns.ShowDateModified = !columns.ShowDateModified, Checked: columns.ShowDateModified),
-            new("Date created", () => columns.ShowDateCreated = !columns.ShowDateCreated, Checked: columns.ShowDateCreated),
-            new("Type", () => columns.ShowType = !columns.ShowType, Checked: columns.ShowType),
-            new("Size", () => columns.ShowSize = !columns.ShowSize, Checked: columns.ShowSize),
+            new(Lang.Text("Column.Tags"), () => columns.ShowTags = !columns.ShowTags, Checked: columns.ShowTags),
+            new(Lang.Text("Column.DateModified"), () => columns.ShowDateModified = !columns.ShowDateModified, Checked: columns.ShowDateModified),
+            new(Lang.Text("Column.DateCreated"), () => columns.ShowDateCreated = !columns.ShowDateCreated, Checked: columns.ShowDateCreated),
+            new(Lang.Text("Column.Type"), () => columns.ShowType = !columns.ShowType, Checked: columns.ShowType),
+            new(Lang.Text("Column.Size"), () => columns.ShowSize = !columns.ShowSize, Checked: columns.ShowSize),
         ];
     }
 

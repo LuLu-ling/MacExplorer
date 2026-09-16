@@ -1,10 +1,10 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
-
 namespace MacExplorer.ViewModels;
 
 public sealed partial class SidebarViewModel : ViewModelBase
@@ -31,13 +31,13 @@ public sealed partial class SidebarViewModel : ViewModelBase
         Items.Add(new SidebarItem
         {
             Id = "home",
-            Title = "Home",
+            Title = Lang.Text("Places.Home"),
             Glyph = Glyphs.ForPath(SpecialFolders.HomeKey),
             Kind = SidebarKind.Home,
             Path = SpecialFolders.HomeKey
         });
 
-        AddSection("favorites", "Favorites", Glyphs.Pin, MacFinder.FavoriteFolders().Select(pin => new SidebarItem
+        AddSection("favorites", Lang.Text("Places.Favorites"), Glyphs.Pin, MacFinder.FavoriteFolders().Select(pin => new SidebarItem
         {
             Id = "pin:" + pin,
             Title = Path.GetFileName(pin.TrimEnd('/')) is { Length: > 0 } n ? n : pin,
@@ -52,14 +52,14 @@ public sealed partial class SidebarViewModel : ViewModelBase
             Items.Add(new SidebarItem
             {
                 Id = "icloud",
-                Title = "iCloud Drive",
+                Title = Lang.Text("Places.iCloudDrive"),
                 Glyph = Glyphs.ForPath(SpecialFolders.ICloud),
                 Kind = SidebarKind.Cloud,
                 Path = SpecialFolders.ICloud
             });
         }
 
-        AddSection("locations", "Locations", Glyphs.Drive, _volumes.List().Select(v => new SidebarItem
+        AddSection("locations", Lang.Text("Places.Locations"), Glyphs.Drive, _volumes.List().Select(v => new SidebarItem
         {
             Id = "vol:" + v.Path,
             Title = v.Name,
@@ -70,14 +70,14 @@ public sealed partial class SidebarViewModel : ViewModelBase
         }).Append(new SidebarItem
         {
             Id = "trash",
-            Title = "Trash",
+            Title = Lang.Text("Places.Trash"),
             Glyph = Glyphs.ForPath(SpecialFolders.Trash),
             Kind = SidebarKind.Location,
             Path = SpecialFolders.Trash,
             Depth = 1
         }));
 
-        AddSection("tags", "File tags", Glyphs.Tag,
+        AddSection("tags", Lang.Text("Places.FileTags"), Glyphs.Tag,
             MacTags.All().Select(Tag));
 
         if (selectedId is not null)
@@ -175,6 +175,8 @@ public sealed partial class SidebarViewModel : ViewModelBase
             item.Marker = MacTags.Resolve(item.Title).Brush;
         }
     }
+
+    protected override void OnLanguageChanged() => Rebuild();
 
 
     private static int MatchScore(SidebarItem item, string path)

@@ -1,3 +1,5 @@
+using MacExplorer.Localization;
+
 namespace MacExplorer.Native;
 
 public readonly record struct MacFileResult(bool Ok, string? Error, string? ResultPath = null);
@@ -54,7 +56,7 @@ internal static class MacFileManager
             ObjC.NsString(path), data, IntPtr.Zero);
         return ok
             ? new MacFileResult(true, null, path)
-            : new MacFileResult(false, "Unable to create the file.");
+            : new MacFileResult(false, Lang.Text("File.Error.CreateFailed"));
     }
 
     private static MacFileResult Invoke(string selector, string source, string destination)

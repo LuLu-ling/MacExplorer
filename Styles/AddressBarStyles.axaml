@@ -93,15 +93,15 @@
                           Height="34" VerticalAlignment="Center" Background="Transparent">
                         <Grid Name="PART_RootHost" ColumnDefinitions="Auto,Auto" VerticalAlignment="Center">
                             <Button Name="PART_RootButton" Classes="AddressSegment AddressRoot"
-                                    AutomationProperties.Name="Home" ToolTip.Tip="Home">
+                                    AutomationProperties.Name="{DynamicResource Places.Home}" ToolTip.Tip="{DynamicResource Places.Home}">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
                                            FontSize="16" Width="16" Text="&#xE80F;"
                                            VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                             </Button>
                             <Button Name="PART_RootArrow" Grid.Column="1" Classes="AddressSegment AddressArrow"
-                                    AutomationProperties.Name="Show Quick Access and Drives"
-                                    ToolTip.Tip="Show Quick Access and Drives">
+                                    AutomationProperties.Name="{DynamicResource Address.ShowQuickAccessAndDrives}"
+                                    ToolTip.Tip="{DynamicResource Address.ShowQuickAccessAndDrives}">
                                 <PathIcon Classes="AddressChevron" Data="M1,1 L5,5 L1,9 L2,10 L7,5 L2,0 Z" />
                             </Button>
                         </Grid>
@@ -110,8 +110,8 @@
                     </Grid>
                     <Grid Name="PART_EditorHost" IsVisible="False">
                         <TextBox Name="PART_Editor" Theme="{StaticResource AddressEditorTheme}" FontSize="14"
-                                 Foreground="{TemplateBinding Foreground}" PlaceholderText="Enter a path"
-                                 AutomationProperties.Name="Folder path" AcceptsReturn="False" AcceptsTab="False" />
+                                 Foreground="{TemplateBinding Foreground}" PlaceholderText="{DynamicResource Address.Placeholder}"
+                                 AutomationProperties.Name="{DynamicResource Address.FolderPath}" AcceptsReturn="False" AcceptsTab="False" />
                         <Border Width="46" Height="34" Margin="3,0,0,0" CornerRadius="17"
                                 HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False">
                             <PathIcon Width="16" Height="16" Data="{StaticResource AddressPathGlyph}"
@@ -177,6 +177,7 @@
     </Style>
 
     <Style Selector="ctrl|SearchField">
+        <Setter Property="Placeholder" Value="{DynamicResource Search.Placeholder}" />
         <Setter Property="Height" Value="38" />
         <Setter Property="MinWidth" Value="120" />
         <Setter Property="Width" Value="240" />
@@ -198,7 +199,7 @@
                              FontSize="{TemplateBinding FontSize}" Foreground="{TemplateBinding Foreground}"
                              Text="{Binding Text, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                              PlaceholderText="{TemplateBinding Placeholder}"
-                             AutomationProperties.Name="Search" AcceptsReturn="False" AcceptsTab="False" />
+                             AutomationProperties.Name="{DynamicResource Search.AutomationName}" AcceptsReturn="False" AcceptsTab="False" />
                     <Border Width="36" Height="34" Margin="3,0,0,0" CornerRadius="17"
                             HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False">
                         <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="14"
@@ -206,7 +207,7 @@
                                    Foreground="{DynamicResource App.Theme.IconBaseBrush}" />
                     </Border>
                     <Button Name="PART_Clear" Classes="SearchClear"
-                            AutomationProperties.Name="Clear" ToolTip.Tip="Clear">
+                            AutomationProperties.Name="{DynamicResource Search.Clear}" ToolTip.Tip="{DynamicResource Search.Clear}">
                         <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE711;" FontSize="12" />
                     </Button>
                 </Grid>

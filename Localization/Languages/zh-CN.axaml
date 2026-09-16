@@ -1,0 +1,362 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xml:space="preserve">
+
+    <!-- Meta -->
+    <x:String x:Key="Meta.Code">zh-CN</x:String>
+    <x:String x:Key="Meta.Name">简体中文</x:String>
+
+    <!-- Common -->
+    <x:String x:Key="Common.Action.Cancel">取消</x:String>
+    <x:String x:Key="Common.Action.OK">确定</x:String>
+    <x:String x:Key="Common.Action.Save">保存</x:String>
+    <x:String x:Key="Common.Action.Delete">删除</x:String>
+    <x:String x:Key="Common.Action.Remove">移除</x:String>
+    <x:String x:Key="Common.Action.Copy">复制</x:String>
+    <x:String x:Key="Common.Action.Cut">剪切</x:String>
+    <x:String x:Key="Common.Action.Paste">粘贴</x:String>
+    <x:String x:Key="Common.Action.Open">打开</x:String>
+    <x:String x:Key="Common.Action.Rename">重命名</x:String>
+    <x:String x:Key="Common.Action.Refresh">刷新</x:String>
+    <x:String x:Key="Common.Action.Share">共享</x:String>
+    <x:String x:Key="Common.Action.Undo">撤销</x:String>
+    <x:String x:Key="Common.Action.Redo">重做</x:String>
+    <x:String x:Key="Common.Action.SelectAll">全选</x:String>
+    <x:String x:Key="Common.Error.Unknown">未知错误</x:String>
+
+    <!-- Places -->
+    <x:String x:Key="Places.Home">主页</x:String>
+    <x:String x:Key="Places.Settings">设置</x:String>
+    <x:String x:Key="Places.Favorites">个人收藏</x:String>
+    <x:String x:Key="Places.Locations">位置</x:String>
+    <x:String x:Key="Places.Trash">废纸篓</x:String>
+    <x:String x:Key="Places.FileTags">文件标签</x:String>
+    <x:String x:Key="Places.iCloudDrive">iCloud 云盘</x:String>
+    <x:String x:Key="Places.Desktop">桌面</x:String>
+    <x:String x:Key="Places.Documents">文稿</x:String>
+    <x:String x:Key="Places.Downloads">下载</x:String>
+    <x:String x:Key="Places.Applications">应用程序</x:String>
+    <x:String x:Key="Places.Computer">电脑</x:String>
+    <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
+    <x:String x:Key="Places.QuickAccess">快速访问</x:String>
+    <x:String x:Key="Places.Drives">磁盘</x:String>
+    <x:String x:Key="Places.RecentFiles">最近的文件</x:String>
+
+    <!-- Window -->
+    <x:String x:Key="Window.Title.Format">{0} – MacExplorer</x:String>
+
+    <!-- Tab -->
+    <x:String x:Key="Tab.New">新建标签页</x:String>
+    <x:String x:Key="Tab.NewWindow">新建窗口</x:String>
+    <x:String x:Key="Tab.OpenInNewWindow">在新窗口中打开</x:String>
+    <x:String x:Key="Tab.Duplicate">复制标签页</x:String>
+    <x:String x:Key="Tab.Close">关闭标签页</x:String>
+    <x:String x:Key="Tab.New.Tip">新建标签页 (⌘T)</x:String>
+
+    <!-- Toolbar -->
+    <x:String x:Key="Toolbar.New">新建</x:String>
+    <x:String x:Key="Toolbar.New.Folder">文件夹</x:String>
+    <x:String x:Key="Toolbar.New.File">文件</x:String>
+    <x:String x:Key="Toolbar.Cut">剪切</x:String>
+    <x:String x:Key="Toolbar.Copy">复制</x:String>
+    <x:String x:Key="Toolbar.Paste">粘贴</x:String>
+    <x:String x:Key="Toolbar.Rename">重命名</x:String>
+    <x:String x:Key="Toolbar.Share">共享</x:String>
+    <x:String x:Key="Toolbar.Delete">删除</x:String>
+    <x:String x:Key="Toolbar.EmptyTrash">清空废纸篓</x:String>
+    <x:String x:Key="Toolbar.Properties">属性</x:String>
+    <x:String x:Key="Toolbar.Back">后退</x:String>
+    <x:String x:Key="Toolbar.Forward">前进</x:String>
+    <x:String x:Key="Toolbar.Up">上一级</x:String>
+    <x:String x:Key="Toolbar.Refresh">刷新</x:String>
+    <x:String x:Key="Toolbar.Selection">选择</x:String>
+    <x:String x:Key="Toolbar.SelectAll">全选</x:String>
+    <x:String x:Key="Toolbar.InvertSelection">反选</x:String>
+    <x:String x:Key="Toolbar.ClearSelection">清除选择</x:String>
+    <x:String x:Key="Toolbar.Sort">排序</x:String>
+    <x:String x:Key="Toolbar.Layout">布局</x:String>
+    <x:String x:Key="Toolbar.InfoPane">信息窗格</x:String>
+
+    <!-- Sort -->
+    <x:String x:Key="Sort.By">排序方式</x:String>
+    <x:String x:Key="Sort.Name">名称</x:String>
+    <x:String x:Key="Sort.DateModified">修改日期</x:String>
+    <x:String x:Key="Sort.DateCreated">创建日期</x:String>
+    <x:String x:Key="Sort.Type">种类</x:String>
+    <x:String x:Key="Sort.Size">大小</x:String>
+
+    <!-- Group -->
+    <x:String x:Key="Group.By">分组方式</x:String>
+    <x:String x:Key="Group.None">无</x:String>
+    <x:String x:Key="Group.Name">名称</x:String>
+    <x:String x:Key="Group.DateModified">修改日期</x:String>
+    <x:String x:Key="Group.DateCreated">创建日期</x:String>
+    <x:String x:Key="Group.Type">种类</x:String>
+    <x:String x:Key="Group.Size">大小</x:String>
+    <x:String x:Key="Group.FileTags">文件标签</x:String>
+    <x:String x:Key="Group.OriginalFolder">原始文件夹</x:String>
+    <x:String x:Key="Group.DateDeleted">删除日期</x:String>
+    <x:String x:Key="Group.FolderPath">文件夹路径</x:String>
+    <x:String x:Key="Group.Year">年</x:String>
+    <x:String x:Key="Group.Month">月</x:String>
+    <x:String x:Key="Group.Day">日</x:String>
+    <x:String x:Key="Group.Ascending">升序</x:String>
+    <x:String x:Key="Group.Descending">降序</x:String>
+    <x:String x:Key="Group.Untagged">无标签</x:String>
+    <x:String x:Key="Group.Size.NotCalculated">未计算项目大小</x:String>
+    <x:String x:Key="Group.Size.Huge">超大</x:String>
+    <x:String x:Key="Group.Size.VeryLarge">很大</x:String>
+    <x:String x:Key="Group.Size.Large">大</x:String>
+    <x:String x:Key="Group.Size.Medium">中</x:String>
+    <x:String x:Key="Group.Size.Small">小</x:String>
+    <x:String x:Key="Group.Size.Tiny">很小</x:String>
+    <x:String x:Key="Group.Size.Range">{0} - {1}</x:String>
+    <x:String x:Key="Group.Size.RangePlus">{0} +</x:String>
+    <x:String x:Key="Group.Size.RangeTiny">0 B - {0}</x:String>
+    <x:String x:Key="Group.Date.Future">未来</x:String>
+    <x:String x:Key="Group.Date.Today">今天</x:String>
+    <x:String x:Key="Group.Date.Yesterday">昨天</x:String>
+    <x:String x:Key="Group.Date.EarlierThisWeek">本周早些时候</x:String>
+    <x:String x:Key="Group.Date.LastWeek">上周</x:String>
+    <x:String x:Key="Group.Date.EarlierThisMonth">本月早些时候</x:String>
+    <x:String x:Key="Group.Date.LastMonth">上个月</x:String>
+    <x:String x:Key="Group.Date.EarlierThisYear">今年早些时候</x:String>
+    <x:String x:Key="Group.Date.LastYear">去年</x:String>
+    <x:String x:Key="Group.Date.Year">{0} 年</x:String>
+    <x:String x:Key="Group.Count.Item">{0} 个项目</x:String>
+    <x:String x:Key="Group.Count.Items">{0} 个项目</x:String>
+
+    <!-- Layout -->
+    <x:String x:Key="Layout.Details">详细信息</x:String>
+    <x:String x:Key="Layout.List">列表</x:String>
+    <x:String x:Key="Layout.Cards">卡片</x:String>
+    <x:String x:Key="Layout.Grid">网格</x:String>
+    <x:String x:Key="Layout.Size">大小</x:String>
+    <x:String x:Key="Layout.Details.Tip">详细信息 (⌘1)</x:String>
+    <x:String x:Key="Layout.List.Tip">列表 (⌘2)</x:String>
+    <x:String x:Key="Layout.Cards.Tip">卡片 (⌘3)</x:String>
+    <x:String x:Key="Layout.Grid.Tip">网格 (⌘4)</x:String>
+
+    <!-- Column -->
+    <x:String x:Key="Column.Name">名称</x:String>
+    <x:String x:Key="Column.Tags">标签</x:String>
+    <x:String x:Key="Column.DateModified">修改日期</x:String>
+    <x:String x:Key="Column.DateCreated">创建日期</x:String>
+    <x:String x:Key="Column.Type">种类</x:String>
+    <x:String x:Key="Column.Size">大小</x:String>
+
+    <!-- Search -->
+    <x:String x:Key="Search.Placeholder">搜索</x:String>
+    <x:String x:Key="Search.Clear">清除</x:String>
+    <x:String x:Key="Search.AutomationName">搜索</x:String>
+
+    <!-- Address -->
+    <x:String x:Key="Address.AutomationName">地址</x:String>
+    <x:String x:Key="Address.Placeholder">输入路径</x:String>
+    <x:String x:Key="Address.FolderPath">文件夹路径</x:String>
+    <x:String x:Key="Address.ShowHiddenComponents">显示隐藏的路径分量</x:String>
+    <x:String x:Key="Address.ShowSubfolders">显示 {0} 的子文件夹</x:String>
+    <x:String x:Key="Address.ShowQuickAccessAndDrives">显示快速访问和磁盘</x:String>
+
+    <!-- Settings -->
+    <x:String x:Key="Settings.Title">设置</x:String>
+    <x:String x:Key="Settings.Nav.Appearance">外观</x:String>
+    <x:String x:Key="Settings.Nav.Language">语言</x:String>
+    <x:String x:Key="Settings.Nav.Folders">文件夹</x:String>
+    <x:String x:Key="Settings.Nav.About">关于</x:String>
+    <x:String x:Key="Settings.Theme">主题</x:String>
+    <x:String x:Key="Settings.Theme.System">使用系统设置</x:String>
+    <x:String x:Key="Settings.Theme.Light">浅色</x:String>
+    <x:String x:Key="Settings.Theme.Dark">深色</x:String>
+    <x:String x:Key="Settings.Language.Title">语言</x:String>
+    <x:String x:Key="Settings.Language.UiLanguage">界面语言</x:String>
+    <x:String x:Key="Settings.Language.Auto">跟随系统</x:String>
+    <x:String x:Key="Settings.Folders.ShowHidden">显示隐藏项目</x:String>
+    <x:String x:Key="Settings.Folders.ShowExtensions">显示文件扩展名</x:String>
+    <x:String x:Key="Settings.Folders.ShowQuickAccess">显示“快速访问”小组件</x:String>
+    <x:String x:Key="Settings.Folders.ShowVolumes">显示“磁盘”小组件</x:String>
+    <x:String x:Key="Settings.Folders.ShowRecents">显示“最近的文件”小组件</x:String>
+    <x:String x:Key="Settings.About.Version">版本 {0}</x:String>
+    <x:String x:Key="Settings.About.Description">一款采用 Files Community 界面、FluentAvalonia 外观，并兼容 Finder 拷贝、剪切、粘贴、重命名和废纸篓操作的 macOS 文件管理器。</x:String>
+
+    <!-- Properties -->
+    <x:String x:Key="Properties.Title">属性</x:String>
+    <x:String x:Key="Properties.Title.Format">{0} – 属性</x:String>
+    <x:String x:Key="Properties.General">通用</x:String>
+    <x:String x:Key="Properties.Hashes">哈希</x:String>
+    <x:String x:Key="Properties.Name">名称</x:String>
+    <x:String x:Key="Properties.Type">种类</x:String>
+    <x:String x:Key="Properties.Location">位置</x:String>
+    <x:String x:Key="Properties.Size">大小</x:String>
+    <x:String x:Key="Properties.SizeOnDisk">占用空间</x:String>
+    <x:String x:Key="Properties.Contains">包含</x:String>
+    <x:String x:Key="Properties.Path">路径</x:String>
+    <x:String x:Key="Properties.Created">创建时间</x:String>
+    <x:String x:Key="Properties.Modified">修改时间</x:String>
+    <x:String x:Key="Properties.Accessed">访问时间</x:String>
+    <x:String x:Key="Properties.Attributes">属性</x:String>
+    <x:String x:Key="Properties.Algorithm">算法</x:String>
+    <x:String x:Key="Properties.HashValue">哈希值</x:String>
+    <x:String x:Key="Properties.SelectHashes">选择要显示的哈希</x:String>
+    <x:String x:Key="Properties.Calculating">正在计算</x:String>
+    <x:String x:Key="Properties.MultipleTypes">多种类型</x:String>
+    <x:String x:Key="Properties.Summary.File">{0} 个文件</x:String>
+    <x:String x:Key="Properties.Summary.Files">{0} 个文件</x:String>
+    <x:String x:Key="Properties.Summary.Folder">{0} 个文件夹</x:String>
+    <x:String x:Key="Properties.Summary.Folders">{0} 个文件夹</x:String>
+    <x:String x:Key="Properties.Summary">{0}，{1}</x:String>
+    <x:String x:Key="Properties.Contents.FilesFolders">{0} 个文件，{1} 个文件夹</x:String>
+    <x:String x:Key="Properties.SaveFailed">无法保存属性</x:String>
+
+    <!-- Explorer -->
+    <x:String x:Key="Explorer.Empty.Folder">此文件夹为空</x:String>
+    <x:String x:Key="Explorer.Empty.Search">没有符合搜索的项目</x:String>
+    <x:String x:Key="Explorer.Empty.Tag">没有带此标签的项目</x:String>
+    <x:String x:Key="Explorer.Status.Item">{0} 个项目</x:String>
+    <x:String x:Key="Explorer.Status.Items">{0} 个项目</x:String>
+    <x:String x:Key="Explorer.Status.Selected">已选择 {0} 个项目</x:String>
+    <x:String x:Key="Explorer.AccessDenied.Title">拒绝访问</x:String>
+    <x:String x:Key="Explorer.AccessDenied.Message">macOS 阻止了对此文件夹的访问。请在“系统设置”中授予“文件和文件夹”权限。</x:String>
+    <x:String x:Key="Explorer.Unavailable.Title">位置不可用</x:String>
+    <x:String x:Key="Explorer.Unavailable.Message">此文件夹不存在或无法找到。</x:String>
+    <x:String x:Key="Explorer.OpenFailed.Title">无法打开此文件夹</x:String>
+    <x:String x:Key="Explorer.OpenItemFailed">无法打开项目</x:String>
+    <x:String x:Key="Explorer.InvalidAddress.Title">地址无效</x:String>
+    <x:String x:Key="Explorer.InvalidAddress.Message">请输入有效的文件夹路径。</x:String>
+    <x:String x:Key="Explorer.NotFound.Message">找不到“{0}”。</x:String>
+    <x:String x:Key="Explorer.RenameFailed">无法重命名</x:String>
+    <x:String x:Key="Explorer.DeleteFailed">无法删除项目</x:String>
+    <x:String x:Key="Explorer.CreateFolderFailed">无法创建文件夹</x:String>
+    <x:String x:Key="Explorer.CreateFileFailed">无法创建文件</x:String>
+
+    <!-- Dialog -->
+    <x:String x:Key="Dialog.DeletePermanently.Title">永久删除？</x:String>
+    <x:String x:Key="Dialog.DeletePermanently.Message">这些项目将被立即删除：&#xA;{0}</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Title">移到废纸篓？</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Message">将 {0} 个项目移到废纸篓？&#xA;{1}</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Action">移到废纸篓</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Title">清空废纸篓？</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Message">项目将被立即删除。</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Action">清空废纸篓</x:String>
+    <x:String x:Key="Dialog.RemoveTags.Title">移除标签？</x:String>
+    <x:String x:Key="Dialog.RemoveTags.Message">从所选项目中移除所有标签？</x:String>
+    <x:String x:Key="Dialog.Conflict.Title">文件已存在</x:String>
+    <x:String x:Key="Dialog.Conflict.Message">“{0}”已存在于此文件夹中。</x:String>
+    <x:String x:Key="Dialog.Conflict.KeepBoth">两个都保留</x:String>
+    <x:String x:Key="Dialog.Conflict.Replace">替换</x:String>
+    <x:String x:Key="Dialog.Conflict.Skip">跳过</x:String>
+    <x:String x:Key="Dialog.EjectFailed.Title">无法推出</x:String>
+    <x:String x:Key="Dialog.EjectFailed.Message">无法推出“{0}”。</x:String>
+
+    <!-- File -->
+    <x:String x:Key="File.Size.Calculating">正在计算…</x:String>
+    <x:String x:Key="File.Size.Bytes">{0} 字节</x:String>
+    <x:String x:Key="File.Size.KB">{0} KB</x:String>
+    <x:String x:Key="File.Size.MB">{0} MB</x:String>
+    <x:String x:Key="File.Size.GB">{0} GB</x:String>
+    <x:String x:Key="File.Type.Folder">文件夹</x:String>
+    <x:String x:Key="File.Type.Document">文稿</x:String>
+    <x:String x:Key="File.Type.ExtensionFile">{0} 文件</x:String>
+    <x:String x:Key="File.CopyPattern">{0}的副本{1}</x:String>
+    <x:String x:Key="File.CopyPatternNumbered">{0}的副本 {2}{1}</x:String>
+    <x:String x:Key="File.NewFolder">新建文件夹</x:String>
+    <x:String x:Key="File.UntitledName">未命名.txt</x:String>
+    <x:String x:Key="File.Tooltip">名称：{0}{1}种类：{2}{1}修改日期：{3}</x:String>
+    <x:String x:Key="File.Tooltip.Size">{0}{1}大小：{2}</x:String>
+
+    <!-- Info -->
+    <x:String x:Key="Info.NoSelection">未选择项目</x:String>
+    <x:String x:Key="Info.ItemType">项目类型</x:String>
+    <x:String x:Key="Info.Path">路径</x:String>
+    <x:String x:Key="Info.Size">大小</x:String>
+    <x:String x:Key="Info.DateModified">修改日期</x:String>
+    <x:String x:Key="Info.DateCreated">创建日期</x:String>
+
+    <!-- Menu -->
+    <x:String x:Key="Menu.File">文件</x:String>
+    <x:String x:Key="Menu.Edit">编辑</x:String>
+    <x:String x:Key="Menu.View">显示</x:String>
+    <x:String x:Key="Menu.Go">前往</x:String>
+    <x:String x:Key="Menu.Window">窗口</x:String>
+    <x:String x:Key="Menu.App.NewWindow">新建窗口</x:String>
+    <x:String x:Key="Menu.App.Settings">设置…</x:String>
+    <x:String x:Key="Menu.App.Quit">退出 MacExplorer</x:String>
+    <x:String x:Key="Menu.File.NewWindow">新建窗口</x:String>
+    <x:String x:Key="Menu.File.NewTab">新建标签页</x:String>
+    <x:String x:Key="Menu.File.NewFolder">新建文件夹</x:String>
+    <x:String x:Key="Menu.File.NewFile">新建文件</x:String>
+    <x:String x:Key="Menu.File.Open">打开</x:String>
+    <x:String x:Key="Menu.File.Rename">重命名</x:String>
+    <x:String x:Key="Menu.File.GetInfo">显示简介</x:String>
+    <x:String x:Key="Menu.File.MoveToTrash">移到废纸篓</x:String>
+    <x:String x:Key="Menu.File.DeletePermanently">永久删除…</x:String>
+    <x:String x:Key="Menu.File.EmptyTrash">清空废纸篓…</x:String>
+    <x:String x:Key="Menu.File.CloseWindow">关闭窗口</x:String>
+    <x:String x:Key="Menu.File.CloseTab">关闭标签页</x:String>
+    <x:String x:Key="Menu.Edit.Find">查找</x:String>
+    <x:String x:Key="Menu.View.AsDetails">详细信息</x:String>
+    <x:String x:Key="Menu.View.AsList">列表</x:String>
+    <x:String x:Key="Menu.View.AsCards">卡片</x:String>
+    <x:String x:Key="Menu.View.AsGrid">网格</x:String>
+    <x:String x:Key="Menu.View.ShowInfoPane">显示信息窗格</x:String>
+    <x:String x:Key="Menu.View.ShowHidden">显示隐藏文件</x:String>
+    <x:String x:Key="Menu.View.ShowExtensions">显示文件扩展名</x:String>
+    <x:String x:Key="Menu.Go.Back">后退</x:String>
+    <x:String x:Key="Menu.Go.Forward">前进</x:String>
+    <x:String x:Key="Menu.Go.EnclosingFolder">上层文件夹</x:String>
+    <x:String x:Key="Menu.Window.Minimize">最小化</x:String>
+    <x:String x:Key="Menu.Window.Zoom">缩放</x:String>
+    <x:String x:Key="Menu.Window.ShowPreviousTab">显示上一个标签页</x:String>
+    <x:String x:Key="Menu.Window.ShowNextTab">显示下一个标签页</x:String>
+    <x:String x:Key="Menu.Window.BringAllToFront">前置全部窗口</x:String>
+
+    <!-- Context -->
+    <x:String x:Key="Context.ShowInFinder">在 Finder 中显示</x:String>
+    <x:String x:Key="Context.Favorite">添加至个人收藏</x:String>
+    <x:String x:Key="Context.Unfavorite">从个人收藏中移除</x:String>
+    <x:String x:Key="Context.Eject">推出</x:String>
+    <x:String x:Key="Context.Tags">标签</x:String>
+    <x:String x:Key="Context.RemoveTags">移除标签</x:String>
+    <x:String x:Key="Context.Share">共享</x:String>
+    <x:String x:Key="Context.AirDrop">隔空投送</x:String>
+    <x:String x:Key="Context.Mail">邮件</x:String>
+    <x:String x:Key="Context.Messages">信息</x:String>
+    <x:String x:Key="Context.NewFolder">新建文件夹</x:String>
+    <x:String x:Key="Context.NewFile">新建文件</x:String>
+
+    <!-- Drag -->
+    <x:String x:Key="Drag.CantDrop">无法拖放到此处</x:String>
+    <x:String x:Key="Drag.MoveTo">移动到{0}</x:String>
+    <x:String x:Key="Drag.CopyTo">拷贝到{0}</x:String>
+    <x:String x:Key="Drag.AddTo">添加到{0}</x:String>
+
+    <!-- Breadcrumb -->
+    <x:String x:Key="Breadcrumb.NoFavorites">没有可用的个人收藏文件夹</x:String>
+    <x:String x:Key="Breadcrumb.NoDrives">没有可用的磁盘</x:String>
+    <x:String x:Key="Breadcrumb.NoSubfolders">没有可显示的子文件夹</x:String>
+
+    <!-- Palette -->
+    <x:String x:Key="Palette.NewTab">新建标签页</x:String>
+    <x:String x:Key="Palette.CloseTab">关闭标签页</x:String>
+    <x:String x:Key="Palette.NewFolder">新建文件夹</x:String>
+    <x:String x:Key="Palette.Copy">复制</x:String>
+    <x:String x:Key="Palette.Cut">剪切</x:String>
+    <x:String x:Key="Palette.Paste">粘贴</x:String>
+    <x:String x:Key="Palette.Properties">属性</x:String>
+    <x:String x:Key="Palette.Delete">删除</x:String>
+    <x:String x:Key="Palette.SelectAll">全选</x:String>
+    <x:String x:Key="Palette.DetailsLayout">详细信息布局</x:String>
+    <x:String x:Key="Palette.ListLayout">列表布局</x:String>
+    <x:String x:Key="Palette.CardsLayout">卡片布局</x:String>
+    <x:String x:Key="Palette.GridLayout">网格布局</x:String>
+    <x:String x:Key="Palette.ToggleInfoPane">切换信息窗格</x:String>
+    <x:String x:Key="Palette.Settings">设置</x:String>
+
+    <!-- File.Error -->
+    <x:String x:Key="File.Error.CreateFailed">无法创建该文件。</x:String>
+    <x:String x:Key="File.Error.InvalidName">名称无效。</x:String>
+    <x:String x:Key="File.Error.InvalidCharacters">名称包含无效字符。</x:String>
+    <x:String x:Key="File.Error.NameExists">已存在同名项目。</x:String>
+    <x:String x:Key="Properties.Hash.FileOpen">无法计算哈希，因为文件正在使用中。</x:String>
+    <x:String x:Key="Properties.Hash.Failed">无法计算哈希。</x:String>
+</ResourceDictionary>

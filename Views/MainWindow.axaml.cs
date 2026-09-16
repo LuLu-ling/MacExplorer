@@ -16,6 +16,7 @@ using MacExplorer.Services;
 using MacExplorer.ViewModels;
 
 
+using MacExplorer.Localization;
 namespace MacExplorer.Views;
 
 public partial class MainWindow : FAAppWindow
@@ -166,11 +167,11 @@ public partial class MainWindow : FAAppWindow
         border.BringIntoView();
         MacContextMenu.Show(
         [
-            new("New tab", () => VM.NewTab()),
-            new("New Window", () => AppServices.Get<WindowService>().OpenWindow()),
-            new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
-            new("Duplicate tab", () => VM.DuplicateTab()),
-            new("Close tab", () => VM.CloseTab(tab), VM.CanCloseTab),
+            new(Lang.Text("Tab.New"), () => VM.NewTab()),
+            new(Lang.Text("Tab.NewWindow"), () => AppServices.Get<WindowService>().OpenWindow()),
+            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
+            new(Lang.Text("Tab.Duplicate"), () => VM.DuplicateTab()),
+            new(Lang.Text("Tab.Close"), () => VM.CloseTab(tab), VM.CanCloseTab),
         ]);
     }
 
@@ -403,21 +404,21 @@ public partial class MainWindow : FAAppWindow
         {
             SidebarKind.Favorite =>
             [
-                new("Unfavorite", () => MacFinder.RemoveFavorite(path)),
+                new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path)),
                 new("", Separator: true),
-                new("Properties", () => ShowProperties(path)),
+                new(Lang.Text("Toolbar.Properties"), () => ShowProperties(path)),
             ],
             SidebarKind.Location when MacWorkspace.IsDiskImage(path) =>
             [
-                new("Eject", () => _ = VM!.EjectVolumeAsync(path)),
+                new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path)),
                 new("", Separator: true),
-                new("Properties", () => ShowProperties(path)),
+                new(Lang.Text("Toolbar.Properties"), () => ShowProperties(path)),
             ],
             _ => []
         };
         if (item.IsSection)
             return actions;
-        return [new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(path)), ..actions];
+        return [new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path)), ..actions];
     }
 
     private void Sidebar_OnDragOver(object? sender, DragEventArgs e)
@@ -662,11 +663,11 @@ public partial class MainWindow : FAAppWindow
     {
         var dialog = new FAContentDialog
         {
-            Title = "File already exists",
-            Content = $"“{name}” already exists in this folder.",
-            PrimaryButtonText = "Keep both",
-            SecondaryButtonText = "Replace",
-            CloseButtonText = "Skip",
+            Title = Lang.Text("Dialog.Conflict.Title"),
+            Content = Lang.Text("Dialog.Conflict.Message", name),
+            PrimaryButtonText = Lang.Text("Dialog.Conflict.KeepBoth"),
+            SecondaryButtonText = Lang.Text("Dialog.Conflict.Replace"),
+            CloseButtonText = Lang.Text("Dialog.Conflict.Skip"),
             DefaultButton = FAContentDialogButton.Primary
         };
         var result = await dialog.ShowAsync(this);
@@ -684,7 +685,7 @@ public partial class MainWindow : FAAppWindow
         {
             Title = title,
             Content = message,
-            PrimaryButtonText = "OK",
+            PrimaryButtonText = Lang.Text("Common.Action.OK"),
             DefaultButton = FAContentDialogButton.Primary
         };
         await dialog.ShowAsync(this);

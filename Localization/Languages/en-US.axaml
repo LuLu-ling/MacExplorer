@@ -1,0 +1,362 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xml:space="preserve">
+
+    <!-- Meta -->
+    <x:String x:Key="Meta.Code">en-US</x:String>
+    <x:String x:Key="Meta.Name">English</x:String>
+
+    <!-- Common -->
+    <x:String x:Key="Common.Action.Cancel">Cancel</x:String>
+    <x:String x:Key="Common.Action.OK">OK</x:String>
+    <x:String x:Key="Common.Action.Save">Save</x:String>
+    <x:String x:Key="Common.Action.Delete">Delete</x:String>
+    <x:String x:Key="Common.Action.Remove">Remove</x:String>
+    <x:String x:Key="Common.Action.Copy">Copy</x:String>
+    <x:String x:Key="Common.Action.Cut">Cut</x:String>
+    <x:String x:Key="Common.Action.Paste">Paste</x:String>
+    <x:String x:Key="Common.Action.Open">Open</x:String>
+    <x:String x:Key="Common.Action.Rename">Rename</x:String>
+    <x:String x:Key="Common.Action.Refresh">Refresh</x:String>
+    <x:String x:Key="Common.Action.Share">Share</x:String>
+    <x:String x:Key="Common.Action.Undo">Undo</x:String>
+    <x:String x:Key="Common.Action.Redo">Redo</x:String>
+    <x:String x:Key="Common.Action.SelectAll">Select All</x:String>
+    <x:String x:Key="Common.Error.Unknown">Unknown error</x:String>
+
+    <!-- Places -->
+    <x:String x:Key="Places.Home">Home</x:String>
+    <x:String x:Key="Places.Settings">Settings</x:String>
+    <x:String x:Key="Places.Favorites">Favorites</x:String>
+    <x:String x:Key="Places.Locations">Locations</x:String>
+    <x:String x:Key="Places.Trash">Trash</x:String>
+    <x:String x:Key="Places.FileTags">File tags</x:String>
+    <x:String x:Key="Places.iCloudDrive">iCloud Drive</x:String>
+    <x:String x:Key="Places.Desktop">Desktop</x:String>
+    <x:String x:Key="Places.Documents">Documents</x:String>
+    <x:String x:Key="Places.Downloads">Downloads</x:String>
+    <x:String x:Key="Places.Applications">Applications</x:String>
+    <x:String x:Key="Places.Computer">Computer</x:String>
+    <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
+    <x:String x:Key="Places.QuickAccess">Quick Access</x:String>
+    <x:String x:Key="Places.Drives">Drives</x:String>
+    <x:String x:Key="Places.RecentFiles">Recent files</x:String>
+
+    <!-- Window -->
+    <x:String x:Key="Window.Title.Format">{0} – MacExplorer</x:String>
+
+    <!-- Tab -->
+    <x:String x:Key="Tab.New">New tab</x:String>
+    <x:String x:Key="Tab.NewWindow">New Window</x:String>
+    <x:String x:Key="Tab.OpenInNewWindow">Open in New Window</x:String>
+    <x:String x:Key="Tab.Duplicate">Duplicate tab</x:String>
+    <x:String x:Key="Tab.Close">Close tab</x:String>
+    <x:String x:Key="Tab.New.Tip">New tab (⌘T)</x:String>
+
+    <!-- Toolbar -->
+    <x:String x:Key="Toolbar.New">New</x:String>
+    <x:String x:Key="Toolbar.New.Folder">Folder</x:String>
+    <x:String x:Key="Toolbar.New.File">File</x:String>
+    <x:String x:Key="Toolbar.Cut">Cut</x:String>
+    <x:String x:Key="Toolbar.Copy">Copy</x:String>
+    <x:String x:Key="Toolbar.Paste">Paste</x:String>
+    <x:String x:Key="Toolbar.Rename">Rename</x:String>
+    <x:String x:Key="Toolbar.Share">Share</x:String>
+    <x:String x:Key="Toolbar.Delete">Delete</x:String>
+    <x:String x:Key="Toolbar.EmptyTrash">Empty Trash</x:String>
+    <x:String x:Key="Toolbar.Properties">Properties</x:String>
+    <x:String x:Key="Toolbar.Back">Back</x:String>
+    <x:String x:Key="Toolbar.Forward">Forward</x:String>
+    <x:String x:Key="Toolbar.Up">Up</x:String>
+    <x:String x:Key="Toolbar.Refresh">Refresh</x:String>
+    <x:String x:Key="Toolbar.Selection">Selection</x:String>
+    <x:String x:Key="Toolbar.SelectAll">Select all</x:String>
+    <x:String x:Key="Toolbar.InvertSelection">Invert selection</x:String>
+    <x:String x:Key="Toolbar.ClearSelection">Clear selection</x:String>
+    <x:String x:Key="Toolbar.Sort">Sort</x:String>
+    <x:String x:Key="Toolbar.Layout">Layout</x:String>
+    <x:String x:Key="Toolbar.InfoPane">Info pane</x:String>
+
+    <!-- Sort -->
+    <x:String x:Key="Sort.By">Sort by</x:String>
+    <x:String x:Key="Sort.Name">Name</x:String>
+    <x:String x:Key="Sort.DateModified">Date modified</x:String>
+    <x:String x:Key="Sort.DateCreated">Date created</x:String>
+    <x:String x:Key="Sort.Type">Type</x:String>
+    <x:String x:Key="Sort.Size">Size</x:String>
+
+    <!-- Group -->
+    <x:String x:Key="Group.By">Group by</x:String>
+    <x:String x:Key="Group.None">None</x:String>
+    <x:String x:Key="Group.Name">Name</x:String>
+    <x:String x:Key="Group.DateModified">Date modified</x:String>
+    <x:String x:Key="Group.DateCreated">Date created</x:String>
+    <x:String x:Key="Group.Type">Type</x:String>
+    <x:String x:Key="Group.Size">Size</x:String>
+    <x:String x:Key="Group.FileTags">File tags</x:String>
+    <x:String x:Key="Group.OriginalFolder">Original folder</x:String>
+    <x:String x:Key="Group.DateDeleted">Date deleted</x:String>
+    <x:String x:Key="Group.FolderPath">Folder path</x:String>
+    <x:String x:Key="Group.Year">Year</x:String>
+    <x:String x:Key="Group.Month">Month</x:String>
+    <x:String x:Key="Group.Day">Day</x:String>
+    <x:String x:Key="Group.Ascending">Ascending</x:String>
+    <x:String x:Key="Group.Descending">Descending</x:String>
+    <x:String x:Key="Group.Untagged">Untagged</x:String>
+    <x:String x:Key="Group.Size.NotCalculated">Item size not calculated</x:String>
+    <x:String x:Key="Group.Size.Huge">Huge</x:String>
+    <x:String x:Key="Group.Size.VeryLarge">Very large</x:String>
+    <x:String x:Key="Group.Size.Large">Large</x:String>
+    <x:String x:Key="Group.Size.Medium">Medium</x:String>
+    <x:String x:Key="Group.Size.Small">Small</x:String>
+    <x:String x:Key="Group.Size.Tiny">Tiny</x:String>
+    <x:String x:Key="Group.Size.Range">{0} - {1}</x:String>
+    <x:String x:Key="Group.Size.RangePlus">{0} +</x:String>
+    <x:String x:Key="Group.Size.RangeTiny">0 B - {0}</x:String>
+    <x:String x:Key="Group.Date.Future">Future</x:String>
+    <x:String x:Key="Group.Date.Today">Today</x:String>
+    <x:String x:Key="Group.Date.Yesterday">Yesterday</x:String>
+    <x:String x:Key="Group.Date.EarlierThisWeek">Earlier this week</x:String>
+    <x:String x:Key="Group.Date.LastWeek">Last week</x:String>
+    <x:String x:Key="Group.Date.EarlierThisMonth">Earlier this month</x:String>
+    <x:String x:Key="Group.Date.LastMonth">Last month</x:String>
+    <x:String x:Key="Group.Date.EarlierThisYear">Earlier this year</x:String>
+    <x:String x:Key="Group.Date.LastYear">Last year</x:String>
+    <x:String x:Key="Group.Date.Year">Year {0}</x:String>
+    <x:String x:Key="Group.Count.Item">{0} item</x:String>
+    <x:String x:Key="Group.Count.Items">{0} items</x:String>
+
+    <!-- Layout -->
+    <x:String x:Key="Layout.Details">Details</x:String>
+    <x:String x:Key="Layout.List">List</x:String>
+    <x:String x:Key="Layout.Cards">Cards</x:String>
+    <x:String x:Key="Layout.Grid">Grid</x:String>
+    <x:String x:Key="Layout.Size">Size</x:String>
+    <x:String x:Key="Layout.Details.Tip">Details (⌘1)</x:String>
+    <x:String x:Key="Layout.List.Tip">List (⌘2)</x:String>
+    <x:String x:Key="Layout.Cards.Tip">Cards (⌘3)</x:String>
+    <x:String x:Key="Layout.Grid.Tip">Grid (⌘4)</x:String>
+
+    <!-- Column -->
+    <x:String x:Key="Column.Name">Name</x:String>
+    <x:String x:Key="Column.Tags">Tags</x:String>
+    <x:String x:Key="Column.DateModified">Date modified</x:String>
+    <x:String x:Key="Column.DateCreated">Date created</x:String>
+    <x:String x:Key="Column.Type">Type</x:String>
+    <x:String x:Key="Column.Size">Size</x:String>
+
+    <!-- Search -->
+    <x:String x:Key="Search.Placeholder">Search</x:String>
+    <x:String x:Key="Search.Clear">Clear</x:String>
+    <x:String x:Key="Search.AutomationName">Search</x:String>
+
+    <!-- Address -->
+    <x:String x:Key="Address.AutomationName">Address</x:String>
+    <x:String x:Key="Address.Placeholder">Enter a path</x:String>
+    <x:String x:Key="Address.FolderPath">Folder path</x:String>
+    <x:String x:Key="Address.ShowHiddenComponents">Show hidden path components</x:String>
+    <x:String x:Key="Address.ShowSubfolders">Show subfolders of {0}</x:String>
+    <x:String x:Key="Address.ShowQuickAccessAndDrives">Show Quick Access and Drives</x:String>
+
+    <!-- Settings -->
+    <x:String x:Key="Settings.Title">Settings</x:String>
+    <x:String x:Key="Settings.Nav.Appearance">Appearance</x:String>
+    <x:String x:Key="Settings.Nav.Language">Language</x:String>
+    <x:String x:Key="Settings.Nav.Folders">Folders</x:String>
+    <x:String x:Key="Settings.Nav.About">About</x:String>
+    <x:String x:Key="Settings.Theme">Theme</x:String>
+    <x:String x:Key="Settings.Theme.System">Use system setting</x:String>
+    <x:String x:Key="Settings.Theme.Light">Light</x:String>
+    <x:String x:Key="Settings.Theme.Dark">Dark</x:String>
+    <x:String x:Key="Settings.Language.Title">Language</x:String>
+    <x:String x:Key="Settings.Language.UiLanguage">Interface language</x:String>
+    <x:String x:Key="Settings.Language.Auto">Follow system</x:String>
+    <x:String x:Key="Settings.Folders.ShowHidden">Show hidden items</x:String>
+    <x:String x:Key="Settings.Folders.ShowExtensions">Show file extensions</x:String>
+    <x:String x:Key="Settings.Folders.ShowQuickAccess">Show Quick Access widget</x:String>
+    <x:String x:Key="Settings.Folders.ShowVolumes">Show Drives widget</x:String>
+    <x:String x:Key="Settings.Folders.ShowRecents">Show Recent files widget</x:String>
+    <x:String x:Key="Settings.About.Version">Version {0}</x:String>
+    <x:String x:Key="Settings.About.Description">A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash.</x:String>
+
+    <!-- Properties -->
+    <x:String x:Key="Properties.Title">Properties</x:String>
+    <x:String x:Key="Properties.Title.Format">{0} – Properties</x:String>
+    <x:String x:Key="Properties.General">General</x:String>
+    <x:String x:Key="Properties.Hashes">Hashes</x:String>
+    <x:String x:Key="Properties.Name">Name</x:String>
+    <x:String x:Key="Properties.Type">Type</x:String>
+    <x:String x:Key="Properties.Location">Location</x:String>
+    <x:String x:Key="Properties.Size">Size</x:String>
+    <x:String x:Key="Properties.SizeOnDisk">Size on disk</x:String>
+    <x:String x:Key="Properties.Contains">Contains</x:String>
+    <x:String x:Key="Properties.Path">Path</x:String>
+    <x:String x:Key="Properties.Created">Created</x:String>
+    <x:String x:Key="Properties.Modified">Modified</x:String>
+    <x:String x:Key="Properties.Accessed">Accessed</x:String>
+    <x:String x:Key="Properties.Attributes">Attributes</x:String>
+    <x:String x:Key="Properties.Algorithm">Algorithm</x:String>
+    <x:String x:Key="Properties.HashValue">Hash value</x:String>
+    <x:String x:Key="Properties.SelectHashes">Select hashes to show</x:String>
+    <x:String x:Key="Properties.Calculating">Calculating</x:String>
+    <x:String x:Key="Properties.MultipleTypes">Multiple types</x:String>
+    <x:String x:Key="Properties.Summary.File">{0} file</x:String>
+    <x:String x:Key="Properties.Summary.Files">{0} files</x:String>
+    <x:String x:Key="Properties.Summary.Folder">{0} folder</x:String>
+    <x:String x:Key="Properties.Summary.Folders">{0} folders</x:String>
+    <x:String x:Key="Properties.Summary">{0}, {1}</x:String>
+    <x:String x:Key="Properties.Contents.FilesFolders">{0} files, {1} folders</x:String>
+    <x:String x:Key="Properties.SaveFailed">Couldn't save properties</x:String>
+
+    <!-- Explorer -->
+    <x:String x:Key="Explorer.Empty.Folder">This folder is empty</x:String>
+    <x:String x:Key="Explorer.Empty.Search">No items match your search</x:String>
+    <x:String x:Key="Explorer.Empty.Tag">No items with this tag</x:String>
+    <x:String x:Key="Explorer.Status.Item">{0} item</x:String>
+    <x:String x:Key="Explorer.Status.Items">{0} items</x:String>
+    <x:String x:Key="Explorer.Status.Selected">{0} items selected</x:String>
+    <x:String x:Key="Explorer.AccessDenied.Title">Access denied</x:String>
+    <x:String x:Key="Explorer.AccessDenied.Message">macOS blocked this folder. Grant Files and Folders permission in System Settings.</x:String>
+    <x:String x:Key="Explorer.Unavailable.Title">Location is unavailable</x:String>
+    <x:String x:Key="Explorer.Unavailable.Message">This folder does not exist or cannot be found.</x:String>
+    <x:String x:Key="Explorer.OpenFailed.Title">Couldn't open this folder</x:String>
+    <x:String x:Key="Explorer.OpenItemFailed">Couldn't open item</x:String>
+    <x:String x:Key="Explorer.InvalidAddress.Title">Invalid address</x:String>
+    <x:String x:Key="Explorer.InvalidAddress.Message">Enter a valid folder path.</x:String>
+    <x:String x:Key="Explorer.NotFound.Message">“{0}” could not be found.</x:String>
+    <x:String x:Key="Explorer.RenameFailed">Couldn't rename</x:String>
+    <x:String x:Key="Explorer.DeleteFailed">Couldn't delete item</x:String>
+    <x:String x:Key="Explorer.CreateFolderFailed">Couldn't create folder</x:String>
+    <x:String x:Key="Explorer.CreateFileFailed">Couldn't create file</x:String>
+
+    <!-- Dialog -->
+    <x:String x:Key="Dialog.DeletePermanently.Title">Delete permanently?</x:String>
+    <x:String x:Key="Dialog.DeletePermanently.Message">These items will be deleted immediately:&#xA;{0}</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Title">Move to Trash?</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Message">Move {0} item(s) to Trash?&#xA;{1}</x:String>
+    <x:String x:Key="Dialog.MoveToTrash.Action">Move to Trash</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Title">Empty Trash?</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Message">Items will be deleted immediately.</x:String>
+    <x:String x:Key="Dialog.EmptyTrash.Action">Empty Trash</x:String>
+    <x:String x:Key="Dialog.RemoveTags.Title">Remove tags?</x:String>
+    <x:String x:Key="Dialog.RemoveTags.Message">Remove all tags from the selected items?</x:String>
+    <x:String x:Key="Dialog.Conflict.Title">File already exists</x:String>
+    <x:String x:Key="Dialog.Conflict.Message">“{0}” already exists in this folder.</x:String>
+    <x:String x:Key="Dialog.Conflict.KeepBoth">Keep both</x:String>
+    <x:String x:Key="Dialog.Conflict.Replace">Replace</x:String>
+    <x:String x:Key="Dialog.Conflict.Skip">Skip</x:String>
+    <x:String x:Key="Dialog.EjectFailed.Title">Unable to eject</x:String>
+    <x:String x:Key="Dialog.EjectFailed.Message">“{0}” could not be ejected.</x:String>
+
+    <!-- File -->
+    <x:String x:Key="File.Size.Calculating">Calculating…</x:String>
+    <x:String x:Key="File.Size.Bytes">{0} B</x:String>
+    <x:String x:Key="File.Size.KB">{0} KB</x:String>
+    <x:String x:Key="File.Size.MB">{0} MB</x:String>
+    <x:String x:Key="File.Size.GB">{0} GB</x:String>
+    <x:String x:Key="File.Type.Folder">Folder</x:String>
+    <x:String x:Key="File.Type.Document">Document</x:String>
+    <x:String x:Key="File.Type.ExtensionFile">{0} File</x:String>
+    <x:String x:Key="File.CopyPattern">{0} copy{1}</x:String>
+    <x:String x:Key="File.CopyPatternNumbered">{0} copy {2}{1}</x:String>
+    <x:String x:Key="File.NewFolder">New folder</x:String>
+    <x:String x:Key="File.UntitledName">untitled.txt</x:String>
+    <x:String x:Key="File.Tooltip">Name: {0}{1}Type: {2}{1}Date modified: {3}</x:String>
+    <x:String x:Key="File.Tooltip.Size">{0}{1}Size: {2}</x:String>
+
+    <!-- Info -->
+    <x:String x:Key="Info.NoSelection">No item selected</x:String>
+    <x:String x:Key="Info.ItemType">Item type</x:String>
+    <x:String x:Key="Info.Path">Path</x:String>
+    <x:String x:Key="Info.Size">Size</x:String>
+    <x:String x:Key="Info.DateModified">Date modified</x:String>
+    <x:String x:Key="Info.DateCreated">Date created</x:String>
+
+    <!-- Menu -->
+    <x:String x:Key="Menu.File">File</x:String>
+    <x:String x:Key="Menu.Edit">Edit</x:String>
+    <x:String x:Key="Menu.View">View</x:String>
+    <x:String x:Key="Menu.Go">Go</x:String>
+    <x:String x:Key="Menu.Window">Window</x:String>
+    <x:String x:Key="Menu.App.NewWindow">New Window</x:String>
+    <x:String x:Key="Menu.App.Settings">Settings…</x:String>
+    <x:String x:Key="Menu.App.Quit">Quit MacExplorer</x:String>
+    <x:String x:Key="Menu.File.NewWindow">New Window</x:String>
+    <x:String x:Key="Menu.File.NewTab">New Tab</x:String>
+    <x:String x:Key="Menu.File.NewFolder">New Folder</x:String>
+    <x:String x:Key="Menu.File.NewFile">New File</x:String>
+    <x:String x:Key="Menu.File.Open">Open</x:String>
+    <x:String x:Key="Menu.File.Rename">Rename</x:String>
+    <x:String x:Key="Menu.File.GetInfo">Get Info</x:String>
+    <x:String x:Key="Menu.File.MoveToTrash">Move to Trash</x:String>
+    <x:String x:Key="Menu.File.DeletePermanently">Delete Permanently…</x:String>
+    <x:String x:Key="Menu.File.EmptyTrash">Empty Trash…</x:String>
+    <x:String x:Key="Menu.File.CloseWindow">Close Window</x:String>
+    <x:String x:Key="Menu.File.CloseTab">Close Tab</x:String>
+    <x:String x:Key="Menu.Edit.Find">Find</x:String>
+    <x:String x:Key="Menu.View.AsDetails">as Details</x:String>
+    <x:String x:Key="Menu.View.AsList">as List</x:String>
+    <x:String x:Key="Menu.View.AsCards">as Cards</x:String>
+    <x:String x:Key="Menu.View.AsGrid">as Grid</x:String>
+    <x:String x:Key="Menu.View.ShowInfoPane">Show Info Pane</x:String>
+    <x:String x:Key="Menu.View.ShowHidden">Show Hidden Files</x:String>
+    <x:String x:Key="Menu.View.ShowExtensions">Show File Extensions</x:String>
+    <x:String x:Key="Menu.Go.Back">Back</x:String>
+    <x:String x:Key="Menu.Go.Forward">Forward</x:String>
+    <x:String x:Key="Menu.Go.EnclosingFolder">Enclosing Folder</x:String>
+    <x:String x:Key="Menu.Window.Minimize">Minimize</x:String>
+    <x:String x:Key="Menu.Window.Zoom">Zoom</x:String>
+    <x:String x:Key="Menu.Window.ShowPreviousTab">Show Previous Tab</x:String>
+    <x:String x:Key="Menu.Window.ShowNextTab">Show Next Tab</x:String>
+    <x:String x:Key="Menu.Window.BringAllToFront">Bring All to Front</x:String>
+
+    <!-- Context -->
+    <x:String x:Key="Context.ShowInFinder">Show in Finder</x:String>
+    <x:String x:Key="Context.Favorite">Favorite</x:String>
+    <x:String x:Key="Context.Unfavorite">Unfavorite</x:String>
+    <x:String x:Key="Context.Eject">Eject</x:String>
+    <x:String x:Key="Context.Tags">Tags</x:String>
+    <x:String x:Key="Context.RemoveTags">Remove Tags</x:String>
+    <x:String x:Key="Context.Share">Share</x:String>
+    <x:String x:Key="Context.AirDrop">AirDrop</x:String>
+    <x:String x:Key="Context.Mail">Mail</x:String>
+    <x:String x:Key="Context.Messages">Messages</x:String>
+    <x:String x:Key="Context.NewFolder">New folder</x:String>
+    <x:String x:Key="Context.NewFile">New file</x:String>
+
+    <!-- Drag -->
+    <x:String x:Key="Drag.CantDrop">Can't drop here</x:String>
+    <x:String x:Key="Drag.MoveTo">Move to {0}</x:String>
+    <x:String x:Key="Drag.CopyTo">Copy to {0}</x:String>
+    <x:String x:Key="Drag.AddTo">Add to {0}</x:String>
+
+    <!-- Breadcrumb -->
+    <x:String x:Key="Breadcrumb.NoFavorites">No available favorite folders</x:String>
+    <x:String x:Key="Breadcrumb.NoDrives">No available drives</x:String>
+    <x:String x:Key="Breadcrumb.NoSubfolders">No subfolders to display</x:String>
+
+    <!-- Palette -->
+    <x:String x:Key="Palette.NewTab">New tab</x:String>
+    <x:String x:Key="Palette.CloseTab">Close tab</x:String>
+    <x:String x:Key="Palette.NewFolder">New folder</x:String>
+    <x:String x:Key="Palette.Copy">Copy</x:String>
+    <x:String x:Key="Palette.Cut">Cut</x:String>
+    <x:String x:Key="Palette.Paste">Paste</x:String>
+    <x:String x:Key="Palette.Properties">Properties</x:String>
+    <x:String x:Key="Palette.Delete">Delete</x:String>
+    <x:String x:Key="Palette.SelectAll">Select all</x:String>
+    <x:String x:Key="Palette.DetailsLayout">Details layout</x:String>
+    <x:String x:Key="Palette.ListLayout">List layout</x:String>
+    <x:String x:Key="Palette.CardsLayout">Cards layout</x:String>
+    <x:String x:Key="Palette.GridLayout">Grid layout</x:String>
+    <x:String x:Key="Palette.ToggleInfoPane">Toggle info pane</x:String>
+    <x:String x:Key="Palette.Settings">Settings</x:String>
+
+    <!-- File.Error -->
+    <x:String x:Key="File.Error.CreateFailed">Unable to create the file.</x:String>
+    <x:String x:Key="File.Error.InvalidName">Invalid name.</x:String>
+    <x:String x:Key="File.Error.InvalidCharacters">The name contains invalid characters.</x:String>
+    <x:String x:Key="File.Error.NameExists">An item with that name already exists.</x:String>
+    <x:String x:Key="Properties.Hash.FileOpen">Couldn't calculate the hash because the file is open.</x:String>
+    <x:String x:Key="Properties.Hash.Failed">Couldn't calculate the hash.</x:String>
+</ResourceDictionary>

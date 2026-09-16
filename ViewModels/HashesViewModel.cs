@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Services;
-
 namespace MacExplorer.ViewModels;
 
 public sealed partial class HashesViewModel : ViewModelBase, IDisposable
@@ -80,11 +80,11 @@ public sealed partial class HashesViewModel : ViewModelBase, IDisposable
         }
         catch (IOException)
         {
-            error = "Couldn't calculate the hash because the file is open.";
+            error = Lang.Text("Properties.Hash.FileOpen");
         }
         catch
         {
-            error = "Couldn't calculate the hash.";
+            error = Lang.Text("Properties.Hash.Failed");
         }
 
         await Dispatcher.UIThread.InvokeAsync(() =>

@@ -1,7 +1,7 @@
+using MacExplorer.Localization;
 using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Native;
-
 namespace MacExplorer.Services;
 
 public sealed class FileService
@@ -110,14 +110,14 @@ public sealed class FileService
     {
         var parent = Path.GetDirectoryName(path);
         if (string.IsNullOrEmpty(parent) || string.IsNullOrWhiteSpace(newName))
-            return new MacFileResult(false, "Invalid name.");
+            return new MacFileResult(false, Lang.Text("File.Error.InvalidName"));
         if (newName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
-            return new MacFileResult(false, "The name contains invalid characters.");
+            return new MacFileResult(false, Lang.Text("File.Error.InvalidCharacters"));
         var dest = Path.Combine(parent, newName);
         if (path == dest)
             return new MacFileResult(true, null, path);
         if (PathUtil.Exists(dest))
-            return new MacFileResult(false, "An item with that name already exists.");
+            return new MacFileResult(false, Lang.Text("File.Error.NameExists"));
         var renamed = MacFileManager.Rename(path, dest);
         if (renamed.Ok) LogWrapper.Info("File", $"Rename {path} -> {dest}");
         else LogWrapper.Warn("File", $"Rename failed: {renamed.Error}");
@@ -142,7 +142,7 @@ public sealed class FileService
 
     public MacFileResult NewFolder(string directory)
     {
-        var dest = PathUtil.UniquePath(directory, "New folder");
+        var dest = PathUtil.UniquePath(directory, Lang.Text("File.NewFolder"));
         try
         {
             Directory.CreateDirectory(dest);
@@ -156,7 +156,7 @@ public sealed class FileService
 
     public MacFileResult NewFile(string directory)
     {
-        var dest = PathUtil.UniquePath(directory, "untitled.txt");
+        var dest = PathUtil.UniquePath(directory, Lang.Text("File.UntitledName"));
         try
         {
             using (File.Create(dest)) { }

@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MacExplorer.Infrastructure;
+using MacExplorer.Localization;
 using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Native;
@@ -25,6 +26,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     private DispatcherTimer? _watchTimer;
     private bool _disposed;
     private int _listingVersion;
+    private string? _unavailableTitleKey;
+    private string? _unavailableMessageKey;
+    private string? _unavailableRawMessage;
 
     public ExplorerTabViewModel(
         FileService files,
@@ -56,7 +60,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     public ObservableCollection<FileItem> SelectedItems { get; }
 
     [ObservableProperty] public partial string CurrentPath { get; set; } = SpecialFolders.HomeKey;
-    [ObservableProperty] public partial string Title { get; set; } = "Home";
+    [ObservableProperty] public partial string Title { get; set; } = Lang.Text("Places.Home");
     [ObservableProperty] public partial bool IsSelectedTab { get; set; }
     [ObservableProperty] public partial string PathText { get; set; } = string.Empty;
     [ObservableProperty] public partial bool IsHome { get; set; } = true;
@@ -89,10 +93,10 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     public bool IsEmpty => Items.Count == 0 && !IsHome && UnavailableTitle is null;
     public string EmptyText => SearchText.Length > 0
-        ? "No items match your search"
+        ? Lang.Text("Explorer.Empty.Search")
         : IsTag
-            ? "No items with this tag"
-            : "This folder is empty";
+            ? Lang.Text("Explorer.Empty.Tag")
+            : Lang.Text("Explorer.Empty.Folder");
     public LayoutMetrics Metrics => LayoutMetrics.For(LayoutSize);
     public DetailsColumns Columns => DetailsColumns.Shared;
     public bool HasSelection => SelectedItems.Count > 0;
@@ -116,9 +120,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         CurrentPath = path;
         IsHome = path == SpecialFolders.HomeKey;
         IsSettings = path == SpecialFolders.SettingsKey;
-        Title = IsHome ? "Home" : IsSettings ? "Settings" : IsTag ? SpecialFolders.TagName(path)
-            : Path.GetFileName(path.TrimEnd('/')) is { Length: > 0 } name ? name : path;
-        PathText = IsHome ? "Home" : IsSettings ? "Settings" : IsTag ? SpecialFolders.TagName(path) : path;
+        ApplyLocalizedChrome();
         Breadcrumbs = PathUtil.Breadcrumbs(path);
         UpdateNav();
         LogWrapper.Info("Explorer", $"Navigate {PathText}");
@@ -145,6 +147,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         AttachWatcher();
         UnavailableTitle = null;
         UnavailableMessage = null;
+        _unavailableTitleKey = null;
+        _unavailableMessageKey = null;
+        _unavailableRawMessage = null;
         if (IsHome || IsSettings)
         {
             IsBusy = false;
@@ -168,7 +173,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
                 Items.Add(item);
             RebuildView();
             SetSelection(Items.Where(i => keep.Contains(i.Path)).ToList());
-            StatusText = $"{Items.Count} item{(Items.Count == 1 ? string.Empty : "s")}";
+            StatusText = Items.Count == 1
+                ? Lang.Text("Explorer.Status.Item", Items.Count)
+                : Lang.Text("Explorer.Status.Items", Items.Count);
             LogWrapper.Debug("Explorer", $"Listed {Items.Count} item(s) in {CurrentPath}");
             OnPropertyChanged(nameof(IsEmpty));
             _ = LoadIconsAsync();
@@ -179,8 +186,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
-            UnavailableTitle = "Access denied";
-            UnavailableMessage = "macOS blocked this folder. Grant Files and Folders permission in System Settings.";
+            SetUnavailable("Explorer.AccessDenied.Title", "Explorer.AccessDenied.Message");
             LogWrapper.Warn(ex, "Explorer", $"Access denied: {CurrentPath}");
         }
         catch (DirectoryNotFoundException ex)
@@ -188,8 +194,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
-            UnavailableTitle = "Location is unavailable";
-            UnavailableMessage = "This folder does not exist or cannot be found.";
+            SetUnavailable("Explorer.Unavailable.Title", "Explorer.Unavailable.Message");
             LogWrapper.Warn(ex, "Explorer", $"Not found: {CurrentPath}");
         }
         catch (Exception ex)
@@ -197,8 +202,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             if (_disposed || version != _listingVersion) return;
             ClearItems();
             SetSelection([]);
-            UnavailableTitle = "Couldn't open this folder";
-            UnavailableMessage = ex.Message;
+            SetUnavailable("Explorer.OpenFailed.Title", message: ex.Message);
             LogWrapper.Warn(ex, "Explorer", $"List failed: {CurrentPath}");
         }
         finally
@@ -232,7 +236,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         {
             0 => string.Empty,
             1 => SelectedItems[0].DisplayName,
-            _ => $"{SelectedItems.Count} items selected"
+            _ => Lang.Text("Explorer.Status.Selected", SelectedItems.Count)
         };
         CopyCommand.NotifyCanExecuteChanged();
         CutCommand.NotifyCanExecuteChanged();
@@ -284,7 +288,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
 
         if (!_files.Open(item.Path))
-            await _dialogs.Error("Couldn't open item", item.DisplayName);
+            await _dialogs.Error(Lang.Text("Explorer.OpenItemFailed"), item.DisplayName);
         else
             RememberRecent(item.Path);
     }
@@ -345,7 +349,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             return;
         var result = _files.Rename(item.Path, name);
         if (!result.Ok)
-            await _dialogs.Error("Couldn't rename", result.Error ?? "Unknown error");
+            await _dialogs.Error(Lang.Text("Explorer.RenameFailed"), result.Error ?? Lang.Text("Common.Error.Unknown"));
         await ReloadAsync();
     }
 
@@ -356,19 +360,19 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         if (SelectedItems.Count > 3)
             names += "…";
         var ok = await _dialogs.Confirm(
-            IsTrash ? "Delete permanently?" : "Move to Trash?",
+            Lang.Text(IsTrash ? "Dialog.DeletePermanently.Title" : "Dialog.MoveToTrash.Title"),
             IsTrash
-                ? $"These items will be deleted immediately:\n{names}"
-                : $"Move {SelectedItems.Count} item(s) to Trash?\n{names}",
-            IsTrash ? "Delete" : "Move to Trash",
-            "Cancel");
+                ? Lang.Text("Dialog.DeletePermanently.Message", names)
+                : Lang.Text("Dialog.MoveToTrash.Message", SelectedItems.Count, names),
+            Lang.Text(IsTrash ? "Common.Action.Delete" : "Dialog.MoveToTrash.Action"),
+            Lang.Text("Common.Action.Cancel"));
         if (!ok) return;
 
         foreach (var item in SelectedItems.ToArray())
         {
             var result = IsTrash ? _files.Delete(item.Path) : _files.Trash(item.Path);
             if (!result.Ok)
-                await _dialogs.Error("Couldn't delete item", result.Error ?? item.DisplayName);
+                await _dialogs.Error(Lang.Text("Explorer.DeleteFailed"), result.Error ?? item.DisplayName);
         }
 
         await ReloadAsync();
@@ -381,7 +385,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         var result = _files.NewFolder(CurrentPath);
         if (!result.Ok)
         {
-            await _dialogs.Error("Couldn't create folder", result.Error ?? "");
+            await _dialogs.Error(Lang.Text("Explorer.CreateFolderFailed"), result.Error ?? "");
             return;
         }
 
@@ -401,7 +405,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         var result = _files.NewFile(CurrentPath);
         if (!result.Ok)
         {
-            await _dialogs.Error("Couldn't create file", result.Error ?? "");
+            await _dialogs.Error(Lang.Text("Explorer.CreateFileFailed"), result.Error ?? "");
             return;
         }
 
@@ -432,7 +436,11 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     public async Task EmptyTrashAsync()
     {
         if (!IsTrash) return;
-        if (!await _dialogs.Confirm("Empty Trash?", "Items will be deleted immediately.", "Empty Trash", "Cancel"))
+        if (!await _dialogs.Confirm(
+                Lang.Text("Dialog.EmptyTrash.Title"),
+                Lang.Text("Dialog.EmptyTrash.Message"),
+                Lang.Text("Dialog.EmptyTrash.Action"),
+                Lang.Text("Common.Action.Cancel")))
             return;
         foreach (var item in Items.ToArray())
             _files.Delete(item.Path);
@@ -506,9 +514,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     {
         var path = address.Trim();
         if (path.Length == 0 || _disposed) return;
-        if (path.Equals("Home", StringComparison.OrdinalIgnoreCase))
+        if (IsHomeAlias(path))
             path = SpecialFolders.HomeKey;
-        else if (path.Equals("Settings", StringComparison.OrdinalIgnoreCase))
+        else if (IsSettingsAlias(path))
             path = SpecialFolders.SettingsKey;
         if (SpecialFolders.IsVirtual(path))
         {
@@ -526,7 +534,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         }
         catch (ArgumentException)
         {
-            await _dialogs.Error("Invalid address", "Enter a valid folder path.");
+            await _dialogs.Error(Lang.Text("Explorer.InvalidAddress.Title"), Lang.Text("Explorer.InvalidAddress.Message"));
             return;
         }
         if (Directory.Exists(path))
@@ -534,7 +542,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         else if (File.Exists(path))
             _files.Open(path);
         else
-            await _dialogs.Error("Location is unavailable", $"“{path}” could not be found.");
+            await _dialogs.Error(Lang.Text("Explorer.Unavailable.Title"), Lang.Text("Explorer.NotFound.Message", path));
     }
 
     partial void OnSearchTextChanged(string value)
@@ -583,10 +591,10 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         if (items.Length == 0)
             return;
         if (!await _dialogs.Confirm(
-                "Remove tags?",
-                "Remove all tags from the selected items?",
-                "Remove",
-                "Cancel"))
+                Lang.Text("Dialog.RemoveTags.Title"),
+                Lang.Text("Dialog.RemoveTags.Message"),
+                Lang.Text("Common.Action.Remove"),
+                Lang.Text("Common.Action.Cancel")))
             return;
 
         await ApplyTagChangeAsync(items.Select(static i => (i, (IReadOnlyList<FileTag>)[])).ToArray());
@@ -632,6 +640,61 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             RebuildView();
     }
 
+
+    protected override void OnLanguageChanged()
+    {
+        if (_disposed) return;
+        ApplyLocalizedChrome();
+        Breadcrumbs = PathUtil.Breadcrumbs(CurrentPath);
+        foreach (var item in Items)
+            item.NotifyLocalized();
+        RebuildView();
+        if (Items.Count > 0)
+            StatusText = Items.Count == 1
+                ? Lang.Text("Explorer.Status.Item", Items.Count)
+                : Lang.Text("Explorer.Status.Items", Items.Count);
+        if (SelectedItems.Count > 1)
+            SelectionText = Lang.Text("Explorer.Status.Selected", SelectedItems.Count);
+        ApplyUnavailable();
+        OnPropertyChanged(nameof(EmptyText));
+    }
+
+    private void ApplyLocalizedChrome()
+    {
+        Title = IsHome ? Lang.Text("Places.Home") : IsSettings ? Lang.Text("Places.Settings") : IsTag
+            ? SpecialFolders.TagName(CurrentPath)
+            : Path.GetFileName(CurrentPath.TrimEnd('/')) is { Length: > 0 } name ? name : CurrentPath;
+        PathText = IsHome ? Lang.Text("Places.Home") : IsSettings ? Lang.Text("Places.Settings") : IsTag
+            ? SpecialFolders.TagName(CurrentPath)
+            : CurrentPath;
+    }
+
+    private void SetUnavailable(string titleKey, string? messageKey = null, string? message = null)
+    {
+        _unavailableTitleKey = titleKey;
+        _unavailableMessageKey = messageKey;
+        _unavailableRawMessage = message;
+        ApplyUnavailable();
+    }
+
+    private void ApplyUnavailable()
+    {
+        if (_unavailableTitleKey is null)
+            return;
+        UnavailableTitle = Lang.Text(_unavailableTitleKey);
+        UnavailableMessage = _unavailableRawMessage ??
+                             (_unavailableMessageKey is null ? null : Lang.Text(_unavailableMessageKey));
+    }
+
+    private static bool IsHomeAlias(string path) =>
+        path == SpecialFolders.HomeKey ||
+        path.Equals("Home", StringComparison.OrdinalIgnoreCase) ||
+        Lang.EqualsText(path, "Places.Home");
+
+    private static bool IsSettingsAlias(string path) =>
+        path == SpecialFolders.SettingsKey ||
+        path.Equals("Settings", StringComparison.OrdinalIgnoreCase) ||
+        Lang.EqualsText(path, "Places.Settings");
 
     public void Dispose()
     {

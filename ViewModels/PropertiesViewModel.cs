@@ -1,6 +1,7 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
@@ -12,7 +13,9 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
     private readonly FileService _files;
     private readonly IconService _icons;
     private readonly string _originalName;
-
+    private readonly FileItem? _primary;
+    private readonly int _fileCount;
+    private readonly int _folderCount;
     public PropertiesViewModel(IReadOnlyList<FileItem> items, FileService files, IconService icons)
     {
         _files = files;
@@ -20,11 +23,14 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
         Items = items.Count > 0 ? items : [];
         IsSingle = Items.Count == 1;
         var primary = IsSingle ? Items[0] : null;
+        _primary = primary;
         CanRename = primary is not null;
         IsDirectory = primary?.IsDirectory ?? false;
         CanShowHashes = primary is { IsDirectory: false };
         Hashes = CanShowHashes ? new HashesViewModel(primary!.Path) : null;
         SelectedPage = "General";
+        _fileCount = Items.Count(i => !i.IsDirectory);
+        _folderCount = Items.Count - _fileCount;
 
         if (primary is not null)
         {
@@ -37,21 +43,17 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
             CreatedText = primary.CreatedText;
             ModifiedText = primary.ModifiedText;
             SizeText = primary.SizeText;
-            Title = $"{DisplayName} – Properties";
         }
         else
         {
-            var fileCount = Items.Count(i => !i.IsDirectory);
-            var folderCount = Items.Count - fileCount;
-            DisplayName = $"{fileCount} file{(fileCount == 1 ? string.Empty : "s")}, {folderCount} folder{(folderCount == 1 ? string.Empty : "s")}";
             _originalName = string.Empty;
             var types = Items.Select(i => i.ItemType).Distinct().ToArray();
-            ItemType = types.Length == 1 ? types[0] : "Multiple types";
+            ItemType = types.Length == 1 ? types[0] : Lang.Text("Properties.MultipleTypes");
             var dirs = Items.Select(i => Path.GetDirectoryName(i.Path)).Where(static p => p is not null).Distinct().ToArray();
             Location = dirs.Length == 1 ? dirs[0]! : string.Empty;
-            Title = "Properties";
         }
 
+        ApplyLocalized();
         _ = LoadAsync(primary);
     }
 
@@ -59,8 +61,8 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
     public bool IsSingle { get; }
     public bool CanRename { get; }
     public bool IsDirectory { get; }
-    public string DisplayName { get; }
-    public string Title { get; }
+    public string DisplayName { get; private set; } = "";
+    public string Title { get; private set; } = Lang.Text("Properties.Title");
 
     [ObservableProperty] public partial string SelectedPage { get; set; }
     [ObservableProperty] public partial string ItemName { get; set; } = string.Empty;
@@ -163,7 +165,7 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
 
             var path = primary!.Path;
             var info = primary.IsDirectory ? (FileSystemInfo)new DirectoryInfo(path) : new FileInfo(path);
-            var accessed = info.LastAccessTime.ToString("yyyy/MM/dd HH:mm");
+            var accessed = Lang.Date(info.LastAccessTime);
             var attributes = File.GetAttributes(path).ToString();
             if (primary.IsDirectory)
             {
@@ -171,7 +173,7 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
                 var dirs = entries.Count(Directory.Exists);
                 var files = entries.Length - dirs;
                 var size = FormatSize(SizeOf(primary));
-                return new Inspected(size, size, $"{files} files, {dirs} folders", accessed, attributes, null);
+                return new Inspected(size, size, Lang.Text("Properties.Contents.FilesFolders", files, dirs), accessed, attributes, null);
             }
 
             var length = FormatSize(primary.SizeKnown ? primary.Size : new FileInfo(path).Length);
@@ -189,11 +191,46 @@ public sealed partial class PropertiesViewModel : ViewModelBase, IDisposable
             ? item.SizeKnown ? item.Size : FolderSize.Of(item.Path)
             : item.SizeKnown ? item.Size : new FileInfo(item.Path).Length;
 
-    private static string FormatSize(long bytes) => bytes switch
+    private static string FormatSize(long bytes) => Lang.FileSize(bytes);
+
+    protected override void OnLanguageChanged()
     {
-        < 1024 => $"{bytes} B",
-        < 1024 * 1024 => $"{bytes / 1024.0:0.##} KB",
-        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):0.##} MB",
-        _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GB"
-    };
+        if (_primary is not null)
+        {
+            CreatedText = _primary.CreatedText;
+            ModifiedText = _primary.ModifiedText;
+            SizeText = _primary.SizeText;
+            ItemType = _primary.ItemType;
+        }
+        else
+        {
+            var types = Items.Select(i => i.ItemType).Distinct().ToArray();
+            ItemType = types.Length == 1 ? types[0] : Lang.Text("Properties.MultipleTypes");
+        }
+
+        ApplyLocalized();
+        _ = LoadAsync(_primary);
+    }
+
+    private void ApplyLocalized()
+    {
+        if (_primary is null)
+        {
+            var files = _fileCount == 1
+                ? Lang.Text("Properties.Summary.File", _fileCount)
+                : Lang.Text("Properties.Summary.Files", _fileCount);
+            var folders = _folderCount == 1
+                ? Lang.Text("Properties.Summary.Folder", _folderCount)
+                : Lang.Text("Properties.Summary.Folders", _folderCount);
+            DisplayName = Lang.Text("Properties.Summary", files, folders);
+            Title = Lang.Text("Properties.Title");
+        }
+        else
+        {
+            Title = Lang.Text("Properties.Title.Format", DisplayName);
+        }
+
+        OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(Title));
+    }
 }

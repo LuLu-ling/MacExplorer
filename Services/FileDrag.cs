@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 
@@ -115,16 +116,16 @@ internal static class FileDrag
     public static string Caption(DragDropEffects effect, string? destination)
     {
         if (effect == DragDropEffects.None || string.IsNullOrEmpty(destination))
-            return "Can't drop here";
+            return Lang.Text("Drag.CantDrop");
 
-        var name = destination is "/" ? "Macintosh HD" : Path.GetFileName(destination.TrimEnd('/'));
+        var name = destination is "/" ? Lang.Text("Places.MacintoshHD") : Path.GetFileName(destination.TrimEnd('/'));
         if (string.IsNullOrEmpty(name))
             name = destination;
         return effect switch
         {
-            DragDropEffects.Move => $"Move to {name}",
-            DragDropEffects.Link => $"Add to {name}",
-            _ => $"Copy to {name}"
+            DragDropEffects.Move => Lang.Text("Drag.MoveTo", name),
+            DragDropEffects.Link => Lang.Text("Drag.AddTo", name),
+            _ => Lang.Text("Drag.CopyTo", name)
         };
     }
 

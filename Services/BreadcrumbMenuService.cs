@@ -1,7 +1,7 @@
 using System.Security;
 using MacExplorer.Infrastructure;
+using MacExplorer.Localization;
 using MacExplorer.Native;
-
 namespace MacExplorer.Services;
 
 internal sealed record BreadcrumbMenuSection(
@@ -49,8 +49,8 @@ internal sealed class BreadcrumbMenuService(VolumeService volumes)
 
         return
         [
-            new("Quick Access", favorites, favorites.Count == 0 ? "No available favorite folders" : null),
-            new("Drives", drives, drives.Count == 0 ? "No available drives" : null)
+            new(Lang.Text("Places.QuickAccess"), favorites, favorites.Count == 0 ? Lang.Text("Breadcrumb.NoFavorites") : null),
+            new(Lang.Text("Places.Drives"), drives, drives.Count == 0 ? Lang.Text("Breadcrumb.NoDrives") : null)
         ];
     }
 
@@ -70,6 +70,6 @@ internal sealed class BreadcrumbMenuService(VolumeService volumes)
             folders.Add((name, entry));
         }
         folders.Sort(static (a, b) => string.Compare(a.Title, b.Title, StringComparison.CurrentCultureIgnoreCase));
-        return [new(null, folders, folders.Count == 0 ? "No subfolders to display" : null)];
+        return [new(null, folders, folders.Count == 0 ? Lang.Text("Breadcrumb.NoSubfolders") : null)];
     }
 }

@@ -4,6 +4,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using MacExplorer.Infrastructure;
 using MacExplorer.Lifecycle;
+using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
@@ -16,6 +17,7 @@ public partial class App : Application
     {
         Name = "MacExplorer";
         AvaloniaXamlLoader.Load(this);
+        LocalizationService.Initialize();
     }
     public override void OnFrameworkInitializationCompleted()
     {

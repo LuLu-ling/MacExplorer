@@ -7,7 +7,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
-
+using MacExplorer.Localization;
 namespace MacExplorer.Controls;
 
 [TemplatePart("PART_Editor", typeof(TextBox), IsRequired = true)]
@@ -20,7 +20,7 @@ public sealed class SearchField : TemplatedControl
             defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<string> PlaceholderProperty =
-        AvaloniaProperty.Register<SearchField, string>(nameof(Placeholder), "Search");
+        AvaloniaProperty.Register<SearchField, string>(nameof(Placeholder), string.Empty);
 
     private TextBox? _editor;
     private Button? _clear;
@@ -30,7 +30,9 @@ public sealed class SearchField : TemplatedControl
     {
         Focusable = true;
         KeyboardNavigation.SetTabNavigation(this, KeyboardNavigationMode.Once);
-        AutomationProperties.SetName(this, "Search");
+        AutomationProperties.SetName(this, Lang.Text("Search.AutomationName"));
+        WeakLanguageChanged.Add(this, static field =>
+            AutomationProperties.SetName(field, Lang.Text("Search.AutomationName")));
         UpdateEmpty();
     }
 

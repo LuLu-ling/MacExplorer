@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Avalonia.Media.Imaging;
+using MacExplorer.Localization;
 using MacExplorer.Models;
-
 namespace MacExplorer.Native;
 
 internal static class MacWorkspace
@@ -408,8 +408,10 @@ internal static class MacWorkspace
     private static string FallbackType(string path)
     {
         if (Directory.Exists(path))
-            return "Folder";
+            return Lang.Text("File.Type.Folder");
         var ext = Path.GetExtension(path);
-        return string.IsNullOrEmpty(ext) ? "Document" : $"{ext.TrimStart('.').ToUpperInvariant()} File";
+        return string.IsNullOrEmpty(ext)
+            ? Lang.Text("File.Type.Document")
+            : Lang.Text("File.Type.ExtensionFile", ext.TrimStart('.').ToUpperInvariant());
     }
 }

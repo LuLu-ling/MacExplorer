@@ -7,6 +7,7 @@ using MacExplorer.Lifecycle;
 using MacExplorer.Services;
 using MacExplorer.ViewModels;
 
+using MacExplorer.Localization;
 namespace MacExplorer.Views;
 
 public partial class HomePageView : UserControl
@@ -35,6 +36,6 @@ public partial class HomePageView : UserControl
         if (button?.Tag is not string path || !Directory.Exists(path))
             return;
         e.Handled = true;
-        MacContextMenu.Show([new("Open in New Window", () => AppServices.Get<WindowService>().OpenWindow(path))]);
+        MacContextMenu.Show([new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path))]);
     }
 }

@@ -1,6 +1,6 @@
 using MacExplorer.Configuration;
+using MacExplorer.Localization;
 using MacExplorer.Models;
-
 namespace MacExplorer.Infrastructure;
 
 public static class Config
@@ -8,6 +8,7 @@ public static class Config
     internal static void Touch()
     {
         _ = Appearance.ThemeConfig;
+        _ = Localization.LanguageConfig;
         _ = Window.WidthConfig;
         _ = Sidebar.PinsConfig;
         _ = Layout.KindConfig;
@@ -28,6 +29,17 @@ public static class Config
         {
             get => (ThemeMode)ThemeConfig.GetValue();
             set => ThemeConfig.SetValue((int)value);
+        }
+    }
+
+    public static class Localization
+    {
+        public static ConfigItem<string> LanguageConfig { get; } =
+            ConfigService.Register("UiLanguage", LocalizationService.Auto);
+        public static string Language
+        {
+            get => LanguageConfig.GetValue();
+            set => LanguageConfig.SetValue(value);
         }
     }
 

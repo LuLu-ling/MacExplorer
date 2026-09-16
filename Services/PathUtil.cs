@@ -1,5 +1,5 @@
+using MacExplorer.Localization;
 using MacExplorer.Models;
-
 namespace MacExplorer.Services;
 
 internal static class PathUtil
@@ -26,13 +26,15 @@ internal static class PathUtil
         var ext = Path.GetExtension(fileName);
         for (var n = 1; n < 10_000; n++)
         {
-            var candidate = n == 1 ? $"{stem} copy{ext}" : $"{stem} copy {n}{ext}";
+            var candidate = n == 1
+                ? Lang.Text("File.CopyPattern", stem, ext)
+                : Lang.Text("File.CopyPatternNumbered", stem, ext, n);
             dest = Path.Combine(directory, candidate);
             if (!Exists(dest))
                 return dest;
         }
 
-        return Path.Combine(directory, $"{stem} copy {Guid.NewGuid():N}{ext}");
+        return Path.Combine(directory, Lang.Text("File.CopyPatternNumbered", stem, ext, Guid.NewGuid().ToString("N")));
     }
 
     public static string DisplayName(string name, bool isDirectory, bool showExtensions)
@@ -49,10 +51,10 @@ internal static class PathUtil
         if (SpecialFolders.IsVirtual(path))
         {
             var title = path == SpecialFolders.SettingsKey
-                ? "Settings"
+                ? Lang.Text("Places.Settings")
                 : SpecialFolders.IsTag(path)
                     ? SpecialFolders.TagName(path)
-                    : "Home";
+                    : Lang.Text("Places.Home");
             items =
             [
                 new BreadcrumbItem
@@ -69,7 +71,7 @@ internal static class PathUtil
             var full = Path.GetFullPath(path);
             items =
             [
-                new BreadcrumbItem { Title = "Macintosh HD", Path = "/", IsRoot = true }
+                new BreadcrumbItem { Title = Lang.Text("Places.MacintoshHD"), Path = "/", IsRoot = true }
             ];
             if (full is not ("/" or ""))
             {

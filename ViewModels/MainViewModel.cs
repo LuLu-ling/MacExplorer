@@ -4,6 +4,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MacExplorer.Infrastructure;
+using MacExplorer.Localization;
 using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Native;
@@ -68,7 +69,9 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     [ObservableProperty] public partial bool ShowSettings { get; set; }
 
     public bool CanCloseTab => Tabs.Count > 0;
-    public string WindowTitle => SelectedTab?.Title is { Length: > 0 } t ? $"{t} – MacExplorer" : "MacExplorer";
+    public string WindowTitle => SelectedTab?.Title is { Length: > 0 } t
+        ? Lang.Text("Window.Title.Format", t)
+        : "MacExplorer";
     public bool IsInfoPaneVisible => ShowInfoPane && SelectedTab is not { IsSettings: true };
 
     public const double SidebarMin = 160;
@@ -102,21 +105,21 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     public IReadOnlyList<PaletteCommand> PaletteCommands =>
     [
-        new("New tab", Glyphs.Add, "⌘T", NewTabCommand),
-        new("Close tab", Glyphs.Delete, "⌘W", CloseTabCommand),
-        new("New folder", Glyphs.NewFolder, "⇧⌘N", SelectedTab?.NewFolderCommand),
-        new("Copy", Glyphs.Copy, "⌘C", SelectedTab?.CopyCommand),
-        new("Cut", Glyphs.Cut, "⌘X", SelectedTab?.CutCommand),
-        new("Paste", Glyphs.Paste, "⌘V", SelectedTab?.PasteCommand),
-        new("Properties", Glyphs.Properties, "⌥↩", OpenPropertiesCommand),
-        new("Delete", Glyphs.Delete, "⌘⌫", SelectedTab?.DeleteCommand),
-        new("Select all", Glyphs.Select, "⌘A", SelectedTab?.SelectAllCommand),
-        new("Details layout", Glyphs.Details, "⌘1", SetLayoutCommand, "Details"),
-        new("List layout", Glyphs.List, "⌘2", SetLayoutCommand, "List"),
-        new("Cards layout", Glyphs.Cards, "⌘3", SetLayoutCommand, "Cards"),
-        new("Grid layout", Glyphs.Grid, "⌘4", SetLayoutCommand, "Grid"),
-        new("Toggle info pane", Glyphs.PanelRight, "⌘P", ToggleInfoPaneCommand),
-        new("Settings", Glyphs.Settings, "⌘,", OpenSettingsCommand)
+        new(Lang.Text("Palette.NewTab"), Glyphs.Add, "⌘T", NewTabCommand),
+        new(Lang.Text("Palette.CloseTab"), Glyphs.Delete, "⌘W", CloseTabCommand),
+        new(Lang.Text("Palette.NewFolder"), Glyphs.NewFolder, "⇧⌘N", SelectedTab?.NewFolderCommand),
+        new(Lang.Text("Palette.Copy"), Glyphs.Copy, "⌘C", SelectedTab?.CopyCommand),
+        new(Lang.Text("Palette.Cut"), Glyphs.Cut, "⌘X", SelectedTab?.CutCommand),
+        new(Lang.Text("Palette.Paste"), Glyphs.Paste, "⌘V", SelectedTab?.PasteCommand),
+        new(Lang.Text("Palette.Properties"), Glyphs.Properties, "⌥↩", OpenPropertiesCommand),
+        new(Lang.Text("Palette.Delete"), Glyphs.Delete, "⌘⌫", SelectedTab?.DeleteCommand),
+        new(Lang.Text("Palette.SelectAll"), Glyphs.Select, "⌘A", SelectedTab?.SelectAllCommand),
+        new(Lang.Text("Palette.DetailsLayout"), Glyphs.Details, "⌘1", SetLayoutCommand, "Details"),
+        new(Lang.Text("Palette.ListLayout"), Glyphs.List, "⌘2", SetLayoutCommand, "List"),
+        new(Lang.Text("Palette.CardsLayout"), Glyphs.Cards, "⌘3", SetLayoutCommand, "Cards"),
+        new(Lang.Text("Palette.GridLayout"), Glyphs.Grid, "⌘4", SetLayoutCommand, "Grid"),
+        new(Lang.Text("Palette.ToggleInfoPane"), Glyphs.PanelRight, "⌘P", ToggleInfoPaneCommand),
+        new(Lang.Text("Palette.Settings"), Glyphs.Settings, "⌘,", OpenSettingsCommand)
     ];
 
     [RelayCommand]
@@ -288,7 +291,9 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         LogWrapper.Info("Volume", $"Eject {path}");
         if (!MacWorkspace.Eject(path))
         {
-            await _dialogs.Error("Unable to eject", $"“{MacWorkspace.VolumeName(path)}” could not be ejected.");
+            await _dialogs.Error(
+                Lang.Text("Dialog.EjectFailed.Title"),
+                Lang.Text("Dialog.EjectFailed.Message", MacWorkspace.VolumeName(path)));
             return;
         }
 
@@ -394,6 +399,12 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(IsInfoPaneVisible));
         OnPropertyChanged(nameof(InfoPaneColumn));
         OnPropertyChanged(nameof(InfoPaneColumnMin));
+    }
+
+    protected override void OnLanguageChanged()
+    {
+        OnPropertyChanged(nameof(WindowTitle));
+        OnPropertyChanged(nameof(PaletteCommands));
     }
 
     public void Dispose()

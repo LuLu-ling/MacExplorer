@@ -59,40 +59,40 @@
                     <Border Width="{x:Static vm:DetailsColumns.Icon}" />
                     <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Name}"
                             Command="{Binding SetSortCommand}" CommandParameter="Name">
-                        <TextBlock Text="Name" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.Name}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Name}" MinColumnWidth="80" MaxColumnWidth="1000" />
                     <Button Classes="ToolbarButton ColHeader ColTags" Width="{Binding Columns.Tags}"
                             IsVisible="{Binding Columns.ShowTags}">
-                        <TextBlock Text="Tags" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.Tags}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Tags}"
                                          IsVisible="{Binding Columns.ShowTags}" />
                     <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateModified}"
                             IsVisible="{Binding Columns.ShowDateModified}"
                             Command="{Binding SetSortCommand}" CommandParameter="DateModified">
-                        <TextBlock Text="Date modified" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.DateModified}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateModified}"
                                          IsVisible="{Binding Columns.ShowDateModified}" />
                     <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateCreated}"
                             IsVisible="{Binding Columns.ShowDateCreated}"
                             Command="{Binding SetSortCommand}" CommandParameter="DateCreated">
-                        <TextBlock Text="Date created" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.DateCreated}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateCreated}"
                                          IsVisible="{Binding Columns.ShowDateCreated}" />
                     <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Type}"
                             IsVisible="{Binding Columns.ShowType}"
                             Command="{Binding SetSortCommand}" CommandParameter="Type">
-                        <TextBlock Text="Type" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.Type}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Type}"
                                          IsVisible="{Binding Columns.ShowType}" />
                     <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Size}"
                             IsVisible="{Binding Columns.ShowSize}"
                             Command="{Binding SetSortCommand}" CommandParameter="Size">
-                        <TextBlock Text="Size" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{DynamicResource Column.Size}" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Size}"
                                          IsVisible="{Binding Columns.ShowSize}" />

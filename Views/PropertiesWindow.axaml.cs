@@ -8,6 +8,7 @@ using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
 using MacExplorer.ViewModels;
 
+using MacExplorer.Localization;
 namespace MacExplorer.Views;
 
 public partial class PropertiesWindow : FAAppWindow
@@ -45,9 +46,9 @@ public partial class PropertiesWindow : FAAppWindow
         {
             var dialog = new FAContentDialog
             {
-                Title = "Couldn't save properties",
-                Content = result.Value.Error ?? "Unknown error",
-                PrimaryButtonText = "OK"
+                Title = Lang.Text("Properties.SaveFailed"),
+                Content = result.Value.Error ?? Lang.Text("Common.Error.Unknown"),
+                PrimaryButtonText = Lang.Text("Common.Action.OK")
             };
             await dialog.ShowAsync(this);
             return;

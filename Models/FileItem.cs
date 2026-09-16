@@ -1,7 +1,7 @@
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Humanizer;
-
+using MacExplorer.Localization;
 namespace MacExplorer.Models;
 
 public sealed partial class FileItem : ObservableObject
@@ -16,7 +16,7 @@ public sealed partial class FileItem : ObservableObject
     [ObservableProperty] public partial bool SizeKnown { get; set; }
     public DateTime Modified { get; init; }
     public DateTime Created { get; init; }
-    public string ItemType { get; init; } = "Item";
+    public string ItemType { get; init; } = "";
     public string Extension { get; init; } = string.Empty;
     public string? OriginalFolder { get; init; }
     public string OriginalFolderName { get; init; } = "";
@@ -45,35 +45,36 @@ public sealed partial class FileItem : ObservableObject
 
 
     public bool IsNavigable => IsDirectory && !IsBundle;
-    public string SizeText => IsDirectory && !SizeKnown ? "Calculating…" : FormatSize(Size);
+    public string SizeText => IsDirectory && !SizeKnown ? Lang.Text("File.Size.Calculating") : Lang.FileSize(Size);
     public double CutOpacity => IsCut ? 0.45 : 1;
-    public string ModifiedText => Modified.ToString("yyyy/MM/dd HH:mm");
-    public string CreatedText => Created.ToString("yyyy/MM/dd HH:mm");
+    public string ModifiedText => Lang.Date(Modified);
+    public string CreatedText => Lang.Date(Created);
     public string ItemTooltipText
     {
         get
         {
-            var text =
-                $"Name: {DisplayName}{Environment.NewLine}Type: {ItemType}{Environment.NewLine}Date modified: {Modified:g}";
+            var text = Lang.Text("File.Tooltip", DisplayName, Environment.NewLine, ItemType, Lang.Date(Modified));
             if (!IsDirectory || SizeKnown)
-                text += $"{Environment.NewLine}Size: {FormatSize(Size)}";
+                text = Lang.Text("File.Tooltip.Size", text, Environment.NewLine, Lang.FileSize(Size));
             return text;
         }
     }
-
-    private static string FormatSize(long bytes) => bytes switch
-    {
-        < 1024 => $"{bytes} B",
-        < 1024 * 1024 => $"{bytes / 1024.0:0.##} KB",
-        < 1024L * 1024 * 1024 => $"{bytes / (1024.0 * 1024):0.##} MB",
-        _ => $"{bytes / (1024.0 * 1024 * 1024):0.##} GB"
-    };
     public string ModifiedHuman => Modified.Humanize();
     public string TypeAndSize => IsDirectory && !SizeKnown ? ItemType : $"{ItemType}  ·  {SizeText}";
     public IReadOnlyList<FileTag> NameDots => Tags;
     public bool HasNameDots => Tags.Count > 0;
     public bool HasTags => Tags.Count > 0;
 
+
+    public void NotifyLocalized()
+    {
+        OnPropertyChanged(nameof(SizeText));
+        OnPropertyChanged(nameof(ModifiedText));
+        OnPropertyChanged(nameof(CreatedText));
+        OnPropertyChanged(nameof(TypeAndSize));
+        OnPropertyChanged(nameof(ItemTooltipText));
+        OnPropertyChanged(nameof(ModifiedHuman));
+    }
 
     private void NotifySize()
     {
