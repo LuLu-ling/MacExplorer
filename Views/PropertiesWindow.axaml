@@ -134,30 +134,9 @@
                                         Background="{DynamicResource DividerStrokeColorDefaultBrush}" />
                                 <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="SemiBold" Text="{DynamicResource Properties.HashValue}" />
                                 <Button Grid.Column="3" Padding="6" Background="Transparent" BorderThickness="0"
-                                        ToolTip.Tip="{DynamicResource Properties.SelectHashes}">
+                                        ToolTip.Tip="{DynamicResource Properties.SelectHashes}"
+                                        Click="SelectHashes_OnClick">
                                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE7B3;" FontSize="14" />
-                                    <Button.Flyout>
-                                        <MenuFlyout>
-                                            <MenuItem Header="CRC32" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[0].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="CRC32" />
-                                            <MenuItem Header="MD5" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[1].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="MD5" />
-                                            <MenuItem Header="SHA1" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[2].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA1" />
-                                            <MenuItem Header="SHA256" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[3].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA256" />
-                                            <MenuItem Header="SHA384" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[4].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA384" />
-                                            <MenuItem Header="SHA512" ToggleType="CheckBox"
-                                                      IsChecked="{Binding Hashes[5].IsEnabled, Mode=OneWay}"
-                                                      Command="{Binding ToggleIsEnabledCommand}" CommandParameter="SHA512" />
-                                        </MenuFlyout>
-                                    </Button.Flyout>
                                 </Button>
                             </Grid>
                             </Border>

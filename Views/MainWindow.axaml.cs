@@ -126,6 +126,80 @@ public partial class MainWindow : FAAppWindow
         Config.Window.Width = Width;
         Config.Window.Height = Height;
     }
+
+    private void New_OnClick(object? sender, RoutedEventArgs e) =>
+        ShowToolbarMenu(sender, e, static (vm, _) =>
+        [
+            new(Lang.Text("Toolbar.New.Folder"), () => vm.NewFolderCommand.Execute(null)),
+            new(Lang.Text("Toolbar.New.File"), () => vm.NewFileCommand.Execute(null)),
+        ]);
+
+    private void Selection_OnClick(object? sender, RoutedEventArgs e) =>
+        ShowToolbarMenu(sender, e, static (_, tab) =>
+        [
+            new(Lang.Text("Toolbar.SelectAll"), tab.SelectAll),
+            new(Lang.Text("Toolbar.InvertSelection"), tab.InvertSelection),
+            new(Lang.Text("Toolbar.ClearSelection"), tab.ClearSelection),
+        ]);
+
+    private void Sort_OnClick(object? sender, RoutedEventArgs e) =>
+        ShowToolbarMenu(sender, e, static (vm, tab) =>
+        {
+            var field = Config.Layout.SortFieldValue;
+            return
+            [
+                new(Lang.Text("Sort.By"), Children:
+                [
+                    new(Lang.Text("Sort.Name"), () => vm.SetSort("Name"), Checked: field is SortField.Name),
+                    new(Lang.Text("Sort.DateModified"), () => vm.SetSort("DateModified"), Checked: field is SortField.DateModified),
+                    new(Lang.Text("Sort.DateCreated"), () => vm.SetSort("DateCreated"), Checked: field is SortField.DateCreated),
+                    new(Lang.Text("Sort.Type"), () => vm.SetSort("Type"), Checked: field is SortField.Type),
+                    new(Lang.Text("Sort.Size"), () => vm.SetSort("Size"), Checked: field is SortField.Size),
+                ]),
+                new(Lang.Text("Group.By"), Children: FolderView.GroupByMenu(tab)),
+                new("", Separator: true),
+                new(Lang.Text("Settings.Folders.ShowHidden"), vm.ToggleHidden, Checked: vm.ShowHidden),
+                new(Lang.Text("Settings.Folders.ShowExtensions"), vm.ToggleExtensions, Checked: vm.ShowExtensions),
+            ];
+        });
+
+    private void Layout_OnClick(object? sender, RoutedEventArgs e) =>
+        ShowToolbarMenu(sender, e, static (vm, tab) =>
+        {
+            var layout = tab.Layout;
+            var size = tab.LayoutSize;
+            return
+            [
+                new(Lang.Text("Layout.Details"), () => vm.SetLayout("Details"), Checked: layout is LayoutKind.Details),
+                new(Lang.Text("Layout.List"), () => vm.SetLayout("List"), Checked: layout is LayoutKind.List),
+                new(Lang.Text("Layout.Cards"), () => vm.SetLayout("Cards"), Checked: layout is LayoutKind.Cards),
+                new(Lang.Text("Layout.Grid"), () => vm.SetLayout("Grid"), Checked: layout is LayoutKind.Grid),
+                new("", Separator: true),
+                new(Lang.Text("Layout.Size"), Children:
+                [
+                    new("50%", () => tab.LayoutSize = 1, Checked: size == 1),
+                    new("75%", () => tab.LayoutSize = 2, Checked: size == 2),
+                    new("100%", () => tab.LayoutSize = 3, Checked: size == 3),
+                    new("125%", () => tab.LayoutSize = 4, Checked: size == 4),
+                    new("150%", () => tab.LayoutSize = 5, Checked: size == 5),
+                ]),
+                new("", Separator: true),
+                new(Lang.Text("Settings.Folders.ShowHidden"), vm.ToggleHidden, Checked: vm.ShowHidden),
+                new(Lang.Text("Settings.Folders.ShowExtensions"), vm.ToggleExtensions, Checked: vm.ShowExtensions),
+            ];
+        });
+
+    private void ShowToolbarMenu(
+        object? sender,
+        RoutedEventArgs e,
+        Func<MainViewModel, ExplorerTabViewModel, IReadOnlyList<MacMenuEntry>> build)
+    {
+        e.Handled = true;
+        if (sender is not Control anchor || VM is not { SelectedTab: { } tab } vm)
+            return;
+        MacContextMenu.ShowAt(anchor, build(vm, tab));
+    }
+
     private int _tabDragFrom = -1;
     private int _tabDragHover = -1;
     private bool _tabDragging;

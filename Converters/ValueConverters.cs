@@ -57,19 +57,3 @@ public sealed class LayoutEqConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
-
-public sealed class GroupDateEqConverter : IMultiValueConverter
-{
-    public static readonly GroupDateEqConverter Instance = new();
-
-    public object Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (parameter is not string spec)
-            return false;
-        var split = spec.Split(':');
-        if (split.Length != 2 || values.Count < 2)
-            return false;
-        return string.Equals(values[0]?.ToString(), split[0], StringComparison.Ordinal)
-            && string.Equals(values[1]?.ToString(), split[1], StringComparison.Ordinal);
-    }
-}

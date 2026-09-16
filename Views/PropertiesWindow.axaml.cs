@@ -6,11 +6,11 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
+using MacExplorer.Localization;
+using MacExplorer.Native;
 using MacExplorer.ViewModels;
 
-using MacExplorer.Localization;
 namespace MacExplorer.Views;
-
 public partial class PropertiesWindow : FAAppWindow
 {
     public PropertiesWindow()
@@ -58,6 +58,20 @@ public partial class PropertiesWindow : FAAppWindow
     }
 
     private void Cancel_OnClick(object? sender, RoutedEventArgs e) => Close();
+
+    private void SelectHashes_OnClick(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not Control { DataContext: HashesViewModel hashes } anchor)
+            return;
+        MacContextMenu.ShowAt(anchor,
+        [
+            ..hashes.Hashes.Select(item => new MacMenuEntry(
+                item.Algorithm,
+                () => hashes.ToggleIsEnabledCommand.Execute(item.Algorithm),
+                Checked: item.IsEnabled))
+        ]);
+    }
 
     private async void CopyHash_OnClick(object? sender, RoutedEventArgs e)
     {

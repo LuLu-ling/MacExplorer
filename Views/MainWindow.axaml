@@ -210,17 +210,11 @@
                         IsVisible="{Binding SelectedTab.ShowFolder}">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Orientation="Horizontal" Spacing="0">
-                            <Button Classes="ToolbarButton">
+                            <Button Classes="ToolbarButton" Click="New_OnClick">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE710;" />
                                     <TextBlock Text="{DynamicResource Toolbar.New}" />
                                 </StackPanel>
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuItem Header="{DynamicResource Toolbar.New.Folder}" Command="{Binding NewFolderCommand}" />
-                                        <MenuItem Header="{DynamicResource Toolbar.New.File}" Command="{Binding NewFileCommand}" />
-                                    </MenuFlyout>
-                                </Button.Flyout>
                             </Button>
                             <Rectangle Width="1" Height="18" Margin="4,0" Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
                             <Button Classes="ToolbarButton" Command="{Binding SelectedTab.CutCommand}" ToolTip.Tip="{DynamicResource Toolbar.Cut}">
@@ -248,207 +242,20 @@
                                     IsVisible="{Binding SelectedTab.IsTrash}" Content="{DynamicResource Toolbar.EmptyTrash}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Selection}">
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuItem Header="{DynamicResource Toolbar.SelectAll}" Command="{Binding SelectedTab.SelectAllCommand}" InputGesture="Meta+A" />
-                                        <MenuItem Header="{DynamicResource Toolbar.InvertSelection}" Command="{Binding SelectedTab.InvertSelectionCommand}" />
-                                        <MenuItem Header="{DynamicResource Toolbar.ClearSelection}" Command="{Binding SelectedTab.ClearSelectionCommand}" />
-                                    </MenuFlyout>
-                                </Button.Flyout>
+                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Selection}"
+                                    Click="Selection_OnClick">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8B3;" />
                             </Button>
-                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Sort}">
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuItem Header="{DynamicResource Sort.By}">
-                                            <MenuItem Header="{DynamicResource Sort.Name}" Command="{Binding SetSortCommand}" CommandParameter="Name" />
-                                            <MenuItem Header="{DynamicResource Sort.DateModified}" Command="{Binding SetSortCommand}" CommandParameter="DateModified" />
-                                            <MenuItem Header="{DynamicResource Sort.DateCreated}" Command="{Binding SetSortCommand}" CommandParameter="DateCreated" />
-                                            <MenuItem Header="{DynamicResource Sort.Type}" Command="{Binding SetSortCommand}" CommandParameter="Type" />
-                                            <MenuItem Header="{DynamicResource Sort.Size}" Command="{Binding SetSortCommand}" CommandParameter="Size" />
-                                        </MenuItem>
-                                        <MenuItem Header="{DynamicResource Group.By}">
-                                            <MenuItem Header="{DynamicResource Group.None}" Command="{Binding SetGroupCommand}" CommandParameter="None"
-                                                      ToggleType="Radio"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=None, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.Name}" Command="{Binding SetGroupCommand}" CommandParameter="Name"
-                                                      ToggleType="Radio"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Name, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.DateModified}">
-                                                <MenuItem Header="{DynamicResource Group.Year}" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Year" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Year">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Month}" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Month" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Month">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Day}" Command="{Binding SetGroupCommand}" CommandParameter="DateModified:Day" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateModified:Day">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                            </MenuItem>
-                                            <MenuItem Header="{DynamicResource Group.DateCreated}">
-                                                <MenuItem Header="{DynamicResource Group.Year}" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Year" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Year">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Month}" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Month" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Month">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Day}" Command="{Binding SetGroupCommand}" CommandParameter="DateCreated:Day" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateCreated:Day">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                            </MenuItem>
-                                            <MenuItem Header="{DynamicResource Group.Type}" Command="{Binding SetGroupCommand}" CommandParameter="FileType"
-                                                      ToggleType="Radio"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FileType, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.Size}" Command="{Binding SetGroupCommand}" CommandParameter="Size"
-                                                      ToggleType="Radio"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Size, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.FileTags}" Command="{Binding SetGroupCommand}" CommandParameter="FileTag"
-                                                      ToggleType="Radio"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FileTag, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.OriginalFolder}" Command="{Binding SetGroupCommand}" CommandParameter="OriginalFolder"
-                                                      ToggleType="Radio"
-                                                      IsVisible="{Binding SelectedTab.CanGroupByOriginalFolder}"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=OriginalFolder, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.DateDeleted}" IsVisible="{Binding SelectedTab.CanGroupByDateDeleted}">
-                                                <MenuItem Header="{DynamicResource Group.Year}" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Year" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Year">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Month}" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Month" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Month">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                                <MenuItem Header="{DynamicResource Group.Day}" Command="{Binding SetGroupCommand}" CommandParameter="DateDeleted:Day" ToggleType="Radio">
-                                                    <MenuItem.IsChecked>
-                                                        <MultiBinding Converter="{x:Static conv:GroupDateEqConverter.Instance}" ConverterParameter="DateDeleted:Day">
-                                                            <Binding Path="SelectedTab.GroupOption" />
-                                                            <Binding Path="SelectedTab.GroupByDateUnit" />
-                                                        </MultiBinding>
-                                                    </MenuItem.IsChecked>
-                                                </MenuItem>
-                                            </MenuItem>
-                                            <MenuItem Header="{DynamicResource Group.FolderPath}" Command="{Binding SetGroupCommand}" CommandParameter="FolderPath"
-                                                      ToggleType="Radio"
-                                                      IsVisible="{Binding SelectedTab.CanGroupByFolderPath}"
-                                                      IsChecked="{Binding SelectedTab.GroupOption, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=FolderPath, Mode=OneWay}" />
-                                            <Separator />
-                                            <MenuItem Header="{DynamicResource Group.Ascending}" Command="{Binding SetGroupDirectionCommand}" CommandParameter="Ascending"
-                                                      ToggleType="Radio"
-                                                      IsEnabled="{Binding SelectedTab.IsGrouped}"
-                                                      IsChecked="{Binding SelectedTab.GroupDirection, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Ascending, Mode=OneWay}" />
-                                            <MenuItem Header="{DynamicResource Group.Descending}" Command="{Binding SetGroupDirectionCommand}" CommandParameter="Descending"
-                                                      ToggleType="Radio"
-                                                      IsEnabled="{Binding SelectedTab.IsGrouped}"
-                                                      IsChecked="{Binding SelectedTab.GroupDirection, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Descending, Mode=OneWay}" />
-                                        </MenuItem>
-                                        <Separator />
-                                        <MenuItem Header="{DynamicResource Settings.Folders.ShowHidden}" Command="{Binding ToggleHiddenCommand}" />
-                                        <MenuItem Header="{DynamicResource Settings.Folders.ShowExtensions}" Command="{Binding ToggleExtensionsCommand}" />
-                                    </MenuFlyout>
-                                </Button.Flyout>
+                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Sort}"
+                                    Click="Sort_OnClick">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8CB;" />
                             </Button>
-                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Layout}">
-                                <Button.Flyout>
-                                    <Flyout Placement="Bottom">
-                                        <StackPanel Spacing="12" Width="420">
-                                            <TextBlock FontWeight="Medium" Text="{DynamicResource Toolbar.Layout}" />
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
-                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Details, Mode=OneWay}"
-                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Details"
-                                                             ToolTip.Tip="{DynamicResource Layout.Details.Tip}">
-                                                    <StackPanel Spacing="4">
-                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
-                                                                   HorizontalAlignment="Center" Text="&#xE8A9;" />
-                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="{DynamicResource Layout.Details}"
-                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                                                    </StackPanel>
-                                                </RadioButton>
-                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
-                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=List, Mode=OneWay}"
-                                                             Command="{Binding SetLayoutCommand}" CommandParameter="List"
-                                                             ToolTip.Tip="{DynamicResource Layout.List.Tip}">
-                                                    <StackPanel Spacing="4">
-                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
-                                                                   HorizontalAlignment="Center" Text="&#xE8A4;" />
-                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="{DynamicResource Layout.List}"
-                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                                                    </StackPanel>
-                                                </RadioButton>
-                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
-                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Cards, Mode=OneWay}"
-                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Cards"
-                                                             ToolTip.Tip="{DynamicResource Layout.Cards.Tip}">
-                                                    <StackPanel Spacing="4">
-                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
-                                                                   HorizontalAlignment="Center" Text="&#xE8A1;" />
-                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="{DynamicResource Layout.Cards}"
-                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                                                    </StackPanel>
-                                                </RadioButton>
-                                                <RadioButton Classes="LayoutPicker" GroupName="Layout"
-                                                             IsChecked="{Binding SelectedTab.Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Grid, Mode=OneWay}"
-                                                             Command="{Binding SetLayoutCommand}" CommandParameter="Grid"
-                                                             ToolTip.Tip="{DynamicResource Layout.Grid.Tip}">
-                                                    <StackPanel Spacing="4">
-                                                        <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="28"
-                                                                   HorizontalAlignment="Center" Text="&#xE80A;" />
-                                                        <TextBlock HorizontalAlignment="Center" FontSize="12" Text="{DynamicResource Layout.Grid}"
-                                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
-                                                    </StackPanel>
-                                                </RadioButton>
-                                            </StackPanel>
-                                            <TextBlock FontWeight="Medium" Text="{DynamicResource Layout.Size}" />
-                                            <Slider Minimum="1" Maximum="5" TickFrequency="1" IsSnapToTickEnabled="True"
-                                                    Value="{Binding SelectedTab.LayoutSize}" />
-                                            <CheckBox Content="{DynamicResource Settings.Folders.ShowHidden}" IsChecked="{Binding ShowHidden, Mode=TwoWay}" />
-                                            <CheckBox Content="{DynamicResource Settings.Folders.ShowExtensions}" IsChecked="{Binding ShowExtensions, Mode=TwoWay}" />
-                                        </StackPanel>
-                                    </Flyout>
-                                </Button.Flyout>
+                            <Button Classes="ToolbarButton" ToolTip.Tip="{DynamicResource Toolbar.Layout}"
+                                    Click="Layout_OnClick">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE8A9;" />
                             </Button>
-                            <ToggleButton Classes="ToolbarButton" IsChecked="{Binding ShowInfoPane}" ToolTip.Tip="{DynamicResource Toolbar.InfoPane}">
+                            <ToggleButton Classes="ToolbarButton" IsChecked="{Binding ShowInfoPane}"
+                                          ToolTip.Tip="{DynamicResource Toolbar.InfoPane}">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xEA49;" />
                             </ToggleButton>
                         </StackPanel>

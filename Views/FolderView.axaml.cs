@@ -544,7 +544,7 @@ public partial class FolderView : UserControl
         new(Lang.Text("Toolbar.Properties"), OpenProperties),
     ];
 
-    private static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
+    internal static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
     {
         var option = tab.GroupOption;
         var unit = tab.GroupByDateUnit;
