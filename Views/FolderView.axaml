@@ -11,7 +11,7 @@
              Columns="{Binding Columns}"
              KeyDown="OnKeyDown">
     <Panel x:Name="RootPanel" ClipToBounds="True">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,125,0,0"
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                     IsVisible="{Binding IsEmpty}">
             <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="48"
                        Text="&#xE8B7;" HorizontalAlignment="Center"
@@ -20,7 +20,7 @@
                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
         </StackPanel>
 
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Margin="24,125,24,0" MaxWidth="400"
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24,0" MaxWidth="400"
                     IsVisible="{Binding UnavailableTitle, Converter={x:Static ObjectConverters.IsNotNull}}">
             <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" FontSize="48"
                        Text="&#xE946;" HorizontalAlignment="Center"
@@ -111,6 +111,7 @@
                                 Width="{Binding #Root.Columns.TotalWidth}">
                             <StackPanel Orientation="Horizontal"
                                         Height="{Binding #Root.Metrics.DetailsRowHeight}"
+                                        VerticalAlignment="Center"
                                         Opacity="{Binding CutOpacity}">
                                 <Border Width="{x:Static vm:DetailsColumns.Icon}">
                                     <Image Width="{Binding #Root.Metrics.DetailsIconSize}"
@@ -178,7 +179,7 @@
                  ScrollViewer.VerticalScrollBarVisibility="Disabled">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Vertical" />
+                    <WrapPanel Orientation="Vertical" ItemSpacing="4" LineSpacing="4" />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
             <ListBox.DataTemplates>
@@ -234,7 +235,7 @@
         </ListBox>
 
 
-        <ListBox Classes="FileList Wrap" SelectionMode="Multiple"
+        <ListBox Classes="FileList Wrap card" SelectionMode="Multiple"
                  IsVisible="{Binding Layout, Converter={x:Static conv:LayoutEqConverter.Instance}, ConverterParameter=Cards}"
                  ItemsSource="{Binding ViewItems}" DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged">
             <ListBox.ItemsPanel>

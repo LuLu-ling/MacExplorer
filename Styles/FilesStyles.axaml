@@ -14,7 +14,7 @@
             <Setter Property="ClipToBounds" Value="False" />
             <Setter Property="UseLayoutRounding" Value="False" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="FocusAdorner" Value="{x:Null}" />
             <Setter Property="Template">
                 <ControlTemplate>
@@ -31,6 +31,34 @@
             </Setter>
         </ControlTheme>
     </Styles.Resources>
+
+    <Style Selector="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Image, PathIcon, Ellipse, ProgressBar">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="RadioButton">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button, ToggleButton, RepeatButton">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
 
     <Style Selector="Button.NavButton">
         <Setter Property="Width" Value="36" />
@@ -102,6 +130,8 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="ToggleButton.ToolbarButton:checked /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
@@ -143,6 +173,7 @@
     <Style Selector="Button.SidebarRow">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -198,6 +229,9 @@
     <Style Selector="ListBox.FileList.grid ListBoxItem">
         <Setter Property="Margin" Value="4,0" />
     </Style>
+    <Style Selector="ListBox.FileList.card ListBoxItem">
+        <Setter Property="Margin" Value="4" />
+    </Style>
     <Style Selector="ListBox.FileList.list">
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled" />
@@ -236,8 +270,11 @@
     </Style>
     <Style Selector="Border.FileRow.card">
         <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
-        <Setter Property="Margin" Value="4" />
+        <Setter Property="Margin" Value="0" />
         <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="Border.FileRow.card:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
     </Style>
     <Style Selector="Border.FileRow.card.selected">
         <Setter Property="Background" Value="{StaticResource FileSelectionFillBrush}" />

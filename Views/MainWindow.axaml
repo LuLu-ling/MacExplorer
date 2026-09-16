@@ -471,12 +471,13 @@
                             BorderThickness="0,1,0,0"
                             IsVisible="{Binding !SelectedTab.IsHome}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                 <TextBlock VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                            Text="{Binding SelectedTab.StatusText}" />
                                 <Border Width="1" Height="18" Background="{DynamicResource DividerStrokeColorDefaultBrush}"
-                                        IsVisible="{Binding SelectedTab.HasSelection}" />
+                                        IsVisible="{Binding SelectedTab.HasSelection}"
+                                        VerticalAlignment="Center" />
                                 <TextBlock VerticalAlignment="Center"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                            Text="{Binding SelectedTab.SelectionText}" />
