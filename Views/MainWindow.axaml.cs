@@ -38,11 +38,6 @@ public partial class MainWindow : FAAppWindow
         };
         Activated += (_, _) => RefreshFinderPlaces();
         TitleBarHost.SizeChanged += (_, _) => UpdateTabStripOverflow();
-        DragDrop.SetAllowDrop(SidebarHost, true);
-        SidebarHost.AddHandler(DragDrop.DragOverEvent, Sidebar_OnDragOver);
-        SidebarHost.AddHandler(DragDrop.DragLeaveEvent, Sidebar_OnDragLeave);
-        SidebarHost.AddHandler(DragDrop.DropEvent, Sidebar_OnDrop);
-        SidebarHost.AddHandler(ContextRequestedEvent, Sidebar_OnContextRequested, RoutingStrategies.Tunnel);
         DragDrop.SetAllowDrop(AddressBar, true);
         AddressBar.AddHandler(DragDrop.DragOverEvent, AddressBar_OnDragOver);
         AddressBar.AddHandler(DragDrop.DragLeaveEvent, AddressBar_OnDragLeave);
@@ -438,109 +433,6 @@ public partial class MainWindow : FAAppWindow
                 FormattableString.Invariant($"translateX({x}px)"));
     }
 
-    private async void Sidebar_OnClick(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Button { Tag: SidebarItem item })
-            await (VM?.NavigateSidebarAsync(item) ?? Task.CompletedTask);
-    }
-
-    private void Sidebar_OnContextRequested(object? sender, ContextRequestedEventArgs e)
-    {
-        if (VM is null || e.Handled)
-            return;
-        SidebarItem? item = null;
-        for (var visual = e.Source as Visual; visual is not null; visual = visual.GetVisualParent())
-        {
-            if (visual is Control { Tag: SidebarItem found })
-            {
-                item = found;
-                break;
-            }
-        }
-        if (item is null)
-            return;
-        var entries = SidebarMenu(item);
-        if (entries.Length == 0)
-            return;
-        e.Handled = true;
-        MacContextMenu.Show(entries);
-    }
-
-    private MacMenuEntry[] SidebarMenu(SidebarItem item)
-    {
-        if (item.Path is not { Length: > 0 } path)
-            return [];
-        MacMenuEntry[] actions = item.Kind switch
-        {
-            SidebarKind.Favorite =>
-            [
-                new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite),
-                new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
-            ],
-            SidebarKind.Location when MacWorkspace.IsDiskImage(path) =>
-            [
-                new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path), Symbol: MacMenuSymbol.Eject),
-                new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
-            ],
-            _ => []
-        };
-        if (item.IsSection)
-            return actions;
-        return [new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow), ..actions];
-    }
-
-    private void Sidebar_OnDragOver(object? sender, DragEventArgs e)
-    {
-        var paths = FileDrag.Paths(e.DataTransfer);
-        var item = SidebarItemAt(e);
-        if (FavoriteDrop(e, item, paths, e.DragEffects, out var effect, out var dest))
-        {
-            _dragHoverOpen.Cancel();
-            e.DragEffects = effect;
-            FileDragTip.Show(e, dest is null ? DragDropEffects.None : DragDropEffects.Link, dest);
-            e.Handled = true;
-            return;
-        }
-
-        dest = SidebarDropPath(item);
-        TrackHoverOpen(dest);
-        e.DragEffects = dest is null || paths is null
-            ? DragDropEffects.None
-            : FileDrag.Effect(paths, dest, e.DragEffects, e.KeyModifiers);
-        FileDragTip.Show(e, e.DragEffects, dest);
-        e.Handled = true;
-    }
-
-    private void Sidebar_OnDragLeave(object? sender, DragEventArgs e)
-    {
-        if (StillInside(SidebarHost, e))
-            return;
-        _dragHoverOpen.Cancel();
-        FileDragTip.Hide();
-        e.Handled = true;
-    }
-
-    private async void Sidebar_OnDrop(object? sender, DragEventArgs e)
-    {
-        var paths = FileDrag.Paths(e.DataTransfer);
-        var item = SidebarItemAt(e);
-        _dragHoverOpen.Cancel();
-        FileDragTip.Hide();
-
-        if (FavoriteDrop(e, item, paths, e.DragEffects, out var effect, out _))
-        {
-            e.DragEffects = effect;
-            e.Handled = true;
-            if (effect != DragDropEffects.None && paths is not null)
-                MacFinder.AddFavorites(paths);
-            return;
-        }
-
-        await DropAtAsync(paths, SidebarDropPath(item), e);
-    }
-
     private void AddressBar_OnDragOver(object? sender, DragEventArgs e)
     {
         if (AddressBar.IsEditing)
@@ -584,87 +476,6 @@ public partial class MainWindow : FAAppWindow
         await DropAtAsync(FileDrag.Paths(e.DataTransfer), AddressBar.IsEditing ? null : AddressBarPathAt(e), e);
     }
 
-    private bool FavoriteDrop(
-        DragEventArgs e,
-        SidebarItem? item,
-        IReadOnlyList<string>? paths,
-        DragDropEffects allowed,
-        out DragDropEffects effect,
-        out string? destination)
-    {
-        effect = DragDropEffects.None;
-        destination = null;
-        if (paths is null || !OverFavoritesHeaderOrGap(e, item))
-            return false;
-        if (paths.Count == 0 || paths.Any(static p => !Directory.Exists(p) || PathUtil.IsBundle(p)))
-            return false;
-        if (paths.Any(MacFinder.IsFavorite))
-            return true;
-
-        effect = (allowed & DragDropEffects.Link) != 0
-            ? DragDropEffects.Link
-            : (allowed & DragDropEffects.Copy) != 0
-                ? DragDropEffects.Copy
-                : DragDropEffects.None;
-        if (effect == DragDropEffects.None)
-            return true;
-        destination = "Favorites";
-        return true;
-    }
-
-    private bool OverFavoritesHeaderOrGap(DragEventArgs e, SidebarItem? item)
-    {
-        if (item is { Id: "favorites" })
-            return true;
-        return item is null && InFavoritesBand(e);
-    }
-
-    private bool InFavoritesBand(DragEventArgs e)
-    {
-        if (SidebarList.ItemsPanelRoot is not Panel panel || VM is null)
-            return false;
-
-        var items = VM.Sidebar.Items;
-        var start = -1;
-        var stop = items.Count;
-        for (var i = 0; i < items.Count; i++)
-        {
-            if (start < 0)
-            {
-                if (items[i].Id == "favorites")
-                    start = i;
-                continue;
-            }
-            if (items[i].Kind != SidebarKind.Favorite)
-            {
-                stop = i;
-                break;
-            }
-        }
-        if ((uint)start >= (uint)panel.Children.Count)
-            return false;
-
-        var top = panel.Children[start].Bounds.Top;
-        var bottom = stop < panel.Children.Count
-            ? panel.Children[stop].Bounds.Top
-            : panel.Children[start].Bounds.Bottom;
-        var pos = e.GetPosition(panel);
-        return pos.Y >= top && pos.Y < bottom;
-    }
-
-    private static SidebarItem? SidebarItemAt(DragEventArgs e)
-    {
-        for (var visual = e.Source as Visual; visual is not null; visual = visual.GetVisualParent())
-        {
-            if (visual is Control { Tag: SidebarItem item })
-                return item;
-        }
-
-        return null;
-    }
-
-    private static string? SidebarDropPath(SidebarItem? item) =>
-        item is { Path.Length: > 0 } && Directory.Exists(item.Path) ? item.Path : null;
 
     private static string? AddressBarPathAt(DragEventArgs e)
     {

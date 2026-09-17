@@ -111,16 +111,38 @@ public sealed partial class SidebarViewModel : ViewModelBase
         SelectedItem = best;
     }
 
+    public (int Lo, int Hi)? ReorderRange(int index)
+    {
+        if ((uint)index >= (uint)Items.Count)
+            return null;
+        var item = Items[index];
+        if (!item.CanReorder)
+            return null;
+        var lo = index;
+        var hi = index;
+        while (lo > 0 && Items[lo - 1].Kind == item.Kind && Items[lo - 1].CanReorder)
+            lo--;
+        while (hi + 1 < Items.Count && Items[hi + 1].Kind == item.Kind && Items[hi + 1].CanReorder)
+            hi++;
+        return hi > lo ? (lo, hi) : null;
+    }
+
+    public bool TryMove(int from, int to)
+    {
+        if ((uint)from >= (uint)Items.Count || (uint)to >= (uint)Items.Count || from == to)
+            return false;
+        if (ReorderRange(from) is not { } range || to < range.Lo || to > range.Hi)
+            return false;
+        var kind = Items[from].Kind;
+        Items.Move(from, to);
+        Persist(kind);
+        return true;
+    }
 
     public void ToggleSection(SidebarItem section)
     {
         if (!section.IsSection) return;
         section.IsExpanded = !section.IsExpanded;
-        foreach (var child in Items.Where(i => i.Id.StartsWith(section.Id + ":", StringComparison.Ordinal) || i.Depth > 0 && Items.ToList().IndexOf(i) > Items.ToList().IndexOf(section)))
-        {
-            // handled below
-        }
-
         var show = section.IsExpanded;
         var started = false;
         foreach (var item in Items)
@@ -153,6 +175,25 @@ public sealed partial class SidebarViewModel : ViewModelBase
         Items.Add(section);
         foreach (var child in children)
             Items.Add(child);
+    }
+
+    private void Persist(SidebarKind kind)
+    {
+        switch (kind)
+        {
+            case SidebarKind.Favorite:
+                MacFinder.ReorderFavorites(
+                    Items.Where(static i => i.Kind == SidebarKind.Favorite && i.Path is { Length: > 0 })
+                        .Select(static i => i.Path!)
+                        .ToArray());
+                break;
+            case SidebarKind.Tag:
+                MacTags.ReorderFavoriteNames(
+                    Items.Where(static i => i.Kind == SidebarKind.Tag)
+                        .Select(static i => i.Title)
+                        .ToArray());
+                break;
+        }
     }
 
     private static SidebarItem Tag(FileTag tag) => new()

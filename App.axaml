@@ -12,6 +12,16 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceInclude Source="/Styles/FilesTheme.axaml" />
             </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SidebarSelectionFillBrush" Color="#E4E5EB" />
+                    <SolidColorBrush x:Key="SidebarHoverFillBrush" Color="#EEEFF3" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SidebarSelectionFillBrush" Color="#3A3A3C" />
+                    <SolidColorBrush x:Key="SidebarHoverFillBrush" Color="#2C2C2E" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>

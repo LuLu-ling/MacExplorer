@@ -142,19 +142,120 @@
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="BorderBrush" Value="Transparent" />
-        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="Margin" Value="8,1" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.SidebarRow">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="Margin" Value="8,1" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Height" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                <ThicknessTransition Property="Margin" Duration="0:0:0.22" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.SidebarRow.section">
+        <Setter Property="Height" Value="28" />
+        <Setter Property="Margin" Value="8,10,8,2" />
+    </Style>
+    <Style Selector="Border.SidebarRow.collapsed">
+        <Setter Property="Height" Value="0" />
+        <Setter Property="Margin" Value="8,0" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="Padding" Value="0" />
     </Style>
     <Style Selector="Button.SidebarRow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SidebarHoverFillBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
     </Style>
     <Style Selector="Button.SidebarRow.selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource SidebarSelectionFillBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+    </Style>
+    <Style Selector="Border.SidebarRow:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SidebarHoverFillBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.selected">
+        <Setter Property="Background" Value="{DynamicResource SidebarSelectionFillBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SidebarSelectionFillBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.section:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.SidebarRow.dragging">
+        <Setter Property="Opacity" Value="0.92" />
+    </Style>
+    <Style Selector="TextBlock.SidebarTitle">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="LineHeight" Value="18" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.SidebarGlyph">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="LineHeight" Value="16" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.SidebarRow.selected TextBlock.SidebarTitle">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="Button.SidebarRow.selected TextBlock.SidebarGlyph">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.selected TextBlock.SidebarTitle">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.selected TextBlock.SidebarGlyph">
+        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="Border.SidebarRow.section TextBlock.SidebarTitle">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="LineHeight" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.SidebarChevron">
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="LineHeight" Value="12" />
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+        <Setter Property="RenderTransform" Value="rotate(0deg)" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="TextBlock.SidebarChevron.expanded">
+        <Setter Property="RenderTransform" Value="rotate(90deg)" />
     </Style>
 
     <Style Selector="ListBox.FileList">

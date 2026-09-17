@@ -29,10 +29,9 @@ public sealed partial class SidebarItem : ObservableObject
     [ObservableProperty] public partial bool IsExpanded { get; set; } = true;
     [ObservableProperty] public partial bool IsSelected { get; set; }
     [ObservableProperty] public partial bool IsVisible { get; set; } = true;
-
     public bool ShowChevron => IsSection;
-    public double Indent => Depth * 16;
     public bool HasMarker => Marker is not null;
+    public bool CanReorder => Kind is SidebarKind.Favorite or SidebarKind.Tag;
     partial void OnMarkerChanged(IBrush? value) => OnPropertyChanged(nameof(HasMarker));
 
 }

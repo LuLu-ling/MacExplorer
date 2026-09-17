@@ -63,6 +63,31 @@ internal static class MacTags
         }
     }
 
+    public static bool ReorderFavoriteNames(IReadOnlyList<string> names)
+    {
+        using var pool = new AutoreleasePool();
+        try
+        {
+            var defaults = ObjC.Call(ObjC.Class("NSUserDefaults"), "standardUserDefaults");
+            var domainName = ObjC.NsString("com.apple.finder");
+            var domain = ObjC.Call(defaults, "persistentDomainForName:", domainName);
+            if (domain == IntPtr.Zero)
+                return false;
+            var mutable = ObjC.Call(ObjC.Class("NSMutableDictionary"), "dictionaryWithDictionary:", domain);
+            var array = ObjC.MutableArray(names.Count);
+            foreach (var name in names)
+                ObjC.AddObject(array, ObjC.NsString(name));
+            ObjC.Call(mutable, "setObject:forKey:", array, ObjC.NsString("FavoriteTagNames"));
+            ObjC.Call(defaults, "setPersistentDomain:forName:", mutable, domainName);
+            ObjC.Call(defaults, "synchronize");
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static IReadOnlyList<FileTag> Read(string path)
     {
         if (string.IsNullOrEmpty(path))

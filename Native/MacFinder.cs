@@ -108,6 +108,69 @@ internal static class MacFinder
     public static bool ToggleFavorite(string path) =>
         IsFavorite(path) ? RemoveFavorite(path) : AddFavorite(path);
 
+    public static bool ReorderFavorites(IReadOnlyList<string> ordered)
+    {
+        if (ordered.Count == 0)
+            return false;
+
+        using var pool = new AutoreleasePool();
+        var list = CreateFavoriteList();
+        if (list == IntPtr.Zero)
+            return false;
+        try
+        {
+            uint seed = 0;
+            var snapshot = LSSharedFileListCopySnapshot(list, ref seed);
+            if (snapshot == IntPtr.Zero)
+                return false;
+            try
+            {
+                var count = CFArrayGetCount(snapshot);
+                var items = new List<(string Path, IntPtr Item)>((int)count);
+                for (long i = 0; i < count; i++)
+                {
+                    var item = CFArrayGetValueAtIndex(snapshot, i);
+                    var path = ResolveListItem(item);
+                    if (path is not null)
+                        items.Add((path, item));
+                }
+
+                var after = ItemBeforeFirst();
+                var moved = false;
+                foreach (var path in ordered)
+                {
+                    var item = FindItem(items, path);
+                    if (item == IntPtr.Zero)
+                        continue;
+                    if (LSSharedFileListItemMove(list, item, after) == 0)
+                        moved = true;
+                    after = item;
+                }
+
+                return moved;
+            }
+            finally
+            {
+                CFRelease(snapshot);
+            }
+        }
+        finally
+        {
+            CFRelease(list);
+        }
+    }
+
+    private static IntPtr FindItem(List<(string Path, IntPtr Item)> items, string path)
+    {
+        foreach (var entry in items)
+        {
+            if (SamePath(entry.Path, path))
+                return entry.Item;
+        }
+
+        return IntPtr.Zero;
+    }
+
     public static void ShowInfo(IReadOnlyList<string> paths)
     {
         using var pool = new AutoreleasePool();
@@ -299,6 +362,12 @@ internal static class MacFinder
         return last == IntPtr.Zero ? new IntPtr(-1) : last;
     }
 
+    private static IntPtr ItemBeforeFirst()
+    {
+        var first = Symbol("kLSSharedFileListItemBeforeFirst");
+        return first == IntPtr.Zero ? IntPtr.Zero : first;
+    }
+
     private static string? ResolveListItem(IntPtr item)
     {
         if (item == IntPtr.Zero)
@@ -375,6 +444,9 @@ internal static class MacFinder
 
     [DllImport(CoreServices)]
     private static extern int LSSharedFileListItemRemove(IntPtr list, IntPtr item);
+
+    [DllImport(CoreServices)]
+    private static extern int LSSharedFileListItemMove(IntPtr list, IntPtr item, IntPtr moveAfterItem);
 
     [DllImport(CoreServices)]
     private static extern IntPtr LSSharedFileListItemCopyResolvedURL(IntPtr item, uint flags, ref IntPtr error);
