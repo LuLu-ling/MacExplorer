@@ -1,7 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Styling;
-
+using Avalonia.Threading;
 namespace MacExplorer.Localization;
 
 /// <summary>
@@ -18,16 +18,17 @@ public static class Lang
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        var app = Application.Current;
-        if (app is not null &&
-            app.TryGetResource(key, app.ActualThemeVariant, out var themed) &&
-            themed is string themedText)
-            return themedText;
+        if (LocalizationService.TryGetText(key, out var localized))
+            return localized;
 
-        if (app is not null &&
-            app.TryGetResource(key, ThemeVariant.Default, out var fallback) &&
-            fallback is string fallbackText)
-            return fallbackText;
+        var app = Application.Current;
+        if (app is not null && Dispatcher.UIThread.CheckAccess())
+        {
+            if (app.TryGetResource(key, app.ActualThemeVariant, out var themed) && themed is string themedText)
+                return themedText;
+            if (app.TryGetResource(key, ThemeVariant.Default, out var fallback) && fallback is string fallbackText)
+                return fallbackText;
+        }
 
 #if DEBUG
         return $"!{key}!";

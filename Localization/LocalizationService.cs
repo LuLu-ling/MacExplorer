@@ -34,6 +34,15 @@ public static class LocalizationService
 
     public static event Action? LanguageChanged;
 
+    internal static bool TryGetText(string key, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out string? text)
+    {
+        text = Lookup(_currentLanguageDictionary, key) ?? Lookup(_baseLanguageDictionary, key);
+        return text is not null;
+    }
+
+    private static string? Lookup(ResourceDictionary? dictionary, string key) =>
+        dictionary is not null && dictionary.TryGetValue(key, out var value) ? value as string : null;
+
     public static void Initialize()
     {
         if (_initialized)
