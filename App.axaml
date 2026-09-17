@@ -16,10 +16,14 @@
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="SidebarSelectionFillBrush" Color="#E4E5EB" />
                     <SolidColorBrush x:Key="SidebarHoverFillBrush" Color="#EEEFF3" />
+                    <SolidColorBrush x:Key="TabItemBackgroundBrush" Color="#EBEBF0" />
+                    <SolidColorBrush x:Key="TabItemHoverBackgroundBrush" Color="#E1E1E6" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SidebarSelectionFillBrush" Color="#3A3A3C" />
                     <SolidColorBrush x:Key="SidebarHoverFillBrush" Color="#2C2C2E" />
+                    <SolidColorBrush x:Key="TabItemBackgroundBrush" Color="#2C2C2E" />
+                    <SolidColorBrush x:Key="TabItemHoverBackgroundBrush" Color="#3A3A3C" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

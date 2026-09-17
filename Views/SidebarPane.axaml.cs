@@ -1,10 +1,7 @@
 using Avalonia;
-using Avalonia.Animation;
-using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media.Transformation;
 using Avalonia.VisualTree;
 using MacExplorer.Controls;
 using MacExplorer.Lifecycle;
@@ -18,9 +15,6 @@ namespace MacExplorer.Views;
 
 public partial class SidebarPane : UserControl
 {
-    private static readonly TimeSpan ShiftDuration = TimeSpan.FromMilliseconds(220);
-    private static readonly SplineEasing ShiftEase = new(0.22, 1, 0.36, 1);
-
     private readonly DragHoverOpen _hoverOpen = new();
     private int _from = -1;
     private int _hover = -1;
@@ -84,7 +78,7 @@ public partial class SidebarPane : UserControl
             _dragging = true;
             _source.Classes.Set("dragging", true);
             panel.Children[_from].ZIndex = 100;
-            Shift(panel.Children[_from], 0, animate: false);
+            ReorderShift.Item(panel.Children[_from], 0, horizontal: false, animate: false);
             e.Pointer.Capture(_source);
         }
         var origin = Top(panel, _from);
@@ -92,13 +86,16 @@ public partial class SidebarPane : UserControl
         var min = Top(panel, _lo) - origin;
         var max = Top(panel, _hi) + panel.Children[_hi].Bounds.Height - origin - height;
         var delta = Math.Clamp(y - _pressY, min, max);
-        var hover = delta <= min + 0.5 ? _lo
-            : delta >= max - 0.5 ? _hi
-            : IndexAt(panel, origin + height / 2 + delta, _lo, _hi);
-        Shift(panel.Children[_from], delta, animate: false);
+        var hover = ReorderShift.HoverAt(
+            panel, _from, origin + height / 2 + delta, horizontal: false, _lo, _hi);
+        if (delta <= min + 0.5)
+            hover = _lo;
+        else if (delta >= max - 0.5)
+            hover = _hi;
+        ReorderShift.Item(panel.Children[_from], delta, horizontal: false, animate: false);
         if (hover != _hover)
         {
-            ShiftSiblings(panel, _from, hover, height);
+            ReorderShift.Siblings(panel, _from, hover, height, horizontal: false);
             _hover = hover;
         }
     }
@@ -134,7 +131,7 @@ public partial class SidebarPane : UserControl
         {
             foreach (var child in panel.Children)
                 child.ZIndex = 0;
-            ResetShifts(panel);
+            ReorderShift.Reset(panel);
         }
 
         if (dragged && to >= 0 && to != from)
@@ -339,76 +336,5 @@ public partial class SidebarPane : UserControl
         return y;
     }
 
-    private static int IndexAt(Panel panel, double y, int lo, int hi)
-    {
-        var acc = 0.0;
-        var last = lo;
-        for (var i = 0; i < panel.Children.Count && i <= hi; i++)
-        {
-            var h = panel.Children[i].Bounds.Height;
-            if (h < 1)
-                continue;
-            if (i < lo)
-            {
-                acc += h;
-                continue;
-            }
-
-            if (y <= acc + h / 2)
-                return i;
-            acc += h;
-            last = i;
-        }
-
-        return last;
-    }
-
-    private static void ShiftSiblings(Panel panel, int from, int hover, double height)
-    {
-        for (var i = 0; i < panel.Children.Count; i++)
-        {
-            if (i == from)
-                continue;
-            var shift = 0.0;
-            if (from < hover && i > from && i <= hover)
-                shift = -height;
-            else if (from > hover && i >= hover && i < from)
-                shift = height;
-            Shift(panel.Children[i], shift, animate: true);
-        }
-    }
-
-    private static void ResetShifts(Panel panel)
-    {
-        foreach (var child in panel.Children)
-            Shift(child, 0, animate: false);
-    }
-
-    private static void Shift(Control child, double y, bool animate)
-    {
-        if (animate)
-        {
-            if (child.Transitions is not { Count: > 0 })
-            {
-                child.Transitions = new Transitions
-                {
-                    new TransformOperationsTransition
-                    {
-                        Property = Visual.RenderTransformProperty,
-                        Duration = ShiftDuration,
-                        Easing = ShiftEase
-                    }
-                };
-            }
-        }
-        else
-        {
-            child.Transitions = null;
-        }
-
-        child.RenderTransform = y == 0
-            ? null
-            : TransformOperations.Parse(FormattableString.Invariant($"translateY({y}px)"));
-    }
 
 }

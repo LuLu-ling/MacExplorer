@@ -387,22 +387,29 @@
         <Setter Property="MinWidth" Value="140" />
         <Setter Property="MaxWidth" Value="240" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TabItemBackgroundBrush}" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
     <Style Selector="Border.TabItem:pointerover">
-        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TabItemHoverBackgroundBrush}" />
     </Style>
     <Style Selector="Border.TabItem.selected">
-        <Setter Property="Background" Value="{StaticResource TabItemBackgroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource TabItemSelectedBackgroundBrush}" />
+    </Style>
+    <Style Selector="Border.TabItem.selected:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TabItemSelectedBackgroundBrush}" />
+    </Style>
+    <Style Selector="Border.TabItem TextBlock.TabTitle">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
     </Style>
     <Style Selector="Border.TabItem.selected TextBlock.TabTitle">
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     </Style>
 
     <Style Selector="RepeatButton.TabScrollButton">
-        <Setter Property="Width" Value="32" />
+        <Setter Property="Width" Value="24" />
         <Setter Property="Height" Value="28" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontFamily" Value="{StaticResource SymbolThemeFontFamily}" />

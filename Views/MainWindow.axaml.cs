@@ -254,12 +254,12 @@ public partial class MainWindow : FAAppWindow
         var x = e.GetPosition(panel).X;
         if (!_tabDragging)
         {
-            if (Math.Abs(x - _tabPressX) < 6)
+            if (Math.Abs(x - _tabPressX) < FileDrag.Threshold)
                 return;
             _tabDragging = true;
             panel.Children[_tabDragFrom].ZIndex = 100;
             _tabDragSource.ZIndex = 100;
-            SetTabShift(panel.Children[_tabDragFrom], 0, animate: false);
+            ReorderShift.Item(panel.Children[_tabDragFrom], 0, horizontal: true, animate: false);
         }
 
         var origin = 0.0;
@@ -269,15 +269,19 @@ public partial class MainWindow : FAAppWindow
         var minDelta = -origin;
         var maxDelta = Math.Max(minDelta, panel.Bounds.Width - origin - tabWidth);
         var dragDelta = Math.Clamp(x - _tabPressX, minDelta, maxDelta);
-        int hover;
+        var hover = ReorderShift.HoverAt(
+            panel, _tabDragFrom, origin + tabWidth / 2 + dragDelta,
+            horizontal: true, lo: 0, hi: panel.Children.Count - 1, spacing: 2);
         if (dragDelta <= minDelta + 0.5)
             hover = 0;
         else if (dragDelta >= maxDelta - 0.5)
             hover = panel.Children.Count - 1;
-        else
-            hover = TabIndexAt(panel, origin + tabWidth / 2 + dragDelta);
-        ShiftTabs(panel, _tabDragFrom, hover, dragDelta);
-        _tabDragHover = hover;
+        ReorderShift.Item(panel.Children[_tabDragFrom], dragDelta, horizontal: true, animate: false);
+        if (hover != _tabDragHover)
+        {
+            ReorderShift.Siblings(panel, _tabDragFrom, hover, tabWidth + 2, horizontal: true);
+            _tabDragHover = hover;
+        }
     }
 
     private void Tab_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -303,7 +307,7 @@ public partial class MainWindow : FAAppWindow
         {
             foreach (var child in panel.Children)
                 child.ZIndex = 0;
-            ResetTabShifts(panel);
+            ReorderShift.Reset(panel);
         }
 
         _tabDragSource = null;
@@ -319,7 +323,6 @@ public partial class MainWindow : FAAppWindow
         if (sender is Button { Tag: ExplorerTabViewModel tab })
             VM?.CloseTab(tab);
     }
-
 
     private void TabStrip_OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
@@ -362,7 +365,7 @@ public partial class MainWindow : FAAppWindow
         var available = TitleBarHost.Bounds.Width - 78 - add;
         var content = TabPanel()?.Bounds.Width ?? TabStrip.Bounds.Width;
         var overflow = content > available + 0.5;
-        var chevrons = overflow ? 68 : 0;
+        var chevrons = overflow ? 52 : 0;
         TabScroller.MaxWidth = Math.Max(0, available - chevrons);
         TabScrollDecreaseButton.IsVisible = overflow;
         TabScrollIncreaseButton.IsVisible = overflow;
@@ -372,66 +375,9 @@ public partial class MainWindow : FAAppWindow
         TabScrollDecreaseButton.IsEnabled = TabScroller.Offset.X > 1;
         TabScrollIncreaseButton.IsEnabled = TabScroller.Offset.X < max - 1;
     }
+
     private Panel? TabPanel() => TabStrip.ItemsPanelRoot as Panel;
 
-    private static int TabIndexAt(Panel panel, double x)
-    {
-        var acc = 0.0;
-        for (var i = 0; i < panel.Children.Count; i++)
-        {
-            var w = panel.Children[i].Bounds.Width;
-            if (x <= acc + w / 2)
-                return i;
-            acc += w + 2;
-        }
-
-        return Math.Max(0, panel.Children.Count - 1);
-    }
-
-    private static void ShiftTabs(Panel panel, int from, int hover, double dragDelta)
-    {
-        var width = panel.Children[from].Bounds.Width + 2;
-        for (var i = 0; i < panel.Children.Count; i++)
-        {
-            var child = panel.Children[i];
-            if (i == from)
-            {
-                SetTabShift(child, dragDelta, animate: false);
-                continue;
-            }
-
-            var shift = 0.0;
-            if (from < hover && i > from && i <= hover)
-                shift = -width;
-            else if (from > hover && i >= hover && i < from)
-                shift = width;
-            SetTabShift(child, shift, animate: true);
-        }
-    }
-
-    private static void ResetTabShifts(Panel panel)
-    {
-        foreach (var child in panel.Children)
-            SetTabShift(child, 0, animate: false);
-    }
-
-    private static void SetTabShift(Control child, double x, bool animate)
-    {
-        child.Transitions = animate
-            ? new Avalonia.Animation.Transitions
-            {
-                new Avalonia.Animation.TransformOperationsTransition
-                {
-                    Property = Visual.RenderTransformProperty,
-                    Duration = TimeSpan.FromMilliseconds(180)
-                }
-            }
-            : null;
-        child.RenderTransform = x == 0
-            ? null
-            : Avalonia.Media.Transformation.TransformOperations.Parse(
-                FormattableString.Invariant($"translateX({x}px)"));
-    }
 
     private void AddressBar_OnDragOver(object? sender, DragEventArgs e)
     {
