@@ -129,16 +129,16 @@ public partial class MainWindow : FAAppWindow
     private void New_OnClick(object? sender, RoutedEventArgs e) =>
         ShowToolbarMenu(sender, e, static (vm, _) =>
         [
-            new(Lang.Text("Toolbar.New.Folder"), () => vm.NewFolderCommand.Execute(null)),
-            new(Lang.Text("Toolbar.New.File"), () => vm.NewFileCommand.Execute(null)),
+            new(Lang.Text("Toolbar.New.Folder"), () => vm.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder),
+            new(Lang.Text("Toolbar.New.File"), () => vm.NewFileCommand.Execute(null), Symbol: MacMenuSymbol.NewFile),
         ]);
 
     private void Selection_OnClick(object? sender, RoutedEventArgs e) =>
         ShowToolbarMenu(sender, e, static (_, tab) =>
         [
-            new(Lang.Text("Toolbar.SelectAll"), tab.SelectAll),
-            new(Lang.Text("Toolbar.InvertSelection"), tab.InvertSelection),
-            new(Lang.Text("Toolbar.ClearSelection"), tab.ClearSelection),
+            new(Lang.Text("Toolbar.SelectAll"), tab.SelectAll, Symbol: MacMenuSymbol.SelectAll),
+            new(Lang.Text("Toolbar.InvertSelection"), tab.InvertSelection, Symbol: MacMenuSymbol.Invert),
+            new(Lang.Text("Toolbar.ClearSelection"), tab.ClearSelection, Symbol: MacMenuSymbol.Clear),
         ]);
 
     private void Sort_OnClick(object? sender, RoutedEventArgs e) =>
@@ -154,11 +154,8 @@ public partial class MainWindow : FAAppWindow
                     new(Lang.Text("Sort.DateCreated"), () => vm.SetSort("DateCreated"), Checked: field is SortField.DateCreated),
                     new(Lang.Text("Sort.Type"), () => vm.SetSort("Type"), Checked: field is SortField.Type),
                     new(Lang.Text("Sort.Size"), () => vm.SetSort("Size"), Checked: field is SortField.Size),
-                ]),
-                new(Lang.Text("Group.By"), Children: FolderView.GroupByMenu(tab)),
-                new("", Separator: true),
-                new(Lang.Text("Settings.Folders.ShowHidden"), vm.ToggleHidden, Checked: vm.ShowHidden),
-                new(Lang.Text("Settings.Folders.ShowExtensions"), vm.ToggleExtensions, Checked: vm.ShowExtensions),
+                ], Symbol: MacMenuSymbol.Sort),
+                new(Lang.Text("Group.By"), Children: FolderView.GroupByMenu(tab), Symbol: MacMenuSymbol.Group),
             ];
         });
 
@@ -169,10 +166,10 @@ public partial class MainWindow : FAAppWindow
             var size = tab.LayoutSize;
             return
             [
-                new(Lang.Text("Layout.Details"), () => vm.SetLayout("Details"), Checked: layout is LayoutKind.Details),
-                new(Lang.Text("Layout.List"), () => vm.SetLayout("List"), Checked: layout is LayoutKind.List),
-                new(Lang.Text("Layout.Cards"), () => vm.SetLayout("Cards"), Checked: layout is LayoutKind.Cards),
-                new(Lang.Text("Layout.Grid"), () => vm.SetLayout("Grid"), Checked: layout is LayoutKind.Grid),
+                new(Lang.Text("Layout.Details"), () => vm.SetLayout("Details"), Checked: layout is LayoutKind.Details, Symbol: MacMenuSymbol.Details),
+                new(Lang.Text("Layout.List"), () => vm.SetLayout("List"), Checked: layout is LayoutKind.List, Symbol: MacMenuSymbol.List),
+                new(Lang.Text("Layout.Cards"), () => vm.SetLayout("Cards"), Checked: layout is LayoutKind.Cards, Symbol: MacMenuSymbol.Cards),
+                new(Lang.Text("Layout.Grid"), () => vm.SetLayout("Grid"), Checked: layout is LayoutKind.Grid, Symbol: MacMenuSymbol.Grid),
                 new("", Separator: true),
                 new(Lang.Text("Layout.Size"), Children:
                 [
@@ -181,10 +178,10 @@ public partial class MainWindow : FAAppWindow
                     new("100%", () => tab.LayoutSize = 3, Checked: size == 3),
                     new("125%", () => tab.LayoutSize = 4, Checked: size == 4),
                     new("150%", () => tab.LayoutSize = 5, Checked: size == 5),
-                ]),
+                ], Symbol: MacMenuSymbol.Size),
                 new("", Separator: true),
-                new(Lang.Text("Settings.Folders.ShowHidden"), vm.ToggleHidden, Checked: vm.ShowHidden),
-                new(Lang.Text("Settings.Folders.ShowExtensions"), vm.ToggleExtensions, Checked: vm.ShowExtensions),
+                new(Lang.Text("Settings.Folders.ShowHidden"), vm.ToggleHidden, Checked: vm.ShowHidden, Symbol: MacMenuSymbol.Hidden),
+                new(Lang.Text("Settings.Folders.ShowExtensions"), vm.ToggleExtensions, Checked: vm.ShowExtensions, Symbol: MacMenuSymbol.Extensions),
             ];
         });
 
@@ -240,11 +237,11 @@ public partial class MainWindow : FAAppWindow
         border.BringIntoView();
         MacContextMenu.Show(
         [
-            new(Lang.Text("Tab.New"), () => VM.NewTab()),
-            new(Lang.Text("Tab.NewWindow"), () => AppServices.Get<WindowService>().OpenWindow()),
-            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
-            new(Lang.Text("Tab.Duplicate"), () => VM.DuplicateTab()),
-            new(Lang.Text("Tab.Close"), () => VM.CloseTab(tab), VM.CanCloseTab),
+            new(Lang.Text("Tab.New"), () => VM.NewTab(), Symbol: MacMenuSymbol.NewTab),
+            new(Lang.Text("Tab.NewWindow"), () => AppServices.Get<WindowService>().OpenWindow(), Symbol: MacMenuSymbol.NewWindow),
+            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
+            new(Lang.Text("Tab.Duplicate"), () => VM.DuplicateTab(), Symbol: MacMenuSymbol.Duplicate),
+            new(Lang.Text("Tab.Close"), () => VM.CloseTab(tab), VM.CanCloseTab, Symbol: MacMenuSymbol.Close),
         ]);
     }
 
@@ -477,21 +474,21 @@ public partial class MainWindow : FAAppWindow
         {
             SidebarKind.Favorite =>
             [
-                new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path)),
+                new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite),
                 new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path])),
+                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
             ],
             SidebarKind.Location when MacWorkspace.IsDiskImage(path) =>
             [
-                new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path)),
+                new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path), Symbol: MacMenuSymbol.Eject),
                 new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path])),
+                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
             ],
             _ => []
         };
         if (item.IsSection)
             return actions;
-        return [new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path)), ..actions];
+        return [new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow), ..actions];
     }
 
     private void Sidebar_OnDragOver(object? sender, DragEventArgs e)

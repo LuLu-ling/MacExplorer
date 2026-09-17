@@ -16,7 +16,52 @@ internal readonly record struct MacMenuEntry(
     bool Separator = false,
     bool Checked = false,
     uint? Dot = null,
-    string? Icon = null);
+    string? Icon = null,
+    string? Symbol = null);
+
+internal static class MacMenuSymbol
+{
+    public const string Open = "arrow.up.forward.app";
+    public const string NewWindow = "macwindow.badge.plus";
+    public const string NewTab = "plus";
+    public const string Duplicate = "plus.square.on.square";
+    public const string Close = "xmark";
+    public const string Favorite = "star";
+    public const string Unfavorite = "star.slash";
+    public const string Cut = "scissors";
+    public const string Copy = "doc.on.doc";
+    public const string Paste = "doc.on.clipboard";
+    public const string Rename = "pencil";
+    public const string Trash = "trash";
+    public const string Tags = "tag";
+    public const string RemoveTags = "tag.slash";
+    public const string Share = "square.and.arrow.up";
+    public const string AirDrop = "dot.radiowaves.left.and.right";
+    public const string Info = "info.circle";
+    public const string NewFolder = "folder.badge.plus";
+    public const string NewFile = "doc.badge.plus";
+    public const string Refresh = "arrow.clockwise";
+    public const string Group = "square.grid.2x2";
+    public const string Sort = "arrow.up.arrow.down";
+    public const string Size = "square.resize";
+    public const string Undo = "arrow.uturn.backward";
+    public const string Redo = "arrow.uturn.forward";
+    public const string SelectAll = "checklist";
+    public const string Invert = "arrow.left.arrow.right";
+    public const string Clear = "xmark.circle";
+    public const string Eject = "eject";
+    public const string Other = "ellipsis.circle";
+    public const string Hidden = "eye.slash";
+    public const string Extensions = "textformat";
+    public const string Details = "list.bullet";
+    public const string List = "tablecells";
+    public const string Cards = "rectangle.grid.2x2";
+    public const string Grid = "square.grid.3x3";
+    public const string FinderApp = "/System/Library/CoreServices/Finder.app";
+    public const string MailApp = "/System/Applications/Mail.app";
+    public const string MessagesApp = "/System/Applications/Messages.app";
+    public const string AppStoreApp = "/System/Applications/App Store.app";
+}
 
 internal static class MacContextMenu
 {
@@ -146,18 +191,12 @@ internal static class MacContextMenu
         if (entry.Checked)
             SetTag(item, ObjC.Sel("setState:"), 1);
 
-        if (!string.IsNullOrEmpty(entry.Icon))
-        {
-            var image = FileImage(entry.Icon);
-            if (image != IntPtr.Zero)
-                ObjC.Call(item, "setImage:", image);
-        }
-        else if (entry.Dot is uint argb)
-        {
-            var image = DotImage(argb);
-            if (image != IntPtr.Zero)
-                ObjC.Call(item, "setImage:", image);
-        }
+        var image = !string.IsNullOrEmpty(entry.Icon) ? FileImage(entry.Icon)
+            : !string.IsNullOrEmpty(entry.Symbol) ? SymbolImage(entry.Symbol)
+            : entry.Dot is uint argb ? DotImage(argb)
+            : IntPtr.Zero;
+        if (image != IntPtr.Zero)
+            ObjC.Call(item, "setImage:", image);
         if (entry.Children is { Length: > 0 })
         {
             ObjC.Call(item, "setSubmenu:", BuildMenu(entry.Children, target));
@@ -188,14 +227,14 @@ internal static class MacContextMenu
         e.Handled = true;
         Show(
         [
-            new(Lang.Text("Common.Action.Undo"), box.Undo, box.CanUndo),
-            new(Lang.Text("Common.Action.Redo"), box.Redo, box.CanRedo),
+            new(Lang.Text("Common.Action.Undo"), box.Undo, box.CanUndo, Symbol: MacMenuSymbol.Undo),
+            new(Lang.Text("Common.Action.Redo"), box.Redo, box.CanRedo, Symbol: MacMenuSymbol.Redo),
             new("", Separator: true),
-            new(Lang.Text("Common.Action.Cut"), box.Cut, box.CanCut),
-            new(Lang.Text("Common.Action.Copy"), box.Copy, box.CanCopy),
-            new(Lang.Text("Common.Action.Paste"), box.Paste, box.CanPaste),
+            new(Lang.Text("Common.Action.Cut"), box.Cut, box.CanCut, Symbol: MacMenuSymbol.Cut),
+            new(Lang.Text("Common.Action.Copy"), box.Copy, box.CanCopy, Symbol: MacMenuSymbol.Copy),
+            new(Lang.Text("Common.Action.Paste"), box.Paste, box.CanPaste, Symbol: MacMenuSymbol.Paste),
             new("", Separator: true),
-            new(Lang.Text("Common.Action.SelectAll"), box.SelectAll, box.Text is { Length: > 0 }),
+            new(Lang.Text("Common.Action.SelectAll"), box.SelectAll, box.Text is { Length: > 0 }, Symbol: MacMenuSymbol.SelectAll),
         ]);
     }
 
@@ -280,6 +319,21 @@ internal static class MacContextMenu
             return IntPtr.Zero;
         ObjC.Call(image, "autorelease");
         ObjC.MsgSendVoid(image, ObjC.Sel("setSize:"), new NSSize(16, 16));
+        return image;
+    }
+
+    private static IntPtr SymbolImage(string name)
+    {
+        var source = ObjC.Call(ObjC.Class("NSImage"), "imageWithSystemSymbolName:accessibilityDescription:",
+            ObjC.NsString(name), IntPtr.Zero);
+        if (source == IntPtr.Zero)
+            return IntPtr.Zero;
+        var image = ObjC.Call(source, "copy");
+        if (image == IntPtr.Zero)
+            return IntPtr.Zero;
+        ObjC.Call(image, "autorelease");
+        ObjC.MsgSendVoid(image, ObjC.Sel("setSize:"), new NSSize(16, 16));
+        SetBool(image, ObjC.Sel("setTemplate:"), true);
         return image;
     }
 }

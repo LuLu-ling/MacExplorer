@@ -36,6 +36,6 @@ public partial class HomePageView : UserControl
         if (button?.Tag is not string path || !Directory.Exists(path))
             return;
         e.Handled = true;
-        MacContextMenu.Show([new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path))]);
+        MacContextMenu.Show([new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow)]);
     }
 }

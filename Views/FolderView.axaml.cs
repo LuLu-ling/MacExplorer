@@ -474,33 +474,33 @@ public partial class FolderView : UserControl
 
         return
         [
-            new(Lang.Text("Common.Action.Open"), () => tab.OpenCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Open"), () => tab.OpenCommand.Execute(null), Symbol: MacMenuSymbol.Open),
             ..OpenWindowEntry(selected),
             ..OpenWithEntry(tab, selected),
-            new(Lang.Text("Context.ShowInFinder"), () => tab.RevealCommand.Execute(null)),
+            new(Lang.Text("Context.ShowInFinder"), () => tab.RevealCommand.Execute(null), Icon: MacMenuSymbol.FinderApp),
             ..FavoriteEntry(selected),
             new("", Separator: true),
-            new(Lang.Text("Common.Action.Cut"), () => tab.CutCommand.Execute(null)),
-            new(Lang.Text("Common.Action.Copy"), () => tab.CopyCommand.Execute(null)),
-            new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
+            new(Lang.Text("Common.Action.Cut"), () => tab.CutCommand.Execute(null), Symbol: MacMenuSymbol.Cut),
+            new(Lang.Text("Common.Action.Copy"), () => tab.CopyCommand.Execute(null), Symbol: MacMenuSymbol.Copy),
+            new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste),
             new("", Separator: true),
-            new(Lang.Text("Common.Action.Rename"), () => tab.RenameCommand.Execute(null)),
-            new(Lang.Text("Common.Action.Delete"), () => tab.DeleteCommand.Execute(null)),
+            new(Lang.Text("Common.Action.Rename"), () => tab.RenameCommand.Execute(null), Symbol: MacMenuSymbol.Rename),
+            new(Lang.Text("Common.Action.Delete"), () => tab.DeleteCommand.Execute(null), Symbol: MacMenuSymbol.Trash),
             new("", Separator: true),
             new(Lang.Text("Context.Tags"), Children:
             [
                 ..tagItems,
                 new("", Separator: true),
-                new(Lang.Text("Context.RemoveTags"), () => _ = tab.RemoveTagsAsync(), selected.Any(i => i.HasTags)),
-            ]),
+                new(Lang.Text("Context.RemoveTags"), () => _ = tab.RemoveTagsAsync(), selected.Any(i => i.HasTags), Symbol: MacMenuSymbol.RemoveTags),
+            ], Symbol: MacMenuSymbol.Tags),
             new(Lang.Text("Context.Share"), Children:
             [
-                new(Lang.Text("Context.AirDrop"), () => tab.ShareCommand.Execute("com.apple.share.AirDrop.send")),
-                new(Lang.Text("Context.Mail"), () => tab.ShareCommand.Execute("com.apple.share.Mail.compose")),
-                new(Lang.Text("Context.Messages"), () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
-            ]),
+                new(Lang.Text("Context.AirDrop"), () => tab.ShareCommand.Execute("com.apple.share.AirDrop.send"), Symbol: MacMenuSymbol.AirDrop),
+                new(Lang.Text("Context.Mail"), () => tab.ShareCommand.Execute("com.apple.share.Mail.compose"), Icon: MacMenuSymbol.MailApp),
+                new(Lang.Text("Context.Messages"), () => tab.ShareCommand.Execute("com.apple.share.Messages.compose"), Icon: MacMenuSymbol.MessagesApp),
+            ], Symbol: MacMenuSymbol.Share),
             new("", Separator: true),
-            new(Lang.Text("Menu.File.GetInfo"), OpenProperties),
+            new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info),
         ];
     }
 
@@ -513,7 +513,7 @@ public partial class FolderView : UserControl
             {
                 foreach (var path in folders)
                     AppServices.Get<WindowService>().OpenWindow(path);
-            })
+            }, Symbol: MacMenuSymbol.NewWindow)
         ];
     }
 
@@ -535,23 +535,23 @@ public partial class FolderView : UserControl
         [
             new("", Separator: true),
             MacFinder.IsFavorite(path)
-                ? new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path))
-                : new(Lang.Text("Context.Favorite"), () => MacFinder.AddFavorite(path)),
+                ? new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite)
+                : new(Lang.Text("Context.Favorite"), () => MacFinder.AddFavorite(path), Symbol: MacMenuSymbol.Favorite),
         ];
     }
 
     private MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
     [
-        new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath)),
+        new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
         new("", Separator: true),
-        new(Lang.Text("Context.NewFolder"), () => tab.NewFolderCommand.Execute(null)),
-        new(Lang.Text("Context.NewFile"), () => tab.NewFileCommand.Execute(null)),
+        new(Lang.Text("Context.NewFolder"), () => tab.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder),
+        new(Lang.Text("Context.NewFile"), () => tab.NewFileCommand.Execute(null), Symbol: MacMenuSymbol.NewFile),
         new("", Separator: true),
-        new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null)),
-        new(Lang.Text("Group.By"), Children: GroupByMenu(tab)),
-        new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null)),
+        new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste),
+        new(Lang.Text("Group.By"), Children: GroupByMenu(tab), Symbol: MacMenuSymbol.Group),
+        new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null), Symbol: MacMenuSymbol.Refresh),
         new("", Separator: true),
-        new(Lang.Text("Menu.File.GetInfo"), OpenProperties),
+        new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info),
     ];
 
     internal static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)

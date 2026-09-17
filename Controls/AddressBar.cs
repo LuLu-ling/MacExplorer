@@ -407,7 +407,7 @@ public sealed class AddressBar : TemplatedControl
         e.Handled = true;
         var cancellationToken = StartMenu();
         MacContextMenu.ShowAt(anchor,
-            [new(Lang.Text("Tab.OpenInNewWindow"), () => InvokeMenuPath(path, true, cancellationToken))],
+            [new(Lang.Text("Tab.OpenInNewWindow"), () => InvokeMenuPath(path, true, cancellationToken), Symbol: MacMenuSymbol.NewWindow)],
             () => IsCurrentMenu(cancellationToken));
     }
 
@@ -469,14 +469,14 @@ public sealed class AddressBar : TemplatedControl
                 newWindowEntries.Add(new(newWindowTitle, Enabled: false));
             foreach (var folder in section.Folders)
             {
-                entries.Add(new(folder.Title, () => InvokeMenuPath(folder.Path, false, cancellationToken)));
-                newWindowEntries.Add(new(folder.Title, () => InvokeMenuPath(folder.Path, true, cancellationToken)));
+                entries.Add(new(folder.Title, () => InvokeMenuPath(folder.Path, false, cancellationToken), Icon: folder.Path));
+                newWindowEntries.Add(new(folder.Title, () => InvokeMenuPath(folder.Path, true, cancellationToken), Icon: folder.Path));
             }
         }
         if (newWindowEntries.Count > 0)
         {
             entries.Add(new("", Separator: true));
-            entries.Add(new(Lang.Text("Tab.OpenInNewWindow"), Children: newWindowEntries.ToArray()));
+            entries.Add(new(Lang.Text("Tab.OpenInNewWindow"), Children: newWindowEntries.ToArray(), Symbol: MacMenuSymbol.NewWindow));
         }
         MacContextMenu.ShowAt(anchor, entries, () => IsCurrentMenu(cancellationToken));
     }

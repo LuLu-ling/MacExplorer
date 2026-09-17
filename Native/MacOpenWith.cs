@@ -23,8 +23,9 @@ internal static class MacOpenWith
         {
             if (Choose(paths) is { } app)
                 open(app, always);
-        }));
-        children.Add(new(Lang.Text("Context.OpenWith.AppStore"), () => SearchAppStore(paths)));
+        }, Symbol: MacMenuSymbol.Other));
+        children.Add(new(Lang.Text("Context.OpenWith.AppStore"), () => SearchAppStore(paths),
+            Icon: MacMenuSymbol.AppStoreApp));
         return new(Lang.Text(always ? "Context.AlwaysOpenWith" : "Context.OpenWith"), Children: [.. children]);
     }
 
