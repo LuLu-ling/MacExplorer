@@ -2,13 +2,13 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using FluentAvalonia.Styling;
 using MacExplorer.Infrastructure;
 using MacExplorer.Lifecycle;
 using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
-
 namespace MacExplorer;
 
 public partial class App : Application
@@ -23,13 +23,7 @@ public partial class App : Application
     {
         AppLifecycle.RegisterDispatcherHook();
         MacContextMenu.Install();
-
-        RequestedThemeVariant = Config.Appearance.Theme switch
-        {
-            ThemeMode.Light => ThemeVariant.Light,
-            ThemeMode.Dark => ThemeVariant.Dark,
-            _ => ThemeVariant.Default
-        };
+        ApplyTheme(Config.Appearance.Theme);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -46,5 +40,23 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+
+    public static void ApplyTheme(ThemeMode mode)
+    {
+        if (Current is not { } app)
+            return;
+        app.RequestedThemeVariant = mode switch
+        {
+            ThemeMode.Light => ThemeVariant.Light,
+            ThemeMode.Dark => ThemeVariant.Dark,
+            _ => ThemeVariant.Default
+        };
+        foreach (var style in app.Styles)
+        {
+            if (style is FluentAvaloniaTheme fluent)
+                fluent.PreferSystemTheme = mode is ThemeMode.Default;
+        }
     }
 }

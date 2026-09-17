@@ -5,26 +5,69 @@
              xmlns:conv="using:MacExplorer.Converters"
              x:Class="MacExplorer.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel">
-    <Grid ColumnDefinitions="240,*">
-        <Border Background="{DynamicResource LayerFillColorDefaultBrush}"
-                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
-                BorderThickness="0,0,1,0">
-            <StackPanel Margin="8,16">
-                <TextBlock Text="{DynamicResource Settings.Title}" FontSize="20" FontWeight="SemiBold" Margin="12,0,12,16" />
-                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Appearance">
-                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Settings.Nav.Appearance}" />
-                </Button>
-                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Language">
-                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Settings.Nav.Language}" />
-                </Button>
-                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="Folders">
-                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Settings.Nav.Folders}" />
-                </Button>
-                <Button Classes="SidebarRow" Command="{Binding SelectPageCommand}" CommandParameter="About">
-                    <TextBlock Margin="12,0" VerticalAlignment="Center" Text="{DynamicResource Settings.Nav.About}" />
-                </Button>
-            </StackPanel>
+    <Grid ColumnDefinitions="252,*">
+        <Border Margin="4,0,8,8"
+                CornerRadius="12"
+                Background="{DynamicResource LayerFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                ClipToBounds="True">
+            <ScrollViewer Padding="0,6,0,4"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Background="Transparent">
+                <StackPanel>
+                    <Border Classes="SidebarRow"
+                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Appearance}"
+                            Tag="Appearance"
+                            PointerReleased="Nav_OnPointerReleased">
+                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
+                            <TextBlock Classes="SidebarGlyph"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE771;" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                       Text="{DynamicResource Settings.Nav.Appearance}" />
+                        </Grid>
+                    </Border>
+                    <Border Classes="SidebarRow"
+                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Language}"
+                            Tag="Language"
+                            PointerReleased="Nav_OnPointerReleased">
+                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
+                            <TextBlock Classes="SidebarGlyph"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE774;" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                       Text="{DynamicResource Settings.Nav.Language}" />
+                        </Grid>
+                    </Border>
+                    <Border Classes="SidebarRow"
+                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Folders}"
+                            Tag="Folders"
+                            PointerReleased="Nav_OnPointerReleased">
+                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
+                            <TextBlock Classes="SidebarGlyph"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE8B7;" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                       Text="{DynamicResource Settings.Nav.Folders}" />
+                        </Grid>
+                    </Border>
+                    <Border Classes="SidebarRow"
+                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=About}"
+                            Tag="About"
+                            PointerReleased="Nav_OnPointerReleased">
+                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
+                            <TextBlock Classes="SidebarGlyph"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE946;" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                       Text="{DynamicResource Settings.Nav.About}" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
         </Border>
+
 
         <ScrollViewer Grid.Column="1" Padding="32">
             <StackPanel MaxWidth="720" Spacing="16">

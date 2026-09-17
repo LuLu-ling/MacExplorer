@@ -66,8 +66,8 @@
         <StackPanel Grid.Row="1" Margin="0,0,0,6">
             <Border Height="1" Margin="16,4"
                     Background="{DynamicResource ControlStrokeColorDefaultBrush}" />
-            <Button Classes="SidebarRow" Command="{Binding OpenSettingsCommand}"
-                    Classes.selected="{Binding ShowSettings}">
+            <Border Classes="SidebarRow" Classes.selected="{Binding ShowSettings}"
+                    PointerReleased="Settings_OnPointerReleased">
                 <Grid ColumnDefinitions="Auto,*"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
@@ -78,7 +78,7 @@
                     <TextBlock Grid.Column="1" Classes="SidebarTitle"
                                Text="{DynamicResource Settings.Title}" />
                 </Grid>
-            </Button>
+            </Border>
         </StackPanel>
     </Grid>
 </UserControl>

@@ -11,7 +11,9 @@ public static class Config
         _ = Localization.LanguageConfig;
         _ = Window.WidthConfig;
         _ = Sidebar.PinsConfig;
+        _ = Sidebar.LocationOrderConfig;
         _ = Layout.KindConfig;
+
         _ = Files.ShowHiddenConfig;
         _ = InfoPane.ShowConfig;
         _ = Home.RecentsConfig;
@@ -56,9 +58,13 @@ public static class Config
         public static ConfigItem<double> WidthConfig { get; } = ConfigService.Register("SidebarWidth", 240d);
         public static ConfigItem<bool> IsOpenConfig { get; } = ConfigService.Register("SidebarOpen", true);
         public static ConfigItem<List<string>> PinsConfig { get; } = ConfigService.Register("SidebarPins", DefaultPins);
+        public static ConfigItem<List<string>> LocationOrderConfig { get; } = ConfigService.Register("SidebarLocationOrder", static () => new List<string>());
         public static double Width { get => WidthConfig.GetValue(); set => WidthConfig.SetValue(value); }
         public static bool IsOpen { get => IsOpenConfig.GetValue(); set => IsOpenConfig.SetValue(value); }
         public static List<string> Pins { get => PinsConfig.GetValue(); set => PinsConfig.SetValue(value); }
+        public static List<string> LocationOrder { get => LocationOrderConfig.GetValue(); set => LocationOrderConfig.SetValue(value); }
+
+
 
         private static List<string> DefaultPins() =>
         [

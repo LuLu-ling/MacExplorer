@@ -31,7 +31,7 @@ public sealed partial class SidebarItem : ObservableObject
     [ObservableProperty] public partial bool IsVisible { get; set; } = true;
     public bool ShowChevron => IsSection;
     public bool HasMarker => Marker is not null;
-    public bool CanReorder => Kind is SidebarKind.Favorite or SidebarKind.Tag;
+    public bool CanReorder => Kind is SidebarKind.Favorite or SidebarKind.Tag or SidebarKind.Location or SidebarKind.Cloud;
     partial void OnMarkerChanged(IBrush? value) => OnPropertyChanged(nameof(HasMarker));
 
 }

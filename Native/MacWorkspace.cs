@@ -69,6 +69,35 @@ internal static class MacWorkspace
         return new Bitmap(stream);
     }
 
+    internal static IntPtr MenuIcon(string path, double size = 16)
+    {
+        var source = FetchIcon(path);
+        if (source == IntPtr.Zero)
+            return IntPtr.Zero;
+        var icon = ObjC.Call(source, "copy");
+        if (icon == IntPtr.Zero)
+            return IntPtr.Zero;
+        ObjC.Call(icon, "autorelease");
+        ObjC.MsgSendVoid(icon, ObjC.Sel("setSize:"), new NSSize(size, size));
+        ObjC.MsgSendVoid(icon, ObjC.Sel("setTemplate:"), false);
+
+        var tint = FolderTint(path);
+        if (tint == FileTagColor.None)
+            return icon;
+
+        var png = EncodeTintedPng(icon, tint);
+        if (png is null)
+            return icon;
+        var tinted = ObjC.Call(ObjC.Call(ObjC.Class("NSImage"), "alloc"), "initWithData:", ObjC.NsData(png));
+        if (tinted == IntPtr.Zero)
+            return icon;
+        ObjC.Call(tinted, "autorelease");
+        ObjC.MsgSendVoid(tinted, ObjC.Sel("setSize:"), new NSSize(size, size));
+        ObjC.MsgSendVoid(tinted, ObjC.Sel("setTemplate:"), false);
+        return tinted;
+    }
+
+
     private static IntPtr FetchIcon(string path)
     {
         var icon = ObjC.Call(Shared(), "iconForFile:", ObjC.NsString(path));

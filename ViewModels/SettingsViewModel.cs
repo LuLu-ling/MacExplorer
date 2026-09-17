@@ -1,5 +1,3 @@
-using Avalonia;
-using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MacExplorer.Infrastructure;
@@ -54,14 +52,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         Config.Appearance.Theme = value;
         OnPropertyChanged(nameof(ThemeIndex));
-        if (Application.Current is null) return;
-        Application.Current.RequestedThemeVariant = value switch
-        {
-            ThemeMode.Light => ThemeVariant.Light,
-            ThemeMode.Dark => ThemeVariant.Dark,
-            _ => ThemeVariant.Default
-        };
+        App.ApplyTheme(value);
     }
+
 
     partial void OnShowHiddenChanged(bool value) => Config.Files.ShowHidden = value;
     partial void OnShowExtensionsChanged(bool value) => Config.Files.ShowExtensions = value;

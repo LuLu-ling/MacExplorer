@@ -29,7 +29,7 @@
         </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
-        <sty:FluentAvaloniaTheme PreferSystemTheme="True" PreferUserAccentColor="True" />
+        <sty:FluentAvaloniaTheme PreferSystemTheme="False" PreferUserAccentColor="True" />
         <StyleInclude Source="/Styles/FilesStyles.axaml" />
         <StyleInclude Source="/Styles/AddressBarStyles.axaml" />
     </Application.Styles>

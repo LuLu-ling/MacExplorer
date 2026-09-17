@@ -110,6 +110,15 @@ public partial class SidebarPane : UserControl
             _ = VM?.NavigateSidebarAsync(item);
     }
 
+    private void Settings_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton != MouseButton.Left)
+            return;
+        e.Handled = true;
+        _ = VM?.OpenSettingsAsync();
+    }
+
+
     private void Row_OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => FinishReorder();
 
     private void FinishReorder()

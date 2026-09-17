@@ -137,18 +137,6 @@
         <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
     </Style>
 
-    <Style Selector="Button.SidebarRow">
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="10" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="Height" Value="32" />
-        <Setter Property="Margin" Value="8,1" />
-        <Setter Property="Cursor" Value="Hand" />
-    </Style>
     <Style Selector="Border.SidebarRow">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Top" />
@@ -181,14 +169,6 @@
         <Setter Property="IsHitTestVisible" Value="False" />
         <Setter Property="Padding" Value="0" />
     </Style>
-    <Style Selector="Button.SidebarRow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SidebarHoverFillBrush}" />
-        <Setter Property="CornerRadius" Value="10" />
-    </Style>
-    <Style Selector="Button.SidebarRow.selected /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource SidebarSelectionFillBrush}" />
-        <Setter Property="CornerRadius" Value="10" />
-    </Style>
     <Style Selector="Border.SidebarRow:pointerover">
         <Setter Property="Background" Value="{DynamicResource SidebarHoverFillBrush}" />
     </Style>
@@ -218,12 +198,6 @@
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
-    </Style>
-    <Style Selector="Button.SidebarRow.selected TextBlock.SidebarTitle">
-        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
-    </Style>
-    <Style Selector="Button.SidebarRow.selected TextBlock.SidebarGlyph">
-        <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />
     </Style>
     <Style Selector="Border.SidebarRow.selected TextBlock.SidebarTitle">
         <Setter Property="Foreground" Value="{DynamicResource AccentFillColorDefaultBrush}" />

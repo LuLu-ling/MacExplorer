@@ -308,19 +308,8 @@ internal static class MacContextMenu
         return image;
     }
 
-    private static IntPtr FileImage(string path)
-    {
-        var source = ObjC.Call(ObjC.Call(ObjC.Class("NSWorkspace"), "sharedWorkspace"),
-            "iconForFile:", ObjC.NsString(path));
-        if (source == IntPtr.Zero)
-            return IntPtr.Zero;
-        var image = ObjC.Call(source, "copy");
-        if (image == IntPtr.Zero)
-            return IntPtr.Zero;
-        ObjC.Call(image, "autorelease");
-        ObjC.MsgSendVoid(image, ObjC.Sel("setSize:"), new NSSize(16, 16));
-        return image;
-    }
+    private static IntPtr FileImage(string path) => MacWorkspace.MenuIcon(path);
+
 
     private static IntPtr SymbolImage(string name)
     {

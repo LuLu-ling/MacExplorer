@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MacExplorer.Infrastructure;
 using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
@@ -47,19 +48,21 @@ public sealed partial class SidebarViewModel : ViewModelBase
             Depth = 1
         }));
 
+        var locations = new List<SidebarItem>();
         if (SpecialFolders.ICloudExists())
         {
-            Items.Add(new SidebarItem
+            locations.Add(new SidebarItem
             {
                 Id = "icloud",
                 Title = Lang.Text("Places.iCloudDrive"),
                 Glyph = Glyphs.ForPath(SpecialFolders.ICloud),
                 Kind = SidebarKind.Cloud,
-                Path = SpecialFolders.ICloud
+                Path = SpecialFolders.ICloud,
+                Depth = 1
             });
         }
 
-        AddSection("locations", Lang.Text("Places.Locations"), Glyphs.Drive, _volumes.List().Select(v => new SidebarItem
+        locations.AddRange(_volumes.List().Select(v => new SidebarItem
         {
             Id = "vol:" + v.Path,
             Title = v.Name,
@@ -67,7 +70,8 @@ public sealed partial class SidebarViewModel : ViewModelBase
             Kind = SidebarKind.Location,
             Path = v.Path,
             Depth = 1
-        }).Append(new SidebarItem
+        }));
+        locations.Add(new SidebarItem
         {
             Id = "trash",
             Title = Lang.Text("Places.Trash"),
@@ -75,7 +79,10 @@ public sealed partial class SidebarViewModel : ViewModelBase
             Kind = SidebarKind.Location,
             Path = SpecialFolders.Trash,
             Depth = 1
-        }));
+        });
+        ApplyOrder(locations, Config.Sidebar.LocationOrder);
+        AddSection("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations);
+
 
         AddSection("tags", Lang.Text("Places.FileTags"), Glyphs.Tag,
             MacTags.All().Select(Tag));
@@ -120,12 +127,13 @@ public sealed partial class SidebarViewModel : ViewModelBase
             return null;
         var lo = index;
         var hi = index;
-        while (lo > 0 && Items[lo - 1].Kind == item.Kind && Items[lo - 1].CanReorder)
+        while (lo > 0 && Items[lo - 1].CanReorder)
             lo--;
-        while (hi + 1 < Items.Count && Items[hi + 1].Kind == item.Kind && Items[hi + 1].CanReorder)
+        while (hi + 1 < Items.Count && Items[hi + 1].CanReorder)
             hi++;
         return hi > lo ? (lo, hi) : null;
     }
+
 
     public bool TryMove(int from, int to)
     {
@@ -193,8 +201,38 @@ public sealed partial class SidebarViewModel : ViewModelBase
                         .Select(static i => i.Title)
                         .ToArray());
                 break;
+            case SidebarKind.Location:
+            case SidebarKind.Cloud:
+                Config.Sidebar.LocationOrder =
+                [
+                    .. Items.Where(static i => i.Kind is SidebarKind.Location or SidebarKind.Cloud)
+                        .Select(static i => i.Id)
+                ];
+                break;
         }
     }
+
+    private static void ApplyOrder(List<SidebarItem> items, List<string> ids)
+    {
+        if (ids.Count == 0 || items.Count < 2)
+            return;
+        var map = items.ToDictionary(static i => i.Id, StringComparer.Ordinal);
+        var ordered = new List<SidebarItem>(items.Count);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var id in ids)
+        {
+            if (map.TryGetValue(id, out var item) && seen.Add(id))
+                ordered.Add(item);
+        }
+        foreach (var item in items)
+        {
+            if (seen.Add(item.Id))
+                ordered.Add(item);
+        }
+        items.Clear();
+        items.AddRange(ordered);
+    }
+
 
     private static SidebarItem Tag(FileTag tag) => new()
     {
