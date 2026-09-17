@@ -63,7 +63,6 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     public Action? RequestFocusPath { get; set; }
     public Action? RequestFocusSearch { get; set; }
-    public Func<Task>? RequestProperties { get; set; }
     public Action? RequestCloseWindow { get; set; }
 
     [ObservableProperty] public partial bool ShowSettings { get; set; }
@@ -111,7 +110,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         new(Lang.Text("Palette.Copy"), Glyphs.Copy, "⌘C", SelectedTab?.CopyCommand),
         new(Lang.Text("Palette.Cut"), Glyphs.Cut, "⌘X", SelectedTab?.CutCommand),
         new(Lang.Text("Palette.Paste"), Glyphs.Paste, "⌘V", SelectedTab?.PasteCommand),
-        new(Lang.Text("Palette.Properties"), Glyphs.Properties, "⌥↩", OpenPropertiesCommand),
+        new(Lang.Text("Menu.File.GetInfo"), Glyphs.Properties, "⌥↩", OpenPropertiesCommand),
         new(Lang.Text("Palette.Delete"), Glyphs.Delete, "⌘⌫", SelectedTab?.DeleteCommand),
         new(Lang.Text("Palette.SelectAll"), Glyphs.Select, "⌘A", SelectedTab?.SelectAllCommand),
         new(Lang.Text("Palette.DetailsLayout"), Glyphs.Details, "⌘1", SetLayoutCommand, "Details"),
@@ -218,7 +217,23 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     public void ToggleInfoPane() => ShowInfoPane = !ShowInfoPane;
 
     [RelayCommand]
-    public Task OpenPropertiesAsync() => RequestProperties?.Invoke() ?? Task.CompletedTask;
+    public void OpenProperties() => ShowInfo();
+
+    public void ShowInfo(IReadOnlyList<string>? paths = null)
+    {
+        var targets = paths ?? InfoTargets();
+        if (targets is { Count: > 0 })
+            MacFinder.ShowInfo(targets);
+    }
+
+    private IReadOnlyList<string>? InfoTargets()
+    {
+        if (SelectedTab is not { } tab || tab.IsHome || tab.IsSettings)
+            return null;
+        if (tab.SelectedItems.Count > 0)
+            return tab.SelectedItems.Select(static i => i.Path).ToList();
+        return SpecialFolders.IsVirtual(tab.CurrentPath) ? null : [tab.CurrentPath];
+    }
 
     [RelayCommand]
     public void SetLayout(string kind) => SelectedTab?.SetLayout(kind);
@@ -418,7 +433,6 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         Tabs.Clear();
         RequestFocusPath = null;
         RequestFocusSearch = null;
-        RequestProperties = null;
         RequestCloseWindow = null;
     }
 }

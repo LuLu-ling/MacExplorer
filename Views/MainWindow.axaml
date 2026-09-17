@@ -235,7 +235,7 @@
                             <Button Classes="ToolbarButton" Command="{Binding SelectedTab.DeleteCommand}" ToolTip.Tip="{DynamicResource Toolbar.Delete}">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE74D;" />
                             </Button>
-                            <Button Classes="ToolbarButton" Command="{Binding OpenPropertiesCommand}" ToolTip.Tip="{DynamicResource Toolbar.Properties}">
+                            <Button Classes="ToolbarButton" Command="{Binding OpenPropertiesCommand}" ToolTip.Tip="{DynamicResource Menu.File.GetInfo}">
                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE946;" />
                             </Button>
                             <Button Classes="ToolbarButton" Command="{Binding SelectedTab.EmptyTrashCommand}"

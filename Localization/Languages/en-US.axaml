@@ -64,7 +64,6 @@
     <x:String x:Key="Toolbar.Share">Share</x:String>
     <x:String x:Key="Toolbar.Delete">Delete</x:String>
     <x:String x:Key="Toolbar.EmptyTrash">Empty Trash</x:String>
-    <x:String x:Key="Toolbar.Properties">Properties</x:String>
     <x:String x:Key="Toolbar.Back">Back</x:String>
     <x:String x:Key="Toolbar.Forward">Forward</x:String>
     <x:String x:Key="Toolbar.Up">Up</x:String>
@@ -179,35 +178,6 @@
     <x:String x:Key="Settings.About.Version">Version {0}</x:String>
     <x:String x:Key="Settings.About.Description">A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash.</x:String>
 
-    <!-- Properties -->
-    <x:String x:Key="Properties.Title">Properties</x:String>
-    <x:String x:Key="Properties.Title.Format">{0} – Properties</x:String>
-    <x:String x:Key="Properties.General">General</x:String>
-    <x:String x:Key="Properties.Hashes">Hashes</x:String>
-    <x:String x:Key="Properties.Name">Name</x:String>
-    <x:String x:Key="Properties.Type">Type</x:String>
-    <x:String x:Key="Properties.Location">Location</x:String>
-    <x:String x:Key="Properties.Size">Size</x:String>
-    <x:String x:Key="Properties.SizeOnDisk">Size on disk</x:String>
-    <x:String x:Key="Properties.Contains">Contains</x:String>
-    <x:String x:Key="Properties.Path">Path</x:String>
-    <x:String x:Key="Properties.Created">Created</x:String>
-    <x:String x:Key="Properties.Modified">Modified</x:String>
-    <x:String x:Key="Properties.Accessed">Accessed</x:String>
-    <x:String x:Key="Properties.Attributes">Attributes</x:String>
-    <x:String x:Key="Properties.Algorithm">Algorithm</x:String>
-    <x:String x:Key="Properties.HashValue">Hash value</x:String>
-    <x:String x:Key="Properties.SelectHashes">Select hashes to show</x:String>
-    <x:String x:Key="Properties.Calculating">Calculating</x:String>
-    <x:String x:Key="Properties.MultipleTypes">Multiple types</x:String>
-    <x:String x:Key="Properties.Summary.File">{0} file</x:String>
-    <x:String x:Key="Properties.Summary.Files">{0} files</x:String>
-    <x:String x:Key="Properties.Summary.Folder">{0} folder</x:String>
-    <x:String x:Key="Properties.Summary.Folders">{0} folders</x:String>
-    <x:String x:Key="Properties.Summary">{0}, {1}</x:String>
-    <x:String x:Key="Properties.Contents.FilesFolders">{0} files, {1} folders</x:String>
-    <x:String x:Key="Properties.SaveFailed">Couldn't save properties</x:String>
-
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">This folder is empty</x:String>
     <x:String x:Key="Explorer.Empty.Search">No items match your search</x:String>
@@ -311,6 +281,14 @@
     <x:String x:Key="Menu.Window.BringAllToFront">Bring All to Front</x:String>
 
     <!-- Context -->
+    <x:String x:Key="Context.OpenWith">Open With</x:String>
+    <x:String x:Key="Context.AlwaysOpenWith">Always Open With</x:String>
+    <x:String x:Key="Context.OpenWith.Default">{0} (default)</x:String>
+    <x:String x:Key="Context.OpenWith.Other">Other…</x:String>
+    <x:String x:Key="Context.OpenWith.AppStore">App Store…</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseApp">Choose Application</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseAppMessage">Choose an application to open the document “{0}”.</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseAppMessageMany">Choose an application to open the selected documents.</x:String>
     <x:String x:Key="Context.ShowInFinder">Show in Finder</x:String>
     <x:String x:Key="Context.Favorite">Favorite</x:String>
     <x:String x:Key="Context.Unfavorite">Unfavorite</x:String>
@@ -342,7 +320,6 @@
     <x:String x:Key="Palette.Copy">Copy</x:String>
     <x:String x:Key="Palette.Cut">Cut</x:String>
     <x:String x:Key="Palette.Paste">Paste</x:String>
-    <x:String x:Key="Palette.Properties">Properties</x:String>
     <x:String x:Key="Palette.Delete">Delete</x:String>
     <x:String x:Key="Palette.SelectAll">Select all</x:String>
     <x:String x:Key="Palette.DetailsLayout">Details layout</x:String>
@@ -357,6 +334,4 @@
     <x:String x:Key="File.Error.InvalidName">Invalid name.</x:String>
     <x:String x:Key="File.Error.InvalidCharacters">The name contains invalid characters.</x:String>
     <x:String x:Key="File.Error.NameExists">An item with that name already exists.</x:String>
-    <x:String x:Key="Properties.Hash.FileOpen">Couldn't calculate the hash because the file is open.</x:String>
-    <x:String x:Key="Properties.Hash.Failed">Couldn't calculate the hash.</x:String>
 </ResourceDictionary>

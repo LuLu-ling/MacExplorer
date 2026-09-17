@@ -293,6 +293,20 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
             RememberRecent(item.Path);
     }
 
+    public async Task OpenWithAsync(string application, bool always = false)
+    {
+        var items = SelectedItems;
+        if (items.Count == 0)
+            return;
+        var paths = items.Select(static i => i.Path).ToList();
+        var name = items[0].DisplayName;
+        if (!_files.OpenWith(paths, application, always))
+            await _dialogs.Error(Lang.Text("Explorer.OpenItemFailed"), name);
+        else
+            foreach (var path in paths)
+                RememberRecent(path);
+    }
+
     [RelayCommand(CanExecute = nameof(HasSelection))]
     public void Copy()
     {

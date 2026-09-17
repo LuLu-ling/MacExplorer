@@ -108,6 +108,24 @@ internal static class MacFinder
     public static bool ToggleFavorite(string path) =>
         IsFavorite(path) ? RemoveFavorite(path) : AddFavorite(path);
 
+    public static void ShowInfo(IReadOnlyList<string> paths)
+    {
+        using var pool = new AutoreleasePool();
+        var lines = paths
+            .Where(static p => !string.IsNullOrEmpty(p) && (File.Exists(p) || Directory.Exists(p)))
+            .Select(static p => $"open information window of (POSIX file \"{MdEscape(p)}\" as alias)")
+            .ToArray();
+        if (lines.Length == 0)
+            return;
+        var source = $"tell application \"Finder\"\n{string.Join("\n", lines)}\nactivate\nend tell";
+        var script = ObjC.Call(ObjC.Call(ObjC.Class("NSAppleScript"), "alloc"),
+            "initWithSource:", ObjC.NsString(source));
+        if (script == IntPtr.Zero)
+            return;
+        ObjC.Call(script, "autorelease");
+        ObjC.Call(script, "executeAndReturnError:", IntPtr.Zero);
+    }
+
     public static IReadOnlyList<string> FilesWithTag(string tag)
     {
         if (string.IsNullOrEmpty(tag))

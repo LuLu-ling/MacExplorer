@@ -64,7 +64,6 @@
     <x:String x:Key="Toolbar.Share">共享</x:String>
     <x:String x:Key="Toolbar.Delete">删除</x:String>
     <x:String x:Key="Toolbar.EmptyTrash">清空废纸篓</x:String>
-    <x:String x:Key="Toolbar.Properties">属性</x:String>
     <x:String x:Key="Toolbar.Back">后退</x:String>
     <x:String x:Key="Toolbar.Forward">前进</x:String>
     <x:String x:Key="Toolbar.Up">上一级</x:String>
@@ -179,35 +178,6 @@
     <x:String x:Key="Settings.About.Version">版本 {0}</x:String>
     <x:String x:Key="Settings.About.Description">一款采用 Files Community 界面、FluentAvalonia 外观，并兼容 Finder 拷贝、剪切、粘贴、重命名和废纸篓操作的 macOS 文件管理器。</x:String>
 
-    <!-- Properties -->
-    <x:String x:Key="Properties.Title">属性</x:String>
-    <x:String x:Key="Properties.Title.Format">{0} – 属性</x:String>
-    <x:String x:Key="Properties.General">通用</x:String>
-    <x:String x:Key="Properties.Hashes">哈希</x:String>
-    <x:String x:Key="Properties.Name">名称</x:String>
-    <x:String x:Key="Properties.Type">种类</x:String>
-    <x:String x:Key="Properties.Location">位置</x:String>
-    <x:String x:Key="Properties.Size">大小</x:String>
-    <x:String x:Key="Properties.SizeOnDisk">占用空间</x:String>
-    <x:String x:Key="Properties.Contains">包含</x:String>
-    <x:String x:Key="Properties.Path">路径</x:String>
-    <x:String x:Key="Properties.Created">创建时间</x:String>
-    <x:String x:Key="Properties.Modified">修改时间</x:String>
-    <x:String x:Key="Properties.Accessed">访问时间</x:String>
-    <x:String x:Key="Properties.Attributes">属性</x:String>
-    <x:String x:Key="Properties.Algorithm">算法</x:String>
-    <x:String x:Key="Properties.HashValue">哈希值</x:String>
-    <x:String x:Key="Properties.SelectHashes">选择要显示的哈希</x:String>
-    <x:String x:Key="Properties.Calculating">正在计算</x:String>
-    <x:String x:Key="Properties.MultipleTypes">多种类型</x:String>
-    <x:String x:Key="Properties.Summary.File">{0} 个文件</x:String>
-    <x:String x:Key="Properties.Summary.Files">{0} 个文件</x:String>
-    <x:String x:Key="Properties.Summary.Folder">{0} 个文件夹</x:String>
-    <x:String x:Key="Properties.Summary.Folders">{0} 个文件夹</x:String>
-    <x:String x:Key="Properties.Summary">{0}，{1}</x:String>
-    <x:String x:Key="Properties.Contents.FilesFolders">{0} 个文件，{1} 个文件夹</x:String>
-    <x:String x:Key="Properties.SaveFailed">无法保存属性</x:String>
-
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">此文件夹为空</x:String>
     <x:String x:Key="Explorer.Empty.Search">没有符合搜索的项目</x:String>
@@ -311,6 +281,14 @@
     <x:String x:Key="Menu.Window.BringAllToFront">前置全部窗口</x:String>
 
     <!-- Context -->
+    <x:String x:Key="Context.OpenWith">打开方式</x:String>
+    <x:String x:Key="Context.AlwaysOpenWith">始终以此方式打开</x:String>
+    <x:String x:Key="Context.OpenWith.Default">{0}（默认）</x:String>
+    <x:String x:Key="Context.OpenWith.Other">其他…</x:String>
+    <x:String x:Key="Context.OpenWith.AppStore">App Store…</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseApp">选取应用程序</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseAppMessage">选取用来打开文稿“{0}”的应用程序。</x:String>
+    <x:String x:Key="Context.OpenWith.ChooseAppMessageMany">选取用来打开所选文稿的应用程序。</x:String>
     <x:String x:Key="Context.ShowInFinder">在 Finder 中显示</x:String>
     <x:String x:Key="Context.Favorite">添加至个人收藏</x:String>
     <x:String x:Key="Context.Unfavorite">从个人收藏中移除</x:String>
@@ -342,7 +320,6 @@
     <x:String x:Key="Palette.Copy">复制</x:String>
     <x:String x:Key="Palette.Cut">剪切</x:String>
     <x:String x:Key="Palette.Paste">粘贴</x:String>
-    <x:String x:Key="Palette.Properties">属性</x:String>
     <x:String x:Key="Palette.Delete">删除</x:String>
     <x:String x:Key="Palette.SelectAll">全选</x:String>
     <x:String x:Key="Palette.DetailsLayout">详细信息布局</x:String>
@@ -357,6 +334,4 @@
     <x:String x:Key="File.Error.InvalidName">名称无效。</x:String>
     <x:String x:Key="File.Error.InvalidCharacters">名称包含无效字符。</x:String>
     <x:String x:Key="File.Error.NameExists">已存在同名项目。</x:String>
-    <x:String x:Key="Properties.Hash.FileOpen">无法计算哈希，因为文件正在使用中。</x:String>
-    <x:String x:Key="Properties.Hash.Failed">无法计算哈希。</x:String>
 </ResourceDictionary>

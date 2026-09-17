@@ -48,6 +48,9 @@ internal static class ObjC
     public static extern IntPtr MsgSend(IntPtr receiver, IntPtr selector, IntPtr a1, IntPtr a2, IntPtr a3);
 
     [DllImport(Lib, EntryPoint = "objc_msgSend")]
+    public static extern IntPtr MsgSend(IntPtr receiver, IntPtr selector, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4);
+
+    [DllImport(Lib, EntryPoint = "objc_msgSend")]
     public static extern IntPtr MsgSend(IntPtr receiver, IntPtr selector, IntPtr a1, IntPtr a2, ref IntPtr a3);
 
     [DllImport(Lib, EntryPoint = "objc_msgSend")]
@@ -87,6 +90,9 @@ internal static class ObjC
 
     [DllImport(Lib, EntryPoint = "objc_msgSend")]
     public static extern void MsgSendVoid(IntPtr receiver, IntPtr selector, NSSize size);
+
+    [DllImport(Lib, EntryPoint = "objc_msgSend")]
+    public static extern void MsgSendVoid(IntPtr receiver, IntPtr selector, [MarshalAs(UnmanagedType.I1)] bool value);
 
     [DllImport(Lib, EntryPoint = "objc_msgSend")]
     public static extern IntPtr MsgSend(IntPtr receiver, IntPtr selector, nuint type, IntPtr properties);
@@ -178,4 +184,7 @@ internal static class ObjC
                 return MsgSend(Class("NSData"), Sel("dataWithBytes:length:"), (IntPtr)ptr, (IntPtr)bytes.Length);
         }
     }
+
+    public static void SetBool(IntPtr receiver, string selector, bool value) =>
+        MsgSendVoid(receiver, Sel(selector), value);
 }

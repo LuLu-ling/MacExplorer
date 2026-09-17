@@ -106,7 +106,6 @@ public partial class MainWindow : FAAppWindow
         if (VM is null) return;
         VM.RequestFocusPath = FocusPathBox;
         VM.RequestFocusSearch = () => SearchBox.FocusEditor();
-        VM.RequestProperties = ShowProperties;
         VM.RequestCloseWindow = Close;
         UpdateTabStripOverflow();
     }
@@ -480,13 +479,13 @@ public partial class MainWindow : FAAppWindow
             [
                 new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path)),
                 new("", Separator: true),
-                new(Lang.Text("Toolbar.Properties"), () => ShowProperties(path)),
+                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path])),
             ],
             SidebarKind.Location when MacWorkspace.IsDiskImage(path) =>
             [
                 new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path)),
                 new("", Separator: true),
-                new(Lang.Text("Toolbar.Properties"), () => ShowProperties(path)),
+                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path])),
             ],
             _ => []
         };
@@ -765,43 +764,4 @@ public partial class MainWindow : FAAppWindow
         await dialog.ShowAsync(this);
     }
 
-    public Task ShowProperties() => ShowPropertiesAsync();
-
-    public Task ShowProperties(string path) => ShowPropertiesAsync([ListingService.Create(path)]);
-
-    private Task ShowPropertiesAsync(IReadOnlyList<FileItem>? items = null)
-    {
-        var tab = VM?.SelectedTab;
-        items ??= tab is { IsHome: false, IsSettings: false }
-            ? tab.SelectedItems.Count > 0
-                ? tab.SelectedItems.ToList()
-                : [ListingService.Create(tab.CurrentPath)]
-            : null;
-        if (items is not { Count: > 0 })
-            return Task.CompletedTask;
-
-        var vm = new PropertiesViewModel(items, AppServices.Get<FileService>(), AppServices.Get<IconService>());
-        var window = new PropertiesWindow { DataContext = vm };
-        void OnMainClosed(object? _, EventArgs e) => window.Close();
-        Closed += OnMainClosed;
-        window.Closed += async (_, _) =>
-        {
-            Closed -= OnMainClosed;
-            if (vm.SavedPath is not { Length: > 0 } saved || tab is null)
-                return;
-            await tab.ReloadAsync();
-            if (tab.Items.FirstOrDefault(i => string.Equals(i.Path, saved, StringComparison.Ordinal)) is { } item)
-                tab.SetSelection([item]);
-        };
-
-        // Independent window: Show(owner) parents it on macOS, so navigating
-        // (title change / orderFront) raises properties over the main window.
-        window.WindowStartupLocation = WindowStartupLocation.Manual;
-        window.Show();
-        var scale = DesktopScaling;
-        var x = Position.X + (int)((ClientSize.Width - window.Width) * scale / 2);
-        var y = Position.Y + (int)((ClientSize.Height - window.Height) * scale / 2);
-        window.Position = new PixelPoint(x, y);
-        return Task.CompletedTask;
-    }
 }

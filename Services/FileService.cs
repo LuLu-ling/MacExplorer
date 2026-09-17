@@ -170,6 +170,13 @@ public sealed class FileService
 
     public bool Open(string path) => MacWorkspace.Open(path);
 
+    public bool OpenWith(IReadOnlyList<string> paths, string application, bool always = false)
+    {
+        if (always)
+            MacOpenWith.SetDefault(paths, application);
+        return MacOpenWith.Open(paths, application);
+    }
+
     public bool Reveal(string path) => MacWorkspace.Reveal(path);
 
     public void Share(IReadOnlyList<string> paths, string service) => MacWorkspace.Share(paths, service);

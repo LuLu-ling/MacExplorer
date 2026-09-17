@@ -15,7 +15,8 @@ internal readonly record struct MacMenuEntry(
     MacMenuEntry[]? Children = null,
     bool Separator = false,
     bool Checked = false,
-    uint? Dot = null);
+    uint? Dot = null,
+    string? Icon = null);
 
 internal static class MacContextMenu
 {
@@ -145,7 +146,13 @@ internal static class MacContextMenu
         if (entry.Checked)
             SetTag(item, ObjC.Sel("setState:"), 1);
 
-        if (entry.Dot is uint argb)
+        if (!string.IsNullOrEmpty(entry.Icon))
+        {
+            var image = FileImage(entry.Icon);
+            if (image != IntPtr.Zero)
+                ObjC.Call(item, "setImage:", image);
+        }
+        else if (entry.Dot is uint argb)
         {
             var image = DotImage(argb);
             if (image != IntPtr.Zero)
@@ -259,6 +266,20 @@ internal static class MacContextMenu
         ObjC.Call(path, "fill");
         ObjC.Call(image, "unlockFocus");
         SetBool(image, ObjC.Sel("setTemplate:"), false);
+        return image;
+    }
+
+    private static IntPtr FileImage(string path)
+    {
+        var source = ObjC.Call(ObjC.Call(ObjC.Class("NSWorkspace"), "sharedWorkspace"),
+            "iconForFile:", ObjC.NsString(path));
+        if (source == IntPtr.Zero)
+            return IntPtr.Zero;
+        var image = ObjC.Call(source, "copy");
+        if (image == IntPtr.Zero)
+            return IntPtr.Zero;
+        ObjC.Call(image, "autorelease");
+        ObjC.MsgSendVoid(image, ObjC.Sel("setSize:"), new NSSize(16, 16));
         return image;
     }
 }

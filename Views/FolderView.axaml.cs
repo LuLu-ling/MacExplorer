@@ -476,6 +476,7 @@ public partial class FolderView : UserControl
         [
             new(Lang.Text("Common.Action.Open"), () => tab.OpenCommand.Execute(null)),
             ..OpenWindowEntry(selected),
+            ..OpenWithEntry(tab, selected),
             new(Lang.Text("Context.ShowInFinder"), () => tab.RevealCommand.Execute(null)),
             ..FavoriteEntry(selected),
             new("", Separator: true),
@@ -499,7 +500,7 @@ public partial class FolderView : UserControl
                 new(Lang.Text("Context.Messages"), () => tab.ShareCommand.Execute("com.apple.share.Messages.compose")),
             ]),
             new("", Separator: true),
-            new(Lang.Text("Toolbar.Properties"), OpenProperties),
+            new(Lang.Text("Menu.File.GetInfo"), OpenProperties),
         ];
     }
 
@@ -514,6 +515,15 @@ public partial class FolderView : UserControl
                     AppServices.Get<WindowService>().OpenWindow(path);
             })
         ];
+    }
+
+    private static MacMenuEntry[] OpenWithEntry(ExplorerTabViewModel tab, IList<FileItem> selected)
+    {
+        if (selected.Count == 0 ||
+            selected.Any(static i => i.IsDirectory || i.Extension.Equals(".app", StringComparison.OrdinalIgnoreCase)))
+            return [];
+        var paths = selected.Select(static i => i.Path).ToArray();
+        return [MacOpenWith.Menu(paths, (app, always) => _ = tab.OpenWithAsync(app, always))];
     }
 
     private static MacMenuEntry[] FavoriteEntry(IList<FileItem> selected)
@@ -541,7 +551,7 @@ public partial class FolderView : UserControl
         new(Lang.Text("Group.By"), Children: GroupByMenu(tab)),
         new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null)),
         new("", Separator: true),
-        new(Lang.Text("Toolbar.Properties"), OpenProperties),
+        new(Lang.Text("Menu.File.GetInfo"), OpenProperties),
     ];
 
     internal static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
@@ -603,8 +613,8 @@ public partial class FolderView : UserControl
 
     private void OpenProperties()
     {
-        if (TopLevel.GetTopLevel(this) is MainWindow window)
-            _ = window.ShowProperties();
+        if (TopLevel.GetTopLevel(this)?.DataContext is MainViewModel vm)
+            vm.ShowInfo();
     }
 
     private void UpdateMarquee(Point pos, KeyModifiers modifiers)
