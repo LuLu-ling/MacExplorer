@@ -92,7 +92,7 @@ public sealed class WindowService(IServiceProvider services)
     public void CloseActiveTabOrWindow()
     {
         if (ActiveWindow?.DataContext is MainViewModel model)
-            model.CloseTab();
+            _ = model.CloseTab();
     }
 
     public void Quit() => Desktop.Shutdown();

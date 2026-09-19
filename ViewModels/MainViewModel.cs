@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MacExplorer.Controls;
 using MacExplorer.Infrastructure;
 using MacExplorer.Localization;
 using MacExplorer.Logging;
@@ -64,6 +65,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     public Action? RequestFocusPath { get; set; }
     public Action? RequestFocusSearch { get; set; }
     public Action? RequestCloseWindow { get; set; }
+    public Action<ExplorerTabViewModel>? PrepareTabClose { get; set; }
 
     [ObservableProperty] public partial bool ShowSettings { get; set; }
 
@@ -147,20 +149,32 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     private Task NewFileAsync() => SelectedTab?.NewFileAsync() ?? Task.CompletedTask;
 
     [RelayCommand]
-    public void CloseTab(ExplorerTabViewModel? tab = null)
+    public async Task CloseTab(ExplorerTabViewModel? tab = null)
     {
         tab ??= SelectedTab;
-        if (tab is null || !Tabs.Contains(tab)) return;
+        if (tab is null || !Tabs.Contains(tab) || tab.IsClosing)
+            return;
         if (Tabs.Count == 1)
         {
             RequestCloseWindow?.Invoke();
             return;
         }
+
         var index = Tabs.IndexOf(tab);
         LogWrapper.Info("Window", $"Close tab {tab.CurrentPath}");
+        PrepareTabClose?.Invoke(tab);
+        tab.IsClosing = true;
+        if (SelectedTab == tab)
+        {
+            var next = index >= Tabs.Count - 1 ? index - 1 : index + 1;
+            SelectedTab = Tabs[Math.Clamp(next, 0, Tabs.Count - 1)];
+        }
+
+        await Task.Delay(ReorderShift.Duration);
+        if (_disposed || !Tabs.Contains(tab))
+            return;
         Tabs.Remove(tab);
         tab.Dispose();
-        SelectedTab = Tabs[Math.Clamp(index, 0, Tabs.Count - 1)];
         OnPropertyChanged(nameof(CanCloseTab));
     }
 
@@ -172,12 +186,23 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    public void CloseOtherTabs()
+    public async Task CloseOtherTabs()
     {
         var keep = SelectedTab;
-        foreach (var tab in Tabs.ToArray())
+        var closing = Tabs.Where(tab => tab != keep && !tab.IsClosing).ToArray();
+        foreach (var tab in closing)
         {
-            if (tab == keep) continue;
+            PrepareTabClose?.Invoke(tab);
+            tab.IsClosing = true;
+        }
+
+        await Task.Delay(ReorderShift.Duration);
+        if (_disposed)
+            return;
+        foreach (var tab in closing)
+        {
+            if (!Tabs.Contains(tab))
+                continue;
             Tabs.Remove(tab);
             tab.Dispose();
         }
@@ -501,6 +526,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         RequestFocusPath = null;
         RequestFocusSearch = null;
         RequestCloseWindow = null;
+        PrepareTabClose = null;
     }
 }
 

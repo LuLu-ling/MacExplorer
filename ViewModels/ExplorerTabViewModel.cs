@@ -62,6 +62,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty] public partial string CurrentPath { get; set; } = SpecialFolders.HomeKey;
     [ObservableProperty] public partial string Title { get; set; } = Lang.Text("Places.Home");
     [ObservableProperty] public partial bool IsSelectedTab { get; set; }
+    [ObservableProperty] public partial bool IsClosing { get; set; }
     [ObservableProperty] public partial string PathText { get; set; } = string.Empty;
     [ObservableProperty] public partial bool IsHome { get; set; } = true;
     [ObservableProperty] public partial bool IsSettings { get; set; }

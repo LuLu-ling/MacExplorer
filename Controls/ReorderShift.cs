@@ -8,8 +8,8 @@ namespace MacExplorer.Controls;
 
 internal static class ReorderShift
 {
-    private static readonly TimeSpan Duration = TimeSpan.FromMilliseconds(220);
-    private static readonly SplineEasing Ease = new(0.22, 1, 0.36, 1);
+    public static readonly TimeSpan Duration = TimeSpan.FromMilliseconds(220);
+    public static readonly Easing Ease = new SplineEasing(0.22, 1, 0.36, 1);
 
     public static void Item(Control child, double delta, bool horizontal, bool animate) =>
         Set(child, horizontal ? delta : 0, horizontal ? 0 : delta, animate);
@@ -82,36 +82,59 @@ internal static class ReorderShift
         }
     }
 
-    public static void Reset(Panel panel)
+    public static void Reset(Panel panel, bool animate = false)
     {
         foreach (var child in panel.Children)
-            Set(child, 0, 0, animate: false);
+            Set(child, 0, 0, animate);
+    }
+
+    public static void Settle(Panel panel, int from, int to, double slot, bool horizontal)
+    {
+        for (var i = 0; i < panel.Children.Count; i++)
+        {
+            var shift = 0.0;
+            if (i == from)
+                shift = (to - from) * slot;
+            else if (from < to && i > from && i <= to)
+                shift = -slot;
+            else if (from > to && i >= to && i < from)
+                shift = slot;
+            Item(panel.Children[i], shift, horizontal, animate: true);
+        }
     }
 
     private static void Set(Control child, double x, double y, bool animate)
     {
-        if (animate)
-        {
-            if (child.Transitions is not { Count: > 0 })
-            {
-                child.Transitions = new Transitions
-                {
-                    new TransformOperationsTransition
-                    {
-                        Property = Visual.RenderTransformProperty,
-                        Duration = Duration,
-                        Easing = Ease
-                    }
-                };
-            }
-        }
-        else
-        {
-            child.Transitions = null;
-        }
-
-        child.RenderTransform = x == 0 && y == 0
+        var transform = x == 0 && y == 0
             ? null
             : TransformOperations.Parse(FormattableString.Invariant($"translate({x}px, {y}px)"));
+        if (animate)
+        {
+            Ensure(child);
+            child.RenderTransform = transform;
+            return;
+        }
+
+        var saved = child.Transitions;
+        child.Transitions = null;
+        child.RenderTransform = transform;
+        child.Transitions = saved;
+    }
+
+    private static void Ensure(Control child)
+    {
+        var list = child.Transitions ??= new Transitions();
+        foreach (var transition in list)
+        {
+            if (transition is TransformOperationsTransition)
+                return;
+        }
+
+        list.Add(new TransformOperationsTransition
+        {
+            Property = Visual.RenderTransformProperty,
+            Duration = Duration,
+            Easing = Ease
+        });
     }
 }

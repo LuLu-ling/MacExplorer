@@ -4,6 +4,7 @@
         xmlns:ctrl="using:MacExplorer.Controls"
         xmlns:m="using:MacExplorer.Models">
     <Styles.Resources>
+        <SplineEasing x:Key="MotionEase" X1="0.22" Y1="1" X2="0.36" Y2="1" />
         <ControlTheme x:Key="FileListItemTheme" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -372,6 +373,15 @@
         <Setter Property="Background" Value="{DynamicResource TabItemBackgroundBrush}" />
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+                <DoubleTransition Property="Width" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Border.TabItem:pointerover">
         <Setter Property="Background" Value="{DynamicResource TabItemHoverBackgroundBrush}" />
@@ -382,8 +392,20 @@
     <Style Selector="Border.TabItem.selected:pointerover">
         <Setter Property="Background" Value="{DynamicResource TabItemSelectedBackgroundBrush}" />
     </Style>
+    <Style Selector="Border.TabItem.closing">
+        <Setter Property="Width" Value="0" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MaxWidth" Value="0" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
     <Style Selector="Border.TabItem TextBlock.TabTitle">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Foreground" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="Border.TabItem.selected TextBlock.TabTitle">
         <Setter Property="FontWeight" Value="SemiBold" />

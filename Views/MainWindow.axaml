@@ -49,11 +49,13 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:ExplorerTabViewModel">
                                     <Border Classes="TabItem" Classes.selected="{Binding IsSelectedTab}"
+                                            Classes.closing="{Binding IsClosing}"
                                             Tag="{Binding}"
                                             PointerPressed="Tab_OnPointerPressed"
                                             PointerMoved="Tab_OnPointerMoved"
                                             PointerReleased="Tab_OnPointerReleased"
                                             PointerCaptureLost="Tab_OnPointerCaptureLost"
+                                            AttachedToVisualTree="Tab_OnAttachedToVisualTree"
                                             ContextRequested="Tab_OnContextRequested">
                                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="10,0,6,0">
                                             <Panel Width="16" Height="16" VerticalAlignment="Center">

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
@@ -22,6 +23,8 @@ namespace MacExplorer.Views;
 public partial class MainWindow : FAAppWindow
 {
     private readonly DragHoverOpen _dragHoverOpen = new();
+    private bool _tabsReady;
+    private readonly HashSet<ExplorerTabViewModel> _enteredTabs = [];
 
     public MainWindow()
     {
@@ -102,6 +105,9 @@ public partial class MainWindow : FAAppWindow
         VM.RequestFocusPath = FocusPathBox;
         VM.RequestFocusSearch = () => SearchBox.FocusEditor();
         VM.RequestCloseWindow = Close;
+        VM.PrepareTabClose = PrepareTabClose;
+        _tabsReady = true;
+        RememberOpenTabs();
         UpdateTabStripOverflow();
     }
 
@@ -203,7 +209,7 @@ public partial class MainWindow : FAAppWindow
             return;
         if (e.GetCurrentPoint(border).Properties.PointerUpdateKind == PointerUpdateKind.MiddleButtonPressed)
         {
-            VM.CloseTab(tab);
+            _ = VM.CloseTab(tab);
             e.Handled = true;
             return;
         }
@@ -236,7 +242,7 @@ public partial class MainWindow : FAAppWindow
             new(Lang.Text("Tab.NewWindow"), () => AppServices.Get<WindowService>().OpenWindow(), Symbol: MacMenuSymbol.NewWindow),
             new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
             new(Lang.Text("Tab.Duplicate"), () => VM.DuplicateTab(), Symbol: MacMenuSymbol.Duplicate),
-            new(Lang.Text("Tab.Close"), () => VM.CloseTab(tab), VM.CanCloseTab, Symbol: MacMenuSymbol.Close),
+            new(Lang.Text("Tab.Close"), () => _ = VM.CloseTab(tab), VM.CanCloseTab, Symbol: MacMenuSymbol.Close),
         ]);
     }
 
@@ -299,21 +305,35 @@ public partial class MainWindow : FAAppWindow
 
         var from = _tabDragFrom;
         var to = _tabDragHover;
+        var dragged = _tabDragging;
         var panel = TabPanel();
         _tabDragFrom = -1;
         _tabDragHover = -1;
         _tabDragging = false;
-        if (panel is not null)
+        _tabDragSource = null;
+        if (panel is null)
+            return;
+
+        if (dragged && to >= 0 && to != from)
         {
-            foreach (var child in panel.Children)
-                child.ZIndex = 0;
-            ReorderShift.Reset(panel);
+            var slot = panel.Children[from].Bounds.Width + 2;
+            ReorderShift.Settle(panel, from, to, slot, horizontal: true);
+            _ = CommitTabDrop(panel, from, to);
+            return;
         }
 
-        _tabDragSource = null;
+        foreach (var child in panel.Children)
+            child.ZIndex = 0;
+        ReorderShift.Reset(panel, animate: dragged);
+    }
 
-        if (to >= 0 && to != from)
-            VM.MoveTab(from, to);
+    private async Task CommitTabDrop(Panel panel, int from, int to)
+    {
+        await Task.Delay(ReorderShift.Duration);
+        VM?.MoveTab(from, to);
+        foreach (var child in panel.Children)
+            child.ZIndex = 0;
+        ReorderShift.Reset(panel, animate: false);
     }
 
     private void CloseTab_OnClick(object? sender, RoutedEventArgs e)
@@ -321,7 +341,7 @@ public partial class MainWindow : FAAppWindow
         e.Handled = true;
         FinishTabDrag();
         if (sender is Button { Tag: ExplorerTabViewModel tab })
-            VM?.CloseTab(tab);
+            _ = VM?.CloseTab(tab);
     }
 
     private void TabStrip_OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -377,6 +397,113 @@ public partial class MainWindow : FAAppWindow
     }
 
     private Panel? TabPanel() => TabStrip.ItemsPanelRoot as Panel;
+
+    private void RememberOpenTabs()
+    {
+        if (TabPanel() is not { } panel)
+            return;
+        foreach (var child in panel.Children)
+        {
+            if (TabBorderOf(child)?.DataContext is ExplorerTabViewModel tab)
+                _enteredTabs.Add(tab);
+        }
+    }
+
+    private void Tab_OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+    {
+        if (!_tabsReady || sender is not Border { DataContext: ExplorerTabViewModel tab } border)
+            return;
+        if (tab.IsClosing || !_enteredTabs.Add(tab))
+            return;
+        PlayTabEnter(border);
+    }
+
+    private void PlayTabEnter(Border border)
+    {
+        var target = TabSlotWidth(border);
+        var transitions = border.Transitions;
+        border.Transitions = null;
+        border.MinWidth = 0;
+        border.MaxWidth = 0;
+        border.Width = 0;
+        border.Opacity = 0;
+        border.Transitions = transitions;
+        Dispatcher.UIThread.Post(() =>
+        {
+            border.MinWidth = 0;
+            border.MaxWidth = 240;
+            border.Width = target;
+            border.Opacity = 1;
+            _ = ReleaseTabSize(border);
+        }, DispatcherPriority.Render);
+    }
+
+    private static async Task ReleaseTabSize(Border border)
+    {
+        await Task.Delay(ReorderShift.Duration);
+        if (border.DataContext is ExplorerTabViewModel { IsClosing: true })
+            return;
+        var transitions = border.Transitions;
+        border.Transitions = null;
+        border.ClearValue(WidthProperty);
+        border.ClearValue(MinWidthProperty);
+        border.ClearValue(MaxWidthProperty);
+        border.Transitions = transitions;
+    }
+
+    private double TabSlotWidth(Visual self)
+    {
+        if (TabPanel() is not { } panel)
+            return 140;
+        foreach (var child in panel.Children)
+        {
+            if (child.Bounds.Width < 8)
+                continue;
+            var tab = TabBorderOf(child);
+            if (tab is null || ReferenceEquals(tab, self))
+                continue;
+            return tab.Bounds.Width;
+        }
+
+        return 140;
+    }
+
+    private void PrepareTabClose(ExplorerTabViewModel tab)
+    {
+        _enteredTabs.Remove(tab);
+        if (TabBorder(tab) is not { } border)
+            return;
+        var width = border.Bounds.Width;
+        var transitions = border.Transitions;
+        border.Transitions = null;
+        border.Width = width;
+        border.MinWidth = 0;
+        border.MaxWidth = width;
+        border.Transitions = transitions;
+        border.Width = 0;
+        border.MaxWidth = 0;
+        border.Opacity = 0;
+        border.IsHitTestVisible = false;
+    }
+
+    private Border? TabBorder(ExplorerTabViewModel tab)
+    {
+        if (TabPanel() is not { } panel)
+            return null;
+        foreach (var child in panel.Children)
+        {
+            var border = TabBorderOf(child);
+            if (border?.Tag as ExplorerTabViewModel == tab ||
+                border?.DataContext as ExplorerTabViewModel == tab)
+                return border;
+        }
+
+        return null;
+    }
+
+    private static Border? TabBorderOf(Control child) =>
+        child as Border ?? child.GetVisualDescendants().OfType<Border>()
+            .FirstOrDefault(static b => b.Classes.Contains("TabItem"));
 
 
     private void AddressBar_OnDragOver(object? sender, DragEventArgs e)
