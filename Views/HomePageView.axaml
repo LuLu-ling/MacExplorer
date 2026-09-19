@@ -4,7 +4,7 @@
              x:Class="MacExplorer.Views.HomePageView"
              x:DataType="vm:HomeViewModel">
     <ScrollViewer>
-        <StackPanel Margin="8,8,16,16" Spacing="20">
+        <StackPanel Margin="0,8,16,16" Spacing="20">
             <StackPanel Spacing="8" IsVisible="{Binding ShowQuickAccess}">
                 <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.QuickAccess}" />
                 <ItemsControl ItemsSource="{Binding QuickAccess}">

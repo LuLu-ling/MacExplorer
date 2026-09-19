@@ -6,7 +6,7 @@
              x:Class="MacExplorer.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel">
     <Grid ColumnDefinitions="252,*">
-        <Border Margin="4,0,8,8"
+        <Border Margin="0,0,8,8"
                 CornerRadius="12"
                 Background="{DynamicResource LayerFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"

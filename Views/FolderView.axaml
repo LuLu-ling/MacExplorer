@@ -52,7 +52,7 @@
                       HorizontalScrollBarVisibility="Auto"
                       VerticalScrollBarVisibility="Disabled">
         <DockPanel MinWidth="{Binding Columns.TotalWidth}">
-            <Grid x:Name="DetailsHeader" DockPanel.Dock="Top" Height="40" Margin="8,0" Background="Transparent">
+            <Grid x:Name="DetailsHeader" DockPanel.Dock="Top" Height="40" Margin="0,0,8,0" Background="Transparent">
                 <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
                         BorderThickness="0,0,0,1" />
                 <ctrl:ColumnStripPanel x:Name="DetailsHeaderStrip" Columns="{Binding Columns}" Cursor="Hand">

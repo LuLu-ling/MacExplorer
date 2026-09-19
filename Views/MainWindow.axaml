@@ -155,7 +155,7 @@
             </Grid.ColumnDefinitions>
             <Border x:Name="SidebarHost" Classes="SidebarPane"
                     IsVisible="{Binding IsSidebarOpen}"
-                    Margin="8,0,4,8"
+                    Margin="8,0,1,8"
                     CornerRadius="12"
                     Background="{DynamicResource LayerFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
@@ -164,11 +164,11 @@
                 <views:SidebarPane />
             </Border>
 
-            <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+            <GridSplitter Grid.Column="1" Width="2" Background="Transparent"
                           IsVisible="{Binding IsSidebarOpen}" ResizeDirection="Columns"
                           ResizeBehavior="PreviousAndNext" />
 
-            <Grid Grid.Column="2" Margin="4,0,4,8" RowDefinitions="Auto,*">
+            <Grid Grid.Column="2" Margin="1,0,4,8" RowDefinitions="Auto,*">
                 <!-- Inner toolbar -->
                 <Border Margin="0,0,0,4" Padding="4,2"
                         Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
