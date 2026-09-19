@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using MacExplorer.Controls;
 using MacExplorer.Infrastructure;
 using MacExplorer.Models;
-
 namespace MacExplorer.ViewModels;
 
 public sealed partial class DetailsColumns : ObservableObject
@@ -35,6 +35,7 @@ public sealed partial class DetailsColumns : ObservableObject
     [ObservableProperty] public partial bool ShowTags { get; set; }
 
     private DetailsColumnKind[] _order = DefaultOrder;
+    private int _widthEpoch;
 
     public IReadOnlyList<DetailsColumnKind> Order => _order;
 
@@ -118,8 +119,23 @@ public sealed partial class DetailsColumns : ObservableObject
     private void SetVisible(Action<bool> persist, bool value)
     {
         persist(value);
-        OnPropertyChanged(nameof(TotalWidth));
         OnPropertyChanged(nameof(Order));
+        if (value)
+        {
+            _widthEpoch++;
+            OnPropertyChanged(nameof(TotalWidth));
+            return;
+        }
+
+        var epoch = ++_widthEpoch;
+        _ = CommitWidth(epoch);
+    }
+
+    private async Task CommitWidth(int epoch)
+    {
+        await Task.Delay(ReorderShift.Duration);
+        if (epoch == _widthEpoch)
+            OnPropertyChanged(nameof(TotalWidth));
     }
 
     private List<DetailsColumnKind> Visible()

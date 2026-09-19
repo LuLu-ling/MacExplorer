@@ -37,7 +37,12 @@ public sealed class ColumnStripPanel : Panel
     {
         var units = new List<Control>(Children.Count);
         foreach (var child in VisibleChildren())
+        {
+            if (child is ColumnUnit { IsShown: false })
+                continue;
             units.Add(child);
+        }
+
         return units.ToArray();
     }
 
@@ -108,7 +113,7 @@ public sealed class ColumnStripPanel : Panel
         {
             foreach (var kind in columns.Order)
             {
-                if (Child(kind) is { IsVisible: true } child)
+                if (Child(kind) is { } child)
                     yield return child;
             }
 
@@ -116,10 +121,7 @@ public sealed class ColumnStripPanel : Panel
         }
 
         foreach (var child in Children)
-        {
-            if (child.IsVisible)
-                yield return child;
-        }
+            yield return child;
     }
 
     private Control? Child(DetailsColumnKind kind)
