@@ -35,7 +35,7 @@ public partial class MainWindow : FAAppWindow
         InitializeComponent();
         AddressBar.MenuService = new BreadcrumbMenuService(AppServices.Get<VolumeService>());
         TitleBar.ExtendsContentIntoTitleBar = true;
-        TitleBar.Height = 48;
+        TitleBar.Height = WindowChrome.TitleBarHeight;
         DataContextChanged += (_, _) => BindDialogs();
         Closed += (_, _) =>
         {
@@ -745,7 +745,7 @@ public partial class MainWindow : FAAppWindow
     private void UpdateTabStripOverflow()
     {
         var add = (TabBarAddNewTabButton.Bounds.Width > 0 ? TabBarAddNewTabButton.Bounds.Width : 30) + 4;
-        var available = TitleBarHost.Bounds.Width - 78 - add;
+        var available = TitleBarHost.Bounds.Width - WindowChrome.TrafficLightInset - add;
         var content = TabPanel()?.Bounds.Width ?? TabStrip.Bounds.Width;
         var overflow = content > available + 0.5;
         const double chevron = 24;
