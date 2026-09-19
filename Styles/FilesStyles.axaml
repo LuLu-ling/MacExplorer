@@ -1,6 +1,5 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:ui="using:FluentAvalonia.UI.Controls"
         xmlns:ctrl="using:MacExplorer.Controls"
         xmlns:m="using:MacExplorer.Models">
     <Styles.Resources>

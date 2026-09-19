@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Windowing;
 using MacExplorer.Controls;
 using MacExplorer.Infrastructure;
@@ -599,50 +598,48 @@ public partial class MainWindow : FAAppWindow
         AppServices.Get<WindowService>().OpenWindow(path);
 
 
-    private async Task<bool> ConfirmAsync(string title, string message, string primary, string close)
-    {
-        var dialog = new FAContentDialog
-        {
-            Title = title,
-            Content = message,
-            PrimaryButtonText = primary,
-            CloseButtonText = close,
-            DefaultButton = FAContentDialogButton.Primary
-        };
-        var result = await dialog.ShowAsync(this);
-        return result == FAContentDialogResult.Primary;
-    }
+    private async Task<bool> ConfirmAsync(string title, string message, string primary, string close) =>
+        await ShowAlertAsync(title, message, MacAlertStyle.Warning, primary, close) == 0;
 
     private async Task<ConflictDecision> ConflictAsync(string name)
     {
-        var dialog = new FAContentDialog
-        {
-            Title = Lang.Text("Dialog.Conflict.Title"),
-            Content = Lang.Text("Dialog.Conflict.Message", name),
-            PrimaryButtonText = Lang.Text("Dialog.Conflict.KeepBoth"),
-            SecondaryButtonText = Lang.Text("Dialog.Conflict.Replace"),
-            CloseButtonText = Lang.Text("Dialog.Conflict.Skip"),
-            DefaultButton = FAContentDialogButton.Primary
-        };
-        var result = await dialog.ShowAsync(this);
+        var result = await ShowAlertAsync(
+            Lang.Text("Dialog.Conflict.Title"),
+            Lang.Text("Dialog.Conflict.Message", name),
+            MacAlertStyle.Warning,
+            Lang.Text("Dialog.Conflict.KeepBoth"),
+            Lang.Text("Dialog.Conflict.Replace"),
+            Lang.Text("Dialog.Conflict.Skip"));
         return result switch
         {
-            FAContentDialogResult.Primary => ConflictDecision.KeepBoth,
-            FAContentDialogResult.Secondary => ConflictDecision.Replace,
+            0 => ConflictDecision.KeepBoth,
+            1 => ConflictDecision.Replace,
             _ => ConflictDecision.Skip
         };
     }
 
     private async Task ErrorAsync(string title, string message)
     {
-        var dialog = new FAContentDialog
-        {
-            Title = title,
-            Content = message,
-            PrimaryButtonText = Lang.Text("Common.Action.OK"),
-            DefaultButton = FAContentDialogButton.Primary
-        };
-        await dialog.ShowAsync(this);
+        await ShowAlertAsync(title, message, MacAlertStyle.Critical, Lang.Text("Common.Action.OK"));
     }
+
+    private Task<int> ShowAlertAsync(
+        string title,
+        string message,
+        MacAlertStyle style,
+        params string[] buttons)
+    {
+        return MacAlert.ShowSheetAsync(
+            () =>
+            {
+                var handle = TryGetPlatformHandle();
+                return handle?.HandleDescriptor == "NSWindow" ? handle.Handle : IntPtr.Zero;
+            },
+            title,
+            message,
+            style,
+            buttons);
+    }
+ 
 
 }

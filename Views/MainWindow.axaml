@@ -7,7 +7,6 @@
                  xmlns:ctrl="using:MacExplorer.Controls"
 
                  xmlns:wnd="using:FluentAvalonia.UI.Windowing"
-                 xmlns:ui="using:FluentAvalonia.UI.Controls"
                  x:Class="MacExplorer.Views.MainWindow"
                  x:DataType="vm:MainViewModel"
                  Title="{Binding WindowTitle}"
