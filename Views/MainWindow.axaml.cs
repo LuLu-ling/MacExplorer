@@ -315,8 +315,7 @@ public partial class MainWindow : FAAppWindow
 
         if (dragged && to >= 0 && to != from)
         {
-            var slot = panel.Children[from].Bounds.Width + 2;
-            ReorderShift.Settle(panel, from, to, slot, horizontal: true);
+            ReorderShift.Settle(panel, from, to, horizontal: true, spacing: 2);
             _ = CommitTabDrop(panel, from, to);
             return;
         }

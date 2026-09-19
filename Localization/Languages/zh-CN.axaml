@@ -81,7 +81,7 @@
     <x:String x:Key="Sort.Name">名称</x:String>
     <x:String x:Key="Sort.DateModified">修改日期</x:String>
     <x:String x:Key="Sort.DateCreated">创建日期</x:String>
-    <x:String x:Key="Sort.Type">种类</x:String>
+    <x:String x:Key="Sort.Type">类型</x:String>
     <x:String x:Key="Sort.Size">大小</x:String>
 
     <!-- Group -->
@@ -90,7 +90,7 @@
     <x:String x:Key="Group.Name">名称</x:String>
     <x:String x:Key="Group.DateModified">修改日期</x:String>
     <x:String x:Key="Group.DateCreated">创建日期</x:String>
-    <x:String x:Key="Group.Type">种类</x:String>
+    <x:String x:Key="Group.Type">类型</x:String>
     <x:String x:Key="Group.Size">大小</x:String>
     <x:String x:Key="Group.FileTags">文件标签</x:String>
     <x:String x:Key="Group.OriginalFolder">原始文件夹</x:String>
@@ -141,7 +141,7 @@
     <x:String x:Key="Column.Tags">标签</x:String>
     <x:String x:Key="Column.DateModified">修改日期</x:String>
     <x:String x:Key="Column.DateCreated">创建日期</x:String>
-    <x:String x:Key="Column.Type">种类</x:String>
+    <x:String x:Key="Column.Type">类型</x:String>
     <x:String x:Key="Column.Size">大小</x:String>
 
     <!-- Search -->
@@ -234,7 +234,7 @@
     <x:String x:Key="File.CopyPatternNumbered">{0}的副本 {2}{1}</x:String>
     <x:String x:Key="File.NewFolder">新建文件夹</x:String>
     <x:String x:Key="File.UntitledName">未命名.txt</x:String>
-    <x:String x:Key="File.Tooltip">名称：{0}{1}种类：{2}{1}修改日期：{3}</x:String>
+    <x:String x:Key="File.Tooltip">名称：{0}{1}类型：{2}{1}修改日期：{3}</x:String>
     <x:String x:Key="File.Tooltip.Size">{0}{1}大小：{2}</x:String>
 
     <!-- Info -->

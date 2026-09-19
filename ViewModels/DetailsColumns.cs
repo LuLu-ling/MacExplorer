@@ -1,12 +1,23 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using MacExplorer.Infrastructure;
+using MacExplorer.Models;
 
 namespace MacExplorer.ViewModels;
 
 public sealed partial class DetailsColumns : ObservableObject
 {
-    public const double Splitter = 12;
+    public const double Splitter = 3;
     public const double Icon = 36;
+
+    public static readonly DetailsColumnKind[] DefaultOrder =
+    [
+        DetailsColumnKind.Name,
+        DetailsColumnKind.Tags,
+        DetailsColumnKind.DateModified,
+        DetailsColumnKind.DateCreated,
+        DetailsColumnKind.Type,
+        DetailsColumnKind.Size,
+    ];
 
     public static DetailsColumns Shared { get; } = new();
 
@@ -17,13 +28,15 @@ public sealed partial class DetailsColumns : ObservableObject
     [ObservableProperty] public partial double Size { get; set; }
     [ObservableProperty] public partial double Tags { get; set; }
 
-
     [ObservableProperty] public partial bool ShowDateModified { get; set; }
     [ObservableProperty] public partial bool ShowDateCreated { get; set; }
     [ObservableProperty] public partial bool ShowType { get; set; }
     [ObservableProperty] public partial bool ShowSize { get; set; }
     [ObservableProperty] public partial bool ShowTags { get; set; }
 
+    private DetailsColumnKind[] _order = DefaultOrder;
+
+    public IReadOnlyList<DetailsColumnKind> Order => _order;
 
     public double TotalWidth =>
         Icon + Name + Splitter
@@ -46,6 +59,41 @@ public sealed partial class DetailsColumns : ObservableObject
         ShowType = Config.Layout.ShowTypeColumn;
         ShowSize = Config.Layout.ShowSizeColumn;
         ShowTags = Config.Layout.ShowTagsColumn;
+        _order = LoadOrder();
+    }
+
+    public bool IsShown(DetailsColumnKind kind) => kind switch
+    {
+        DetailsColumnKind.Name => true,
+        DetailsColumnKind.Tags => ShowTags,
+        DetailsColumnKind.DateModified => ShowDateModified,
+        DetailsColumnKind.DateCreated => ShowDateCreated,
+        DetailsColumnKind.Type => ShowType,
+        DetailsColumnKind.Size => ShowSize,
+        _ => false
+    };
+
+    public bool TryMoveVisible(int from, int to)
+    {
+        var visible = Visible();
+        if ((uint)from >= (uint)visible.Count || (uint)to >= (uint)visible.Count || from == to)
+            return false;
+
+        var moved = visible[from];
+        visible.RemoveAt(from);
+        visible.Insert(to, moved);
+
+        var index = 0;
+        for (var i = 0; i < _order.Length; i++)
+        {
+            if (!IsShown(_order[i]))
+                continue;
+            _order[i] = visible[index++];
+        }
+
+        Config.Layout.ColumnOrder = [.. _order.Select(static kind => kind.ToString())];
+        OnPropertyChanged(nameof(Order));
+        return true;
     }
 
     partial void OnNameChanged(double value) => SetWidth(v => Config.Layout.NameColumnWidth = v, value);
@@ -71,6 +119,38 @@ public sealed partial class DetailsColumns : ObservableObject
     {
         persist(value);
         OnPropertyChanged(nameof(TotalWidth));
+        OnPropertyChanged(nameof(Order));
+    }
+
+    private List<DetailsColumnKind> Visible()
+    {
+        var list = new List<DetailsColumnKind>(_order.Length);
+        foreach (var kind in _order)
+        {
+            if (IsShown(kind))
+                list.Add(kind);
+        }
+
+        return list;
+    }
+
+    private static DetailsColumnKind[] LoadOrder()
+    {
+        var parsed = new List<DetailsColumnKind>(DefaultOrder.Length);
+        var seen = new HashSet<DetailsColumnKind>();
+        foreach (var name in Config.Layout.ColumnOrder)
+        {
+            if (Enum.TryParse(name, true, out DetailsColumnKind kind) && seen.Add(kind))
+                parsed.Add(kind);
+        }
+
+        foreach (var kind in DefaultOrder)
+        {
+            if (seen.Add(kind))
+                parsed.Add(kind);
+        }
+
+        return [.. parsed];
     }
 
     private static double Visible(bool show, double width) => show ? width + Splitter : 0;

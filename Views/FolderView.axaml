@@ -55,50 +55,64 @@
             <Grid x:Name="DetailsHeader" DockPanel.Dock="Top" Height="40" Margin="8,0" Background="Transparent">
                 <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
                         BorderThickness="0,0,0,1" />
-                <StackPanel Orientation="Horizontal">
-                    <Border Width="{x:Static vm:DetailsColumns.Icon}" />
-                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Name}"
-                            Command="{Binding SetSortCommand}" CommandParameter="Name">
-                        <TextBlock Text="{DynamicResource Column.Name}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Name}" MinColumnWidth="80" MaxColumnWidth="1000" />
-                    <Button Classes="ToolbarButton ColHeader ColTags" Width="{Binding Columns.Tags}"
-                            IsVisible="{Binding Columns.ShowTags}">
-                        <TextBlock Text="{DynamicResource Column.Tags}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Tags}"
-                                         IsVisible="{Binding Columns.ShowTags}" />
-                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateModified}"
-                            IsVisible="{Binding Columns.ShowDateModified}"
-                            Command="{Binding SetSortCommand}" CommandParameter="DateModified">
-                        <TextBlock Text="{DynamicResource Column.DateModified}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateModified}"
-                                         IsVisible="{Binding Columns.ShowDateModified}" />
-                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateCreated}"
-                            IsVisible="{Binding Columns.ShowDateCreated}"
-                            Command="{Binding SetSortCommand}" CommandParameter="DateCreated">
-                        <TextBlock Text="{DynamicResource Column.DateCreated}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateCreated}"
-                                         IsVisible="{Binding Columns.ShowDateCreated}" />
-                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Type}"
-                            IsVisible="{Binding Columns.ShowType}"
-                            Command="{Binding SetSortCommand}" CommandParameter="Type">
-                        <TextBlock Text="{DynamicResource Column.Type}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Type}"
-                                         IsVisible="{Binding Columns.ShowType}" />
-                    <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Size}"
-                            IsVisible="{Binding Columns.ShowSize}"
-                            Command="{Binding SetSortCommand}" CommandParameter="Size">
-                        <TextBlock Text="{DynamicResource Column.Size}" TextTrimming="CharacterEllipsis" />
-                    </Button>
-                    <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Size}"
-                                         IsVisible="{Binding Columns.ShowSize}" />
-                </StackPanel>
+                <ctrl:ColumnStripPanel x:Name="DetailsHeaderStrip" Columns="{Binding Columns}" Cursor="Hand">
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                ctrl:ColumnStripPanel.Column="Name">
+                        <Border Width="{x:Static vm:DetailsColumns.Icon}" />
+                        <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Name}">
+                            <TextBlock Text="{DynamicResource Column.Name}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Name}" MinColumnWidth="80" MaxColumnWidth="1000" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                IsVisible="{Binding Columns.ShowTags}"
+                                ctrl:ColumnStripPanel.Column="Tags">
+                        <Button Classes="ToolbarButton ColHeader ColTags" Width="{Binding Columns.Tags}">
+                            <TextBlock Text="{DynamicResource Column.Tags}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Tags}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                IsVisible="{Binding Columns.ShowDateModified}"
+                                ctrl:ColumnStripPanel.Column="DateModified">
+                        <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateModified}">
+                            <TextBlock Text="{DynamicResource Column.DateModified}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateModified}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                IsVisible="{Binding Columns.ShowDateCreated}"
+                                ctrl:ColumnStripPanel.Column="DateCreated">
+                        <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.DateCreated}">
+                            <TextBlock Text="{DynamicResource Column.DateCreated}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.DateCreated}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                IsVisible="{Binding Columns.ShowType}"
+                                ctrl:ColumnStripPanel.Column="Type">
+                        <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Type}">
+                            <TextBlock Text="{DynamicResource Column.Type}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Type}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                IsVisible="{Binding Columns.ShowSize}"
+                                ctrl:ColumnStripPanel.Column="Size">
+                        <Button Classes="ToolbarButton ColHeader" Width="{Binding Columns.Size}">
+                            <TextBlock Text="{DynamicResource Column.Size}" TextTrimming="CharacterEllipsis" />
+                        </Button>
+                        <ctrl:ColumnSplitter ColumnWidth="{Binding Columns.Size}" />
+                    </StackPanel>
+                </ctrl:ColumnStripPanel>
             </Grid>
-            <ListBox Classes="FileList details" SelectionMode="Multiple" ItemsSource="{Binding ViewItems}"
+            <ListBox x:Name="DetailsList" Classes="FileList details" SelectionMode="Multiple" ItemsSource="{Binding ViewItems}"
                      DoubleTapped="OnOpen" SelectionChanged="OnSelectionChanged"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.DataTemplates>
@@ -109,64 +123,77 @@
                         <Border Classes="FileRow details" Classes.selected="{Binding IsSelected}"
                                 Classes.drop="{Binding IsDropTarget}"
                                 Width="{Binding #Root.Columns.TotalWidth}">
-                            <StackPanel Orientation="Horizontal"
-                                        Height="{Binding #Root.Metrics.DetailsRowHeight}"
-                                        VerticalAlignment="Center"
-                                        Opacity="{Binding CutOpacity}">
-                                <Border Width="{x:Static vm:DetailsColumns.Icon}">
-                                    <Image Width="{Binding #Root.Metrics.DetailsIconSize}"
-                                           Height="{Binding #Root.Metrics.DetailsIconSize}"
-                                           Source="{Binding Icon}" Stretch="Uniform"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="False">
-                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
-                                               TextAlignment="Left"
-                                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="8,0"
-                                               FontSize="{Binding #Root.Metrics.FontSize}"
-                                               IsVisible="{Binding !IsRenaming}" />
-                                    <ctrl:RenameTextBox Text="{Binding RenameText}"
-                                                        FontSize="{Binding #Root.Metrics.FontSize}"
-                                                        Margin="2,0" HorizontalAlignment="Stretch"
-                                                        IsVisible="{Binding IsRenaming}"
-                                                        KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
-                                <Panel Width="{Binding #Root.Columns.Tags}" ClipToBounds="True"
-                                       IsVisible="{Binding #Root.Columns.ShowTags}">
-                                    <ctrl:TagDots ItemsSource="{Binding Tags}" HorizontalAlignment="Center" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
-                                        IsVisible="{Binding #Root.Columns.ShowTags}" />
-                                <Panel Width="{Binding #Root.Columns.DateModified}" ClipToBounds="True"
-                                       IsVisible="{Binding #Root.Columns.ShowDateModified}">
-                                    <TextBlock Classes="ColSecondary" Text="{Binding ModifiedText}" Margin="8,0"
-                                               TextWrapping="NoWrap" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
-                                        IsVisible="{Binding #Root.Columns.ShowDateModified}" />
-                                <Panel Width="{Binding #Root.Columns.DateCreated}" ClipToBounds="True"
-                                       IsVisible="{Binding #Root.Columns.ShowDateCreated}">
-                                    <TextBlock Classes="ColSecondary" Text="{Binding CreatedText}" Margin="8,0"
-                                               TextWrapping="NoWrap" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
-                                        IsVisible="{Binding #Root.Columns.ShowDateCreated}" />
-                                <Panel Width="{Binding #Root.Columns.Type}" ClipToBounds="True"
-                                       IsVisible="{Binding #Root.Columns.ShowType}">
-                                    <TextBlock Classes="ColSecondary" Text="{Binding ItemType}" Margin="8,0"
-                                               TextWrapping="NoWrap" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
-                                        IsVisible="{Binding #Root.Columns.ShowType}" />
-                                <Panel Width="{Binding #Root.Columns.Size}" ClipToBounds="True"
-                                       IsVisible="{Binding #Root.Columns.ShowSize}">
-                                    <TextBlock Classes="ColSecondary" Text="{Binding SizeText}" Margin="8,0"
-                                               TextWrapping="NoWrap" />
-                                </Panel>
-                                <Border Width="{x:Static vm:DetailsColumns.Splitter}"
-                                        IsVisible="{Binding #Root.Columns.ShowSize}" />
-                            </StackPanel>
+                            <ctrl:ColumnStripPanel Columns="{Binding #Root.Columns}"
+                                                   Height="{Binding #Root.Metrics.DetailsRowHeight}"
+                                                   VerticalAlignment="Center"
+                                                   Opacity="{Binding CutOpacity}">
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            ctrl:ColumnStripPanel.Column="Name">
+                                    <Border Width="{x:Static vm:DetailsColumns.Icon}">
+                                        <Image Width="{Binding #Root.Metrics.DetailsIconSize}"
+                                               Height="{Binding #Root.Metrics.DetailsIconSize}"
+                                               Source="{Binding Icon}" Stretch="Uniform"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="False">
+                                        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
+                                                   TextAlignment="Left"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="8,0"
+                                                   FontSize="{Binding #Root.Metrics.FontSize}"
+                                                   IsVisible="{Binding !IsRenaming}" />
+                                        <ctrl:RenameTextBox Text="{Binding RenameText}"
+                                                            FontSize="{Binding #Root.Metrics.FontSize}"
+                                                            Margin="2,0" HorizontalAlignment="Stretch"
+                                                            IsVisible="{Binding IsRenaming}"
+                                                            KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            IsVisible="{Binding #Root.Columns.ShowTags}"
+                                            ctrl:ColumnStripPanel.Column="Tags">
+                                    <Panel Width="{Binding #Root.Columns.Tags}" ClipToBounds="True">
+                                        <ctrl:TagDots ItemsSource="{Binding Tags}" HorizontalAlignment="Center" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            IsVisible="{Binding #Root.Columns.ShowDateModified}"
+                                            ctrl:ColumnStripPanel.Column="DateModified">
+                                    <Panel Width="{Binding #Root.Columns.DateModified}" ClipToBounds="True">
+                                        <TextBlock Classes="ColSecondary" Text="{Binding ModifiedText}" Margin="8,0"
+                                                   TextWrapping="NoWrap" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            IsVisible="{Binding #Root.Columns.ShowDateCreated}"
+                                            ctrl:ColumnStripPanel.Column="DateCreated">
+                                    <Panel Width="{Binding #Root.Columns.DateCreated}" ClipToBounds="True">
+                                        <TextBlock Classes="ColSecondary" Text="{Binding CreatedText}" Margin="8,0"
+                                                   TextWrapping="NoWrap" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            IsVisible="{Binding #Root.Columns.ShowType}"
+                                            ctrl:ColumnStripPanel.Column="Type">
+                                    <Panel Width="{Binding #Root.Columns.Type}" ClipToBounds="True">
+                                        <TextBlock Classes="ColSecondary" Text="{Binding ItemType}" Margin="8,0"
+                                                   TextWrapping="NoWrap" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Background="Transparent"
+                                            IsVisible="{Binding #Root.Columns.ShowSize}"
+                                            ctrl:ColumnStripPanel.Column="Size">
+                                    <Panel Width="{Binding #Root.Columns.Size}" ClipToBounds="True">
+                                        <TextBlock Classes="ColSecondary" Text="{Binding SizeText}" Margin="8,0"
+                                                   TextWrapping="NoWrap" />
+                                    </Panel>
+                                    <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
+                                </StackPanel>
+                            </ctrl:ColumnStripPanel>
                         </Border>
                     </DataTemplate>
                 </ListBox.DataTemplates>

@@ -59,6 +59,13 @@ public partial class FolderView : UserControl
     private FileItem[] _selectionSnapshot = [];
     private IPointer? _captured;
     private PointerPressedEventArgs? _pressArgs;
+    private int _colFrom = -1;
+    private int _colHover = -1;
+    private bool _colDragging;
+    private bool _colLayoutHooked;
+    private double _colPressX;
+    private double _colDelta;
+    private double _colSlot;
 
 
     public FolderView()
@@ -74,6 +81,10 @@ public partial class FolderView : UserControl
         AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
+        DetailsHeaderStrip.AddHandler(PointerPressedEvent, OnColumnPressed, RoutingStrategies.Tunnel);
+        DetailsHeaderStrip.AddHandler(PointerMovedEvent, OnColumnMoved);
+        DetailsHeaderStrip.AddHandler(PointerReleasedEvent, OnColumnReleased);
+        DetailsHeaderStrip.AddHandler(PointerCaptureLostEvent, OnColumnCaptureLost);
 
     }
 
@@ -100,6 +111,7 @@ public partial class FolderView : UserControl
         ClickOutside.Detach(_root, OnRenameOutsidePointerPressed);
         _root = null;
         EndMarquee();
+        FinishColumnDrag();
         BindTab(null);
         base.OnDetachedFromVisualTree(e);
     }
@@ -1018,7 +1030,7 @@ public partial class FolderView : UserControl
         }
     }
 
-    private static void OnFileContainerPrepared(object? sender, ContainerPreparedEventArgs e)
+    private void OnFileContainerPrepared(object? sender, ContainerPreparedEventArgs e)
     {
         if (e.Container is not ListBoxItem item)
             return;
@@ -1029,6 +1041,11 @@ public partial class FolderView : UserControl
         item.Classes.Set("group", group);
         item.Focusable = true;
         item.IsHitTestVisible = true;
+        if (item.FindDescendantOfType<ColumnStripPanel>() is not { } strip)
+            return;
+        ReorderShift.Reset(strip);
+        foreach (var child in strip.Children)
+            child.ZIndex = 0;
     }
 
     private void OnOverviewTapped(object? sender, TappedEventArgs e)
@@ -1131,5 +1148,198 @@ public partial class FolderView : UserControl
         }
 
         return false;
+    }
+
+    private void OnColumnPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source is Visual source &&
+            source.FindAncestorOfType<ColumnSplitter>(includeSelf: true) is not null)
+            return;
+        if (!e.GetCurrentPoint(DetailsHeaderStrip).Properties.IsLeftButtonPressed)
+            return;
+
+        var unit = ColumnUnit(DetailsHeaderStrip, e.Source);
+        if (unit is null)
+            return;
+        var units = DetailsHeaderStrip.Units();
+        var from = Array.IndexOf(units, unit);
+        if (from < 0)
+            return;
+
+        _colFrom = from;
+        _colHover = from;
+        _colDragging = false;
+        _colDelta = 0;
+        _colSlot = units[from].Bounds.Width;
+        _colPressX = e.GetPosition(DetailsHeaderStrip).X;
+        e.Pointer.Capture(DetailsHeaderStrip);
+        e.Handled = true;
+    }
+
+    private void OnColumnMoved(object? sender, PointerEventArgs e)
+    {
+        if (_colFrom < 0)
+            return;
+        if (!e.GetCurrentPoint(DetailsHeaderStrip).Properties.IsLeftButtonPressed)
+            return;
+
+        var header = DetailsHeaderStrip.Units();
+        if ((uint)_colFrom >= (uint)header.Length)
+            return;
+
+        var x = e.GetPosition(DetailsHeaderStrip).X;
+        if (!_colDragging)
+        {
+            if (Math.Abs(x - _colPressX) < FileDrag.Threshold)
+                return;
+            if (header.Length < 2)
+                return;
+            _colDragging = true;
+            _colSlot = header[_colFrom].Bounds.Width;
+            HookColumnLayout(true);
+            ShiftColumns(_colFrom, _colHover, 0, siblings: true);
+        }
+
+        var origin = ReorderShift.Origin(header, _colFrom, horizontal: true);
+        var width = header[_colFrom].Bounds.Width;
+        var min = -origin;
+        var max = Math.Max(min, ReorderShift.Origin(header, header.Length, horizontal: true) - origin - width);
+        var delta = Math.Clamp(x - _colPressX, min, max);
+        var hover = ReorderShift.HoverAt(
+            header, _colFrom, origin + width / 2 + delta, horizontal: true, lo: 0, hi: header.Length - 1);
+        if (delta <= min + 0.5)
+            hover = 0;
+        else if (delta >= max - 0.5)
+            hover = header.Length - 1;
+        _colDelta = delta;
+        var siblings = hover != _colHover;
+        if (siblings)
+            _colHover = hover;
+        ShiftColumns(_colFrom, _colHover, delta, siblings);
+    }
+
+    private void OnColumnReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        var from = _colFrom;
+        var dragged = _colDragging;
+        FinishColumnDrag();
+        e.Pointer.Capture(null);
+        if (dragged || from < 0 || Tab is null)
+            return;
+        var units = DetailsHeaderStrip.Units();
+        if ((uint)from >= (uint)units.Length)
+            return;
+        var kind = ColumnStripPanel.GetColumn(units[from]);
+        if (kind is not DetailsColumnKind.Tags)
+            Tab.SetSort(kind.ToString());
+    }
+
+    private void OnColumnCaptureLost(object? sender, PointerCaptureLostEventArgs e) => FinishColumnDrag();
+
+    private void FinishColumnDrag()
+    {
+        if (_colFrom < 0)
+            return;
+
+        var from = _colFrom;
+        var to = _colHover;
+        var dragged = _colDragging;
+        _colFrom = -1;
+        _colHover = -1;
+        _colDragging = false;
+        _colDelta = 0;
+        HookColumnLayout(false);
+
+        if (dragged && to >= 0 && to != from)
+        {
+            foreach (var strip in ColumnStrips())
+                ReorderShift.Settle(strip.Units(), from, to, horizontal: true);
+            _ = CommitColumnDrop(from, to);
+            return;
+        }
+
+        ResetColumnShift(animate: dragged);
+    }
+
+    private async Task CommitColumnDrop(int from, int to)
+    {
+        await Task.Delay(ReorderShift.Duration);
+        Columns.TryMoveVisible(from, to);
+        foreach (var strip in ColumnStrips())
+            strip.UpdateLayout();
+        ResetColumnShift(animate: false);
+    }
+
+    private void OnColumnLayoutUpdated(object? sender, EventArgs e)
+    {
+        if (!_colDragging || _colFrom < 0)
+            return;
+        ShiftColumns(_colFrom, _colHover, _colDelta, siblings: true, freshOnly: true);
+    }
+
+    private void ShiftColumns(int from, int hover, double delta, bool siblings, bool freshOnly = false)
+    {
+        foreach (var strip in ColumnStrips())
+        {
+            var units = strip.Units();
+            if ((uint)from >= (uint)units.Length)
+                continue;
+            var dragged = units[from];
+            var fresh = dragged.ZIndex != 100;
+            if (freshOnly && !fresh)
+            {
+                ReorderShift.Item(dragged, delta, horizontal: true, animate: false);
+                continue;
+            }
+
+            dragged.ZIndex = 100;
+            ReorderShift.Item(dragged, delta, horizontal: true, animate: false);
+            if (siblings || fresh)
+                ReorderShift.Siblings(units, from, hover, _colSlot, horizontal: true);
+        }
+    }
+
+    private void ResetColumnShift(bool animate)
+    {
+        foreach (var strip in ColumnStrips())
+        {
+            foreach (var child in strip.Children)
+                child.ZIndex = 0;
+            ReorderShift.Reset(strip, animate);
+        }
+    }
+
+    private void HookColumnLayout(bool on)
+    {
+        if (on == _colLayoutHooked)
+            return;
+        _colLayoutHooked = on;
+        if (on)
+            DetailsList.LayoutUpdated += OnColumnLayoutUpdated;
+        else
+            DetailsList.LayoutUpdated -= OnColumnLayoutUpdated;
+    }
+
+    private IEnumerable<ColumnStripPanel> ColumnStrips()
+    {
+        yield return DetailsHeaderStrip;
+        if (DetailsList.ItemsPanelRoot is not Panel rows)
+            yield break;
+        foreach (var row in rows.Children)
+        {
+            if (row.FindDescendantOfType<ColumnStripPanel>() is { } strip)
+                yield return strip;
+        }
+    }
+
+    private static Control? ColumnUnit(ColumnStripPanel strip, object? source)
+    {
+        for (var visual = source as Visual; visual is not null && !ReferenceEquals(visual, strip); visual = visual.GetVisualParent())
+        {
+            if (visual is Control control && strip.Children.Contains(control))
+                return control;
+        }
+
+        return null;
     }
 }

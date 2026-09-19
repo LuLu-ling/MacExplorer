@@ -53,6 +53,16 @@ public enum FolderPriority
     Mixed
 }
 
+public enum DetailsColumnKind
+{
+    Name,
+    Tags,
+    DateModified,
+    DateCreated,
+    Type,
+    Size
+}
+
 
 public enum ConflictDecision
 {

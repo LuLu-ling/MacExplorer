@@ -98,6 +98,7 @@ public static class Config
         public static ConfigItem<bool> ShowTypeColumnConfig { get; } = ConfigService.Register("ShowTypeColumn", true);
         public static ConfigItem<bool> ShowSizeColumnConfig { get; } = ConfigService.Register("ShowSizeColumn", true);
         public static ConfigItem<bool> ShowTagsColumnConfig { get; } = ConfigService.Register("ShowTagsColumn", true);
+        public static ConfigItem<List<string>> ColumnOrderConfig { get; } = ConfigService.Register("ColumnOrder", DefaultColumnOrder);
         public static int Kind { get => KindConfig.GetValue(); set => KindConfig.SetValue(value); }
         public static int Size { get => SizeConfig.GetValue(); set => SizeConfig.SetValue(value); }
         public static int SortField { get => SortFieldConfig.GetValue(); set => SortFieldConfig.SetValue(value); }
@@ -117,6 +118,7 @@ public static class Config
         public static bool ShowTypeColumn { get => ShowTypeColumnConfig.GetValue(); set => ShowTypeColumnConfig.SetValue(value); }
         public static bool ShowSizeColumn { get => ShowSizeColumnConfig.GetValue(); set => ShowSizeColumnConfig.SetValue(value); }
         public static bool ShowTagsColumn { get => ShowTagsColumnConfig.GetValue(); set => ShowTagsColumnConfig.SetValue(value); }
+        public static List<string> ColumnOrder { get => ColumnOrderConfig.GetValue(); set => ColumnOrderConfig.SetValue(value); }
         public static LayoutKind KindValue => (LayoutKind)Kind;
         public static Models.SortField SortFieldValue => (Models.SortField)SortField;
         public static Models.SortDirection SortDirectionValue => (Models.SortDirection)SortDirection;
@@ -124,6 +126,9 @@ public static class Config
         public static Models.GroupOption GroupOptionValue => (Models.GroupOption)GroupOption;
         public static Models.SortDirection GroupDirectionValue => (Models.SortDirection)GroupDirection;
         public static Models.GroupByDateUnit GroupByDateUnitValue => (Models.GroupByDateUnit)GroupByDateUnit;
+
+        private static List<string> DefaultColumnOrder() =>
+            ["Name", "Tags", "DateModified", "DateCreated", "Type", "Size"];
     }
 
     public static class Files

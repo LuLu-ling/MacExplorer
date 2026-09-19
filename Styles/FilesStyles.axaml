@@ -1,7 +1,8 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ctrl="using:MacExplorer.Controls"
-        xmlns:m="using:MacExplorer.Models">
+        xmlns:m="using:MacExplorer.Models"
+        xmlns:vm="using:MacExplorer.ViewModels">
     <Styles.Resources>
         <SplineEasing x:Key="MotionEase" X1="0.22" Y1="1" X2="0.36" Y2="1" />
         <ControlTheme x:Key="FileListItemTheme" TargetType="ListBoxItem">
@@ -171,6 +172,7 @@
     <Style Selector="Button.ColHeader">
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="Focusable" Value="False" />
     </Style>
     <Style Selector="Button.ColHeader.ColTags">
         <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -486,7 +488,7 @@
     </Style>
 
     <Style Selector="ctrl|ColumnSplitter">
-        <Setter Property="Width" Value="12" />
+        <Setter Property="Width" Value="{x:Static vm:DetailsColumns.Splitter}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="VerticalAlignment" Value="Stretch" />
     </Style>
