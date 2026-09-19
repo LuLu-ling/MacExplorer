@@ -170,6 +170,7 @@ internal static class MacContextMenu
         var menu = ObjC.Call(ObjC.Call(ObjC.Class("NSMenu"), "alloc"), "initWithTitle:", ObjC.NsString(""));
         ObjC.Call(menu, "autorelease");
         SetBool(menu, ObjC.Sel("setAutoenablesItems:"), false);
+        MacAppearance.ApplyTo(menu);
         foreach (var entry in entries)
             ObjC.Call(menu, "addItem:", CreateItem(entry, target));
         return menu;

@@ -58,5 +58,6 @@ public partial class App : Application
             if (style is FluentAvaloniaTheme fluent)
                 fluent.PreferSystemTheme = mode is ThemeMode.Default;
         }
+        MacAppearance.Apply(mode);
     }
 }
