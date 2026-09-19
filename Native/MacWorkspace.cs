@@ -332,14 +332,12 @@ internal static class MacWorkspace
         return best;
     }
 
-    public static bool IsDiskImage(string path)
+    public static bool IsEjectable(string path)
     {
         using var pool = new AutoreleasePool();
         if (string.IsNullOrEmpty(path) || path is "/" or "/System/Volumes/Data")
             return false;
-        var protocol = DiskProtocol(path);
-        return protocol is "Disk Image" or "Virtual Interface"
-            && VolumeBool(path, "NSURLVolumeIsEjec tableKey");
+        return VolumeBool(path, "NSURLVolumeIsEjectableKey");
     }
 
     public static bool Eject(string path)
@@ -381,56 +379,6 @@ internal static class MacWorkspace
         var num = ObjC.Call(values, "objectForKey:", ObjC.NsString(key));
         return num != IntPtr.Zero && ObjC.MsgSendBool(num, ObjC.Sel("boolValue"));
     }
-
-    private static string? DiskProtocol(string path)
-    {
-        var session = DASessionCreate(IntPtr.Zero);
-        if (session == IntPtr.Zero)
-            return null;
-        try
-        {
-            var disk = DADiskCreateFromVolumePath(IntPtr.Zero, session, ObjC.FileUrl(path));
-            if (disk == IntPtr.Zero)
-                return null;
-            try
-            {
-                var desc = DADiskCopyDescription(disk);
-                if (desc == IntPtr.Zero)
-                    return null;
-                try
-                {
-                    return ObjC.ToString(ObjC.Call(desc, "objectForKey:", ObjC.NsString("DADeviceProtocol")));
-                }
-                finally
-                {
-                    CFRelease(desc);
-                }
-            }
-            finally
-            {
-                CFRelease(disk);
-            }
-        }
-        finally
-        {
-            CFRelease(session);
-        }
-    }
-
-    private const string CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
-    private const string DiskArbitration = "/System/Library/Frameworks/DiskArbitration.framework/DiskArbitration";
-
-    [DllImport(CoreFoundation)]
-    private static extern void CFRelease(IntPtr cf);
-
-    [DllImport(DiskArbitration)]
-    private static extern IntPtr DASessionCreate(IntPtr allocator);
-
-    [DllImport(DiskArbitration)]
-    private static extern IntPtr DADiskCreateFromVolumePath(IntPtr allocator, IntPtr session, IntPtr path);
-
-    [DllImport(DiskArbitration)]
-    private static extern IntPtr DADiskCopyDescription(IntPtr disk);
 
     private static IntPtr Shared() => ObjC.Call(ObjC.Class("NSWorkspace"), "sharedWorkspace");
 

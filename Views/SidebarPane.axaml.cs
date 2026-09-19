@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MacExplorer.Controls;
 using MacExplorer.Lifecycle;
@@ -41,6 +42,8 @@ public partial class SidebarPane : UserControl
     private void Row_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Border { Tag: SidebarItem item } row || VM is null)
+            return;
+        if (item.IsRenaming || e.Source is TextBox)
             return;
         if (!e.GetCurrentPoint(row).Properties.IsLeftButtonPressed)
             return;
@@ -163,28 +166,90 @@ public partial class SidebarPane : UserControl
 
     private MacMenuEntry[] Menu(SidebarItem item)
     {
-        if (item.Path is not { Length: > 0 } path)
+        if (item.Path is not { Length: > 0 } path || item.IsSection)
             return [];
-        MacMenuEntry[] actions = item.Kind switch
+
+        List<MacMenuEntry> entries =
+        [
+            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow),
+        ];
+        if (item.Kind == SidebarKind.Favorite)
+            entries.Add(new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite));
+        if (item.Kind == SidebarKind.Location && MacWorkspace.IsEjectable(path))
+            entries.Add(new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path), Symbol: MacMenuSymbol.Eject));
+        if (item.Kind == SidebarKind.Tag)
         {
-            SidebarKind.Favorite =>
-            [
-                new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite),
-                new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
-            ],
-            SidebarKind.Location when MacWorkspace.IsDiskImage(path) =>
-            [
-                new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path), Symbol: MacMenuSymbol.Eject),
-                new("", Separator: true),
-                new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info),
-            ],
-            _ => []
-        };
-        if (item.IsSection)
-            return actions;
-        return [new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow), ..actions];
+            entries.Add(new("", Separator: true));
+            entries.Add(new(Lang.Text("Common.Action.Rename"), () => BeginTagRename(item), Symbol: MacMenuSymbol.Rename));
+            entries.Add(new(Lang.Text("Common.Action.Delete"), () => _ = VM!.DeleteTagAsync(item.Title), Symbol: MacMenuSymbol.Trash));
+            return [..entries];
+        }
+        if (SpecialFolders.IsVirtual(path) || !PathUtil.Exists(path))
+            return [..entries];
+
+        entries.Add(new("", Separator: true));
+        entries.Add(new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info));
+        if (!SpecialFolders.IsTrash(path))
+            entries.Add(DockEntry(path));
+        return [..entries];
     }
+
+    private void BeginTagRename(SidebarItem item)
+    {
+        if (VM is null)
+            return;
+        foreach (var other in VM.Sidebar.Items)
+            other.IsRenaming = false;
+        item.RenameText = item.Title;
+        item.IsRenaming = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            var box = this.GetVisualDescendants().OfType<TextBox>()
+                .FirstOrDefault(t => ReferenceEquals(t.DataContext, item));
+            if (box is null)
+                return;
+            box.Focus();
+            box.SelectAll();
+        }, DispatcherPriority.Loaded);
+    }
+
+    private async void OnTagRenameKey(object? sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: SidebarItem item })
+            return;
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            await CommitTagRename(item);
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            item.IsRenaming = false;
+        }
+    }
+
+    private async void OnTagRenameLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox { DataContext: SidebarItem item })
+            await CommitTagRename(item);
+    }
+
+    private async Task CommitTagRename(SidebarItem item)
+    {
+        if (!item.IsRenaming)
+            return;
+        item.IsRenaming = false;
+        var name = item.RenameText.Trim();
+        if (string.IsNullOrEmpty(name) || name == item.Title || VM is null)
+            return;
+        await VM.RenameTagAsync(item.Title, name);
+    }
+
+    private static MacMenuEntry DockEntry(string path) =>
+        MacDock.Contains(path)
+            ? new(Lang.Text("Context.RemoveFromDock"), () => MacDock.Remove(path), Symbol: MacMenuSymbol.Dock)
+            : new(Lang.Text("Context.AddToDock"), () => MacDock.Add(path), Symbol: MacMenuSymbol.Dock);
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {

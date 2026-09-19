@@ -29,6 +29,8 @@ public sealed partial class SidebarItem : ObservableObject
     [ObservableProperty] public partial bool IsExpanded { get; set; } = true;
     [ObservableProperty] public partial bool IsSelected { get; set; }
     [ObservableProperty] public partial bool IsVisible { get; set; } = true;
+    [ObservableProperty] public partial bool IsRenaming { get; set; }
+    [ObservableProperty] public partial string RenameText { get; set; } = string.Empty;
     public bool ShowChevron => IsSection;
     public bool HasMarker => Marker is not null;
     public bool CanReorder => Kind is SidebarKind.Favorite or SidebarKind.Tag or SidebarKind.Location or SidebarKind.Cloud;

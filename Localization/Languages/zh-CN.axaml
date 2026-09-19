@@ -210,6 +210,9 @@
     <x:String x:Key="Dialog.EmptyTrash.Action">清空废纸篓</x:String>
     <x:String x:Key="Dialog.RemoveTags.Title">移除标签？</x:String>
     <x:String x:Key="Dialog.RemoveTags.Message">从所选项目中移除所有标签？</x:String>
+    <x:String x:Key="Dialog.DeleteTag.Title">删除标签？</x:String>
+    <x:String x:Key="Dialog.DeleteTag.Message">确定要删除标签“{0}”吗？此标签将从所有项目中移除。</x:String>
+    <x:String x:Key="Dialog.TagExists.Message">已存在名为“{0}”的标签。</x:String>
     <x:String x:Key="Dialog.Conflict.Title">文件已存在</x:String>
     <x:String x:Key="Dialog.Conflict.Message">“{0}”已存在于此文件夹中。</x:String>
     <x:String x:Key="Dialog.Conflict.KeepBoth">两个都保留</x:String>
@@ -293,6 +296,8 @@
     <x:String x:Key="Context.Favorite">添加至个人收藏</x:String>
     <x:String x:Key="Context.Unfavorite">从个人收藏中移除</x:String>
     <x:String x:Key="Context.Eject">推出</x:String>
+    <x:String x:Key="Context.AddToDock">添加到程序坞</x:String>
+    <x:String x:Key="Context.RemoveFromDock">从程序坞中移除</x:String>
     <x:String x:Key="Context.Tags">标签</x:String>
     <x:String x:Key="Context.RemoveTags">移除标签</x:String>
     <x:String x:Key="Context.Share">共享</x:String>

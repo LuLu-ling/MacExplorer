@@ -321,6 +321,73 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         RefreshPlaces();
     }
 
+    public async Task RenameTagAsync(string from, string to)
+    {
+        to = to.Trim();
+        if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || from == to)
+            return;
+        if (to.Contains('\n', StringComparison.Ordinal) ||
+            MacTags.All().Any(tag =>
+                !string.Equals(tag.Name, from, StringComparison.Ordinal) &&
+                string.Equals(tag.Name, to, StringComparison.OrdinalIgnoreCase)))
+        {
+            await _dialogs.Error(Lang.Text("Explorer.RenameFailed"), Lang.Text("Dialog.TagExists.Message", to));
+            return;
+        }
+
+        LogWrapper.Info("Tags", $"Rename {from} -> {to}");
+        var extra = TaggedPaths(from);
+        if (!await Task.Run(() => MacTags.Rename(from, to, extra)))
+        {
+            await _dialogs.Error(Lang.Text("Explorer.RenameFailed"), Lang.Text("Common.Error.Unknown"));
+            return;
+        }
+
+        await RetargetTagAsync(from, to);
+        RefreshPlaces();
+    }
+
+    public async Task DeleteTagAsync(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return;
+        if (!await _dialogs.Confirm(
+                Lang.Text("Dialog.DeleteTag.Title"),
+                Lang.Text("Dialog.DeleteTag.Message", name),
+                Lang.Text("Common.Action.Delete"),
+                Lang.Text("Common.Action.Cancel")))
+            return;
+
+        LogWrapper.Info("Tags", $"Delete {name}");
+        var extra = TaggedPaths(name);
+        if (!await Task.Run(() => MacTags.Delete(name, extra)))
+        {
+            await _dialogs.Error(Lang.Text("Explorer.DeleteFailed"), Lang.Text("Common.Error.Unknown"));
+            return;
+        }
+
+        await RetargetTagAsync(name, null);
+        RefreshPlaces();
+    }
+
+    private async Task RetargetTagAsync(string from, string? to)
+    {
+        var oldPath = SpecialFolders.TagPath(from);
+        var next = to is null ? SpecialFolders.HomeKey : SpecialFolders.TagPath(to);
+        foreach (var tab in Tabs.ToArray())
+        {
+            if (tab.CurrentPath == oldPath)
+                await tab.NavigateAsync(next);
+        }
+    }
+
+    private IReadOnlyList<string> TaggedPaths(string name) =>
+        Tabs.SelectMany(static tab => tab.Items)
+            .Where(item => item.Tags.Any(tag => tag.Name == name))
+            .Select(static item => item.Path)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
     partial void OnSelectedTabChanged(ExplorerTabViewModel? value)
     {
         if (_trackedTab is not null)

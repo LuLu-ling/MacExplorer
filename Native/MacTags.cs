@@ -11,6 +11,7 @@ internal static class MacTags
     private const string TagViewSuffix = "_Tag_ViewSettings";
     private const nuint BinaryPlist = 200;
     private const int FinderInfoSize = 32;
+    private static readonly string[] TagKeySuffixes = ["_Tag_ViewSettings", "_Tag_ViewStyle"];
 
     private static readonly ConcurrentDictionary<string, FileTagColor> Learned = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, FileTagColor> Standard = new(StringComparer.OrdinalIgnoreCase)
@@ -63,29 +64,45 @@ internal static class MacTags
         }
     }
 
-    public static bool ReorderFavoriteNames(IReadOnlyList<string> names)
-    {
-        using var pool = new AutoreleasePool();
-        try
+    public static bool ReorderFavoriteNames(IReadOnlyList<string> names) =>
+        MutateFinder(domain =>
         {
-            var defaults = ObjC.Call(ObjC.Class("NSUserDefaults"), "standardUserDefaults");
-            var domainName = ObjC.NsString("com.apple.finder");
-            var domain = ObjC.Call(defaults, "persistentDomainForName:", domainName);
-            if (domain == IntPtr.Zero)
-                return false;
-            var mutable = ObjC.Call(ObjC.Class("NSMutableDictionary"), "dictionaryWithDictionary:", domain);
             var array = ObjC.MutableArray(names.Count);
             foreach (var name in names)
                 ObjC.AddObject(array, ObjC.NsString(name));
-            ObjC.Call(mutable, "setObject:forKey:", array, ObjC.NsString("FavoriteTagNames"));
-            ObjC.Call(defaults, "setPersistentDomain:forName:", mutable, domainName);
-            ObjC.Call(defaults, "synchronize");
-            return true;
-        }
-        catch
-        {
+            ObjC.Call(domain, "setObject:forKey:", array, ObjC.NsString("FavoriteTagNames"));
+        });
+
+    public static bool Rename(string from, string to, IEnumerable<string>? extra = null)
+    {
+        if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to) || from == to)
             return false;
-        }
+        if (!MutateFinder(domain =>
+            {
+                RewriteFavorites(domain, from, to);
+                RewriteKeys(domain, from, to);
+            }))
+            return false;
+        RetagFiles(from, to, extra);
+        RememberNameChange(from, to);
+        NotifyLearned();
+        return true;
+    }
+
+    public static bool Delete(string name, IEnumerable<string>? extra = null)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+        if (!MutateFinder(domain =>
+            {
+                RewriteFavorites(domain, name, null);
+                RewriteKeys(domain, name, null);
+            }))
+            return false;
+        RetagFiles(name, null, extra);
+        Learned.TryRemove(name, out _);
+        NotifyLearned();
+        return true;
     }
 
     public static IReadOnlyList<FileTag> Read(string path)
@@ -185,6 +202,146 @@ internal static class MacTags
 
         return FileTagColor.None;
     }
+
+    private static bool MutateFinder(Action<IntPtr> edit)
+    {
+        using var pool = new AutoreleasePool();
+        try
+        {
+            var defaults = ObjC.Call(ObjC.Class("NSUserDefaults"), "standardUserDefaults");
+            var domainName = ObjC.NsString("com.apple.finder");
+            var domain = ObjC.Call(defaults, "persistentDomainForName:", domainName);
+            if (domain == IntPtr.Zero)
+                return false;
+            var mutable = ObjC.Call(ObjC.Class("NSMutableDictionary"), "dictionaryWithDictionary:", domain);
+            edit(mutable);
+            ObjC.Call(defaults, "setPersistentDomain:forName:", mutable, domainName);
+            ObjC.Call(defaults, "synchronize");
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void RewriteFavorites(IntPtr domain, string from, string? to)
+    {
+        var src = ObjC.Call(domain, "objectForKey:", ObjC.NsString("FavoriteTagNames"));
+        if (src == IntPtr.Zero)
+            return;
+        var count = ObjC.ArrayCount(src);
+        var dst = ObjC.MutableArray(count);
+        var hasTo = false;
+        for (var i = 0; i < count; i++)
+        {
+            var item = ObjC.ArrayAt(src, i);
+            var name = ObjC.ToString(item);
+            if (name == from)
+            {
+                if (to is null || hasTo)
+                    continue;
+                ObjC.AddObject(dst, ObjC.NsString(to));
+                hasTo = true;
+                continue;
+            }
+            if (to is not null && name == to)
+                hasTo = true;
+            ObjC.AddObject(dst, item);
+        }
+        ObjC.Call(domain, "setObject:forKey:", dst, ObjC.NsString("FavoriteTagNames"));
+    }
+
+    private static void RewriteKeys(IntPtr dict, string from, string? to)
+    {
+        if (!IsDict(dict))
+            return;
+        var keys = ObjC.Call(dict, "allKeys");
+        if (keys == IntPtr.Zero)
+            return;
+        var count = ObjC.ArrayCount(keys);
+        for (var i = 0; i < count; i++)
+        {
+            var keyObj = ObjC.ArrayAt(keys, i);
+            var key = ObjC.ToString(keyObj);
+            var value = ObjC.Call(dict, "objectForKey:", keyObj);
+            if (IsDict(value))
+            {
+                var nested = ObjC.Call(value, "mutableCopy");
+                ObjC.Call(nested, "autorelease");
+                RewriteKeys(nested, from, to);
+                ObjC.Call(dict, "setObject:forKey:", nested, keyObj);
+            }
+
+            if (key is null)
+                continue;
+            foreach (var suffix in TagKeySuffixes)
+            {
+                if (!key.EndsWith(suffix, StringComparison.Ordinal) || key[..^suffix.Length] != from)
+                    continue;
+                if (to is not null)
+                {
+                    var renamed = ObjC.NsString(to + suffix);
+                    if (ObjC.Call(dict, "objectForKey:", renamed) == IntPtr.Zero)
+                        ObjC.Call(dict, "setObject:forKey:", value, renamed);
+                }
+                ObjC.Call(dict, "removeObjectForKey:", keyObj);
+                break;
+            }
+        }
+    }
+
+    private static void RetagFiles(string from, string? to, IEnumerable<string>? extra)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in extra ?? [])
+            RetagPath(path, from, to, seen);
+        foreach (var path in MacFinder.FilesWithTag(from))
+            RetagPath(path, from, to, seen);
+    }
+
+    private static void RetagPath(string path, string from, string? to, HashSet<string> seen)
+    {
+        if (string.IsNullOrEmpty(path) || !seen.Add(path))
+            return;
+        var tags = Read(path);
+        if (tags.Count == 0)
+            return;
+        var next = MapTags(tags, from, to);
+        if (!tags.SequenceEqual(next))
+            Write(path, next);
+    }
+
+    private static FileTag[] MapTags(IReadOnlyList<FileTag> tags, string from, string? to)
+    {
+        var hasTo = to is not null && tags.Any(t => t.Name == to);
+        var list = new List<FileTag>(tags.Count);
+        foreach (var tag in tags)
+        {
+            if (tag.Name != from)
+            {
+                list.Add(tag);
+                continue;
+            }
+            if (to is null || hasTo)
+                continue;
+            list.Add(tag with { Name = to });
+            hasTo = true;
+        }
+        return list.ToArray();
+    }
+
+    private static void RememberNameChange(string from, string to)
+    {
+        var color = ColorOf(from);
+        Learned.TryRemove(from, out _);
+        if (color != FileTagColor.None)
+            Learned[to] = color;
+    }
+
+    private static bool IsDict(IntPtr value) =>
+        value != IntPtr.Zero &&
+        ObjC.MsgSendBool(value, ObjC.Sel("isKindOfClass:"), ObjC.Class("NSDictionary"));
 
     private static IntPtr FinderDomain()
     {

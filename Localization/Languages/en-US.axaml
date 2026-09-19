@@ -210,6 +210,9 @@
     <x:String x:Key="Dialog.EmptyTrash.Action">Empty Trash</x:String>
     <x:String x:Key="Dialog.RemoveTags.Title">Remove tags?</x:String>
     <x:String x:Key="Dialog.RemoveTags.Message">Remove all tags from the selected items?</x:String>
+    <x:String x:Key="Dialog.DeleteTag.Title">Delete tag?</x:String>
+    <x:String x:Key="Dialog.DeleteTag.Message">Are you sure you want to delete the tag “{0}”? This tag will be removed from all items.</x:String>
+    <x:String x:Key="Dialog.TagExists.Message">A tag named “{0}” already exists.</x:String>
     <x:String x:Key="Dialog.Conflict.Title">File already exists</x:String>
     <x:String x:Key="Dialog.Conflict.Message">“{0}” already exists in this folder.</x:String>
     <x:String x:Key="Dialog.Conflict.KeepBoth">Keep both</x:String>
@@ -293,6 +296,8 @@
     <x:String x:Key="Context.Favorite">Favorite</x:String>
     <x:String x:Key="Context.Unfavorite">Unfavorite</x:String>
     <x:String x:Key="Context.Eject">Eject</x:String>
+    <x:String x:Key="Context.AddToDock">Add to Dock</x:String>
+    <x:String x:Key="Context.RemoveFromDock">Remove from Dock</x:String>
     <x:String x:Key="Context.Tags">Tags</x:String>
     <x:String x:Key="Context.RemoveTags">Remove Tags</x:String>
     <x:String x:Key="Context.Share">Share</x:String>

@@ -50,6 +50,7 @@ internal static class MacMenuSymbol
     public const string Invert = "arrow.left.arrow.right";
     public const string Clear = "xmark.circle";
     public const string Eject = "eject";
+    public const string Dock = "dock.rectangle";
     public const string Other = "ellipsis.circle";
     public const string Hidden = "eye.slash";
     public const string Extensions = "textformat";

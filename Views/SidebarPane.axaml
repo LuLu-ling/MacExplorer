@@ -54,9 +54,17 @@
                                                Text="{Binding Glyph}"
                                                IsVisible="{Binding !HasMarker}" />
                                 </Panel>
-                                <TextBlock Grid.Column="2" Classes="SidebarTitle"
-                                           Text="{Binding Title}"
-                                           TextTrimming="CharacterEllipsis" />
+                                <Panel Grid.Column="2">
+                                    <TextBlock Classes="SidebarTitle"
+                                               Text="{Binding Title}"
+                                               TextTrimming="CharacterEllipsis"
+                                               IsVisible="{Binding !IsRenaming}" />
+                                    <TextBox Classes="SidebarRename"
+                                             Text="{Binding RenameText}"
+                                             IsVisible="{Binding IsRenaming}"
+                                             KeyDown="OnTagRenameKey"
+                                             LostFocus="OnTagRenameLostFocus" />
+                                </Panel>
                             </Grid>
                         </Border>
                     </DataTemplate>
