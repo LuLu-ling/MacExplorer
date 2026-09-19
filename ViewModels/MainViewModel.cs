@@ -142,6 +142,44 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(SelectedTabIndex));
     }
 
+    public bool Detach(ExplorerTabViewModel tab)
+    {
+        if (!Tabs.Contains(tab))
+            return false;
+        var index = Tabs.IndexOf(tab);
+        if (SelectedTab == tab)
+            SelectedTab = Tabs.Count == 1 ? null : Tabs[index >= Tabs.Count - 1 ? index - 1 : index + 1];
+        Tabs.Remove(tab);
+        tab.IsSelectedTab = false;
+        tab.IsClosing = false;
+        OnPropertyChanged(nameof(CanCloseTab));
+        LogWrapper.Info("Window", $"Detach tab {tab.CurrentPath} (count={Tabs.Count})");
+        return true;
+    }
+
+    public void Adopt(ExplorerTabViewModel tab, int index = -1)
+    {
+        if (Tabs.Contains(tab))
+        {
+            var from = Tabs.IndexOf(tab);
+            var to = index < 0 || index >= Tabs.Count ? Tabs.Count - 1 : index;
+            MoveTab(from, to);
+            SelectedTab = tab;
+            tab.IsClosing = false;
+            return;
+        }
+
+        tab.AttachDialogs(_dialogs);
+        tab.IsClosing = false;
+        if (index < 0 || index >= Tabs.Count)
+            Tabs.Add(tab);
+        else
+            Tabs.Insert(index, tab);
+        SelectedTab = tab;
+        OnPropertyChanged(nameof(CanCloseTab));
+        LogWrapper.Info("Window", $"Adopt tab {tab.CurrentPath} (count={Tabs.Count})");
+    }
+
     [RelayCommand]
     private Task NewFolderAsync() => SelectedTab?.NewFolderAsync() ?? Task.CompletedTask;
 
@@ -154,7 +192,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         tab ??= SelectedTab;
         if (tab is null || !Tabs.Contains(tab) || tab.IsClosing)
             return;
-        if (Tabs.Count == 1)
+        if (IsLastLiveTab(tab))
         {
             RequestCloseWindow?.Invoke();
             return;
@@ -165,10 +203,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         PrepareTabClose?.Invoke(tab);
         tab.IsClosing = true;
         if (SelectedTab == tab)
-        {
-            var next = index >= Tabs.Count - 1 ? index - 1 : index + 1;
-            SelectedTab = Tabs[Math.Clamp(next, 0, Tabs.Count - 1)];
-        }
+            SelectedTab = Tabs.First(t => !t.IsClosing);
 
         await Task.Delay(ReorderShift.Duration);
         if (_disposed || !Tabs.Contains(tab))
@@ -176,6 +211,19 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         Tabs.Remove(tab);
         tab.Dispose();
         OnPropertyChanged(nameof(CanCloseTab));
+        if (Tabs.Count == 0 || Tabs.All(static t => t.IsClosing))
+            RequestCloseWindow?.Invoke();
+    }
+
+    private bool IsLastLiveTab(ExplorerTabViewModel tab)
+    {
+        foreach (var other in Tabs)
+        {
+            if (!ReferenceEquals(other, tab) && !other.IsClosing)
+                return false;
+        }
+
+        return true;
     }
 
     [RelayCommand]

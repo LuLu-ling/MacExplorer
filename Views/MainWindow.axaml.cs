@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -23,6 +25,9 @@ public partial class MainWindow : FAAppWindow
 {
     private readonly DragHoverOpen _dragHoverOpen = new();
     private bool _tabsReady;
+    private bool _tabOverflowReady;
+    private double _tabScrollTo;
+    private CancellationTokenSource? _tabScrollAnim;
     private readonly HashSet<ExplorerTabViewModel> _enteredTabs = [];
 
     public MainWindow()
@@ -48,6 +53,9 @@ public partial class MainWindow : FAAppWindow
         AddHandler(DragDrop.DragEnterEvent, OnWindowDragEnter, RoutingStrategies.Tunnel);
         AddHandler(DragDrop.DropEvent, OnWindowDragEnd, RoutingStrategies.Tunnel);
         AddHandler(DragDrop.DragLeaveEvent, OnWindowDragLeave, RoutingStrategies.Tunnel);
+        AddHandler(PointerMovedEvent, OnTornPointerMoved, RoutingStrategies.Tunnel);
+        AddHandler(PointerReleasedEvent, OnTornPointerReleased, RoutingStrategies.Tunnel);
+        AddHandler(PointerCaptureLostEvent, OnTornCaptureLost, RoutingStrategies.Tunnel);
     }
 
     private void TitleBar_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -65,8 +73,12 @@ public partial class MainWindow : FAAppWindow
             e.Handled = true;
     }
 
-    private void OnWindowDragEnter(object? sender, DragEventArgs e) =>
+    private void OnWindowDragEnter(object? sender, DragEventArgs e)
+    {
+        if (TabDrag.Active)
+            return;
         FileDrag.Begin(e.Source as Visual);
+    }
 
     private void OnWindowDragEnd(object? sender, DragEventArgs e) => FileDrag.End();
 
@@ -188,7 +200,14 @@ public partial class MainWindow : FAAppWindow
     private int _tabDragFrom = -1;
     private int _tabDragHover = -1;
     private bool _tabDragging;
+    private bool _tabTorn;
+    private ExplorerTabViewModel? _tornTab;
+    private Size _tornSize;
+    private double _tearWidth = 160;
     private double _tabPressX;
+    private double _tabGrabX;
+    private PixelPoint _tabGrab;
+    private PointerPressedEventArgs? _tabPress;
     private Control? _tabDragSource;
 
     private void Tab_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -211,8 +230,14 @@ public partial class MainWindow : FAAppWindow
         _tabDragFrom = VM.Tabs.IndexOf(tab);
         _tabDragHover = _tabDragFrom;
         _tabDragging = false;
+        _tabTorn = false;
         _tabDragSource = border;
+        _tabPress = e;
         _tabPressX = e.GetPosition(TabPanel()).X;
+        _tabGrabX = e.GetPosition(border).X;
+        var origin = border.PointToScreen(default);
+        var cursor = border.PointToScreen(e.GetPosition(border));
+        _tabGrab = new PixelPoint(cursor.X - origin.X, cursor.Y - origin.Y);
         e.Pointer.Capture(border);
         e.Handled = true;
     }
@@ -236,7 +261,7 @@ public partial class MainWindow : FAAppWindow
 
     private void Tab_OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_tabDragFrom < 0 || _tabDragSource is null || VM is null)
+        if (_tabTorn || _tabDragFrom < 0 || _tabDragSource is null || VM is null)
             return;
         if (!e.GetCurrentPoint(_tabDragSource).Properties.IsLeftButtonPressed)
             return;
@@ -248,14 +273,27 @@ public partial class MainWindow : FAAppWindow
         var x = e.GetPosition(panel).X;
         if (!_tabDragging)
         {
-            if (Math.Abs(x - _tabPressX) < FileDrag.Threshold)
+            var y = e.GetPosition(TitleBarHost).Y;
+            if (Math.Abs(x - _tabPressX) < FileDrag.Threshold && y >= 0 && y <= TitleBarHost.Bounds.Height)
                 return;
             _tabDragging = true;
-            panel.Children[_tabDragFrom].ZIndex = 100;
-            _tabDragSource.ZIndex = 100;
-            ReorderShift.Item(panel.Children[_tabDragFrom], 0, horizontal: true, animate: false);
+            if ((uint)_tabDragFrom < (uint)panel.Children.Count)
+            {
+                panel.Children[_tabDragFrom].ZIndex = 100;
+                _tabDragSource.ZIndex = 100;
+                ReorderShift.Item(panel.Children[_tabDragFrom], 0, horizontal: true, animate: false);
+            }
         }
 
+        var hostY = e.GetPosition(TitleBarHost).Y;
+        if (hostY < -24 || hostY > TitleBarHost.Bounds.Height + 24)
+        {
+            StartTear(e);
+            return;
+        }
+
+        if ((uint)_tabDragFrom >= (uint)panel.Children.Count)
+            return;
         var origin = 0.0;
         for (var i = 0; i < _tabDragFrom; i++)
             origin += panel.Children[i].Bounds.Width + 2;
@@ -280,15 +318,21 @@ public partial class MainWindow : FAAppWindow
 
     private void Tab_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
+        if (_tabTorn)
+            return;
         FinishTabDrag();
         e.Pointer.Capture(null);
     }
 
-    private void Tab_OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e) => FinishTabDrag();
+    private void Tab_OnPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        if (!_tabTorn)
+            FinishTabDrag();
+    }
 
     private void FinishTabDrag()
     {
-        if (_tabDragFrom < 0 || VM is null)
+        if (_tabTorn || _tabDragFrom < 0 || VM is null)
             return;
 
         var from = _tabDragFrom;
@@ -299,10 +343,11 @@ public partial class MainWindow : FAAppWindow
         _tabDragHover = -1;
         _tabDragging = false;
         _tabDragSource = null;
+        _tabPress = null;
         if (panel is null)
             return;
 
-        if (dragged && to >= 0 && to != from)
+        if (dragged && to >= 0 && to != from && (uint)from < (uint)panel.Children.Count)
         {
             ReorderShift.Settle(panel, from, to, horizontal: true, spacing: 2);
             _ = CommitTabDrop(panel, from, to);
@@ -323,6 +368,290 @@ public partial class MainWindow : FAAppWindow
         ReorderShift.Reset(panel, animate: false);
     }
 
+    private void StartTear(PointerEventArgs e)
+    {
+        if (_tabTorn || VM is null)
+            return;
+        if ((uint)_tabDragFrom >= (uint)VM.Tabs.Count)
+            return;
+
+        var tab = VM.Tabs[_tabDragFrom];
+        _tearWidth = _tabDragSource?.Bounds.Width is > 8 and var w ? w : 160;
+        _tabTorn = true;
+        _tornTab = tab;
+        _tornSize = new Size(Width, Height);
+        e.Pointer.Capture(this);
+        _tabDragFrom = -1;
+        _tabDragHover = -1;
+        _tabDragging = false;
+        _tabDragSource = null;
+        _tabPress = null;
+        if (TabPanel() is { } panel)
+        {
+            foreach (var child in panel.Children)
+                child.ZIndex = 0;
+            ReorderShift.Reset(panel);
+        }
+
+        var screen = this.PointToScreen(e.GetPosition(this));
+        TabDrag.Begin(tab, VM, screen);
+        TabDragPreview.Show(tab, screen, _tabGrab, _tearWidth);
+        TrackTear(e);
+    }
+
+    private void OnTornPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!_tabTorn)
+            return;
+        TrackTear(e);
+        e.Handled = true;
+    }
+
+    private void OnTornPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (!_tabTorn)
+            return;
+        e.Handled = true;
+        e.Pointer.Capture(null);
+        FinishTear();
+    }
+
+    private void TrackTear(PointerEventArgs e)
+    {
+        var screen = this.PointToScreen(e.GetPosition(this));
+        TabDrag.Screen = screen;
+        TabDragPreview.Move(screen);
+        MainWindow? hit = null;
+        var index = 0;
+        foreach (var window in AppServices.Get<WindowService>().Windows)
+        {
+            if (!HitTabBar(window, screen, out index))
+                continue;
+            hit = window;
+            break;
+        }
+
+        foreach (var window in AppServices.Get<WindowService>().Windows)
+            window.TitleBarHost.Classes.Set("tab-drop", window == hit);
+
+        if (hit?.DataContext is MainViewModel dest)
+            TabDrag.Offer(dest, index);
+        else
+            TabDrag.ClearOffer();
+
+        UpdateTornHost(hit);
+    }
+
+    private void UpdateTornHost(MainWindow? hit)
+    {
+        if (_tornTab is not { } tab || VM is null)
+            return;
+
+        var overSource = hit is not null && ReferenceEquals(hit.DataContext, VM);
+        if (overSource)
+        {
+            TabDragPreview.Hide();
+            if (tab.IsClosing)
+            {
+                tab.IsClosing = false;
+                RestoreTornSlot(tab);
+            }
+
+            DragTornInStrip(tab);
+            return;
+        }
+
+        if (_tabDragFrom >= 0 && TabPanel() is { } panel)
+        {
+            foreach (var child in panel.Children)
+                child.ZIndex = 0;
+            ReorderShift.Reset(panel);
+            _tabDragFrom = -1;
+            _tabDragHover = -1;
+            _tabDragging = false;
+        }
+
+        if (tab.IsClosing)
+            return;
+        TabDragPreview.Show(tab, TabDrag.Screen, _tabGrab, _tearWidth);
+        tab.IsClosing = true;
+        _enteredTabs.Remove(tab);
+        if (TabBorder(tab) is { } closing)
+            PlayTabExit(closing);
+    }
+
+    private void RestoreTornSlot(ExplorerTabViewModel tab)
+    {
+        if (TabBorder(tab) is not { } border)
+            return;
+        var width = _tearWidth > 8 ? _tearWidth : TabSlotWidth(border);
+        var slot = TabSlot(border);
+        SnapTabSize(border, width, 240, 0);
+        if (slot is not null && !ReferenceEquals(slot, border))
+            SnapTabSize(slot, width, double.PositiveInfinity, 0);
+        ExpandTabSize(border, 240, width);
+        if (slot is not null && !ReferenceEquals(slot, border))
+            ExpandTabSize(slot, double.PositiveInfinity, width);
+    }
+
+    private void DragTornInStrip(ExplorerTabViewModel tab)
+    {
+        if (TabPanel() is not { } panel || VM is null)
+            return;
+        var from = VM.Tabs.IndexOf(tab);
+        if ((uint)from >= (uint)panel.Children.Count)
+            return;
+
+        var x = panel.PointToClient(TabDrag.Screen).X;
+        var origin = 0.0;
+        for (var i = 0; i < from; i++)
+        {
+            var w = panel.Children[i].Bounds.Width;
+            origin += (w < 8 ? 0 : w) + 2;
+        }
+
+        var tabWidth = panel.Children[from].Bounds.Width;
+        if (tabWidth < 8)
+            tabWidth = _tearWidth;
+        var minDelta = -origin;
+        var maxDelta = Math.Max(minDelta, panel.Bounds.Width - origin - tabWidth);
+        var dragDelta = Math.Clamp(x - origin - _tabGrabX, minDelta, maxDelta);
+        if (!_tabDragging || _tabDragFrom != from)
+        {
+            _tabDragging = true;
+            _tabDragFrom = from;
+            _tabDragHover = from;
+            panel.Children[from].ZIndex = 100;
+            ReorderShift.Item(panel.Children[from], 0, horizontal: true, animate: false);
+        }
+
+        var hover = ReorderShift.HoverAt(
+            panel, from, origin + tabWidth / 2 + dragDelta,
+            horizontal: true, lo: 0, hi: panel.Children.Count - 1, spacing: 2);
+        if (dragDelta <= minDelta + 0.5)
+            hover = 0;
+        else if (dragDelta >= maxDelta - 0.5)
+            hover = panel.Children.Count - 1;
+        ReorderShift.Item(panel.Children[from], dragDelta, horizontal: true, animate: false);
+        if (hover != _tabDragHover)
+        {
+            ReorderShift.Siblings(panel, from, hover, tabWidth + 2, horizontal: true);
+            _tabDragHover = hover;
+        }
+    }
+
+    private void FinishTear()
+    {
+        if (!_tabTorn || _tornTab is not { } tab || VM is null)
+            return;
+
+        var source = VM;
+        var size = _tornSize;
+        var dest = TabDrag.Dest;
+        var index = TabDrag.Index;
+        var screen = TabDrag.Screen;
+        _tabTorn = false;
+        _tornTab = null;
+        TabDragPreview.Hide();
+        TabDrag.End();
+        foreach (var window in AppServices.Get<WindowService>().Windows)
+            window.TitleBarHost.Classes.Set("tab-drop", false);
+
+        if (dest is null)
+        {
+            source.Detach(tab);
+            AppServices.Get<WindowService>().OpenWindow(
+                tab, new PixelPoint(screen.X - 120, screen.Y - 20), size);
+        }
+        else if (ReferenceEquals(dest, source))
+        {
+            tab.IsClosing = false;
+            var from = _tabDragFrom;
+            var to = _tabDragHover;
+            var dragged = _tabDragging;
+            var panel = TabPanel();
+            _tabDragFrom = -1;
+            _tabDragHover = -1;
+            _tabDragging = false;
+            if (TabBorder(tab) is { } border)
+            {
+                _ = ReleaseTabSize(border);
+                if (TabSlot(border) is { } slot && !ReferenceEquals(slot, border))
+                    _ = ReleaseTabSize(slot);
+            }
+            if (panel is not null && dragged && from >= 0 && to >= 0 && to != from &&
+                (uint)from < (uint)panel.Children.Count)
+            {
+                ReorderShift.Settle(panel, from, to, horizontal: true, spacing: 2);
+                _ = CommitTabDrop(panel, from, to);
+            }
+            else if (panel is not null)
+            {
+                foreach (var child in panel.Children)
+                    child.ZIndex = 0;
+                ReorderShift.Reset(panel, animate: dragged);
+            }
+        }
+        else
+        {
+            var destWindow = WindowOf(dest);
+            destWindow?.PrepareAdoptEnter(tab);
+            source.Detach(tab);
+            dest.Adopt(tab, index);
+            destWindow?.CommitAdoptEnter(tab);
+        }
+
+        if (source.Tabs.Count == 0)
+            source.RequestCloseWindow?.Invoke();
+    }
+
+    private static MainWindow? WindowOf(MainViewModel model)
+    {
+        foreach (var window in AppServices.Get<WindowService>().Windows)
+        {
+            if (ReferenceEquals(window.DataContext, model))
+                return window;
+        }
+
+        return null;
+    }
+
+    private static bool HitTabBar(MainWindow window, PixelPoint screen, out int index)
+    {
+        index = 0;
+        var local = window.PointToClient(screen);
+        if (local.Y < 0 || local.Y > 48 || local.X < 0 || local.X > window.Bounds.Width)
+            return false;
+        index = window.TabInsertIndex(screen);
+        return true;
+    }
+
+    private int TabInsertIndex(PixelPoint screen)
+    {
+        if (TabPanel() is not { } panel || panel.Children.Count == 0)
+            return VM?.Tabs.Count ?? 0;
+        var x = panel.PointToClient(screen).X;
+        var acc = 0.0;
+        var index = 0;
+        for (var i = 0; i < panel.Children.Count; i++)
+        {
+            var width = panel.Children[i].Bounds.Width;
+            if (width < 8)
+                continue;
+            if (x < acc + width / 2)
+                return index;
+            acc += width + 2;
+            index++;
+        }
+
+        return index;
+    }
+
+    private void OnTornCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        if (_tabTorn)
+            FinishTear();
+    }
     private void CloseTab_OnClick(object? sender, RoutedEventArgs e)
     {
         e.Handled = true;
@@ -347,10 +676,10 @@ public partial class MainWindow : FAAppWindow
             if (index > 0)
                 VM.SelectedTabIndex = index - 1;
         }
-
-        if (TabPanel() is { } panel && (uint)VM.SelectedTabIndex < (uint)panel.Children.Count)
-            panel.Children[VM.SelectedTabIndex].BringIntoView();
+        else
+            return;
         e.Handled = true;
+        TabBorder(VM.SelectedTab!)?.BringIntoView();
     }
 
     private void TabScroller_OnScrollChanged(object? sender, ScrollChangedEventArgs e) =>
@@ -363,7 +692,54 @@ public partial class MainWindow : FAAppWindow
     private void ScrollTabs(double delta)
     {
         var max = Math.Max(0, TabScroller.Extent.Width - TabScroller.Viewport.Width);
-        TabScroller.Offset = TabScroller.Offset.WithX(Math.Clamp(TabScroller.Offset.X + delta, 0, max));
+        var from = _tabScrollAnim is null ? TabScroller.Offset.X : _tabScrollTo;
+        _tabScrollTo = Math.Clamp(from + delta, 0, max);
+        _ = AnimateTabScrollAsync();
+    }
+
+    private async Task AnimateTabScrollAsync()
+    {
+        _tabScrollAnim?.Cancel();
+        var cts = _tabScrollAnim = new CancellationTokenSource();
+        var from = TabScroller.Offset.X;
+        var to = _tabScrollTo;
+        if (Math.Abs(to - from) < 0.5)
+        {
+            if (ReferenceEquals(_tabScrollAnim, cts))
+                _tabScrollAnim = null;
+            return;
+        }
+
+        var duration = ReorderShift.Duration;
+        var clock = Stopwatch.StartNew();
+        try
+        {
+            while (clock.Elapsed < duration)
+            {
+                cts.Token.ThrowIfCancellationRequested();
+                var t = ReorderShift.Ease.Ease(Math.Clamp(
+                    clock.Elapsed.TotalMilliseconds / duration.TotalMilliseconds, 0, 1));
+                TabScroller.Offset = TabScroller.Offset.WithX(from + (to - from) * t);
+                await Task.Delay(16, cts.Token);
+            }
+
+            TabScroller.Offset = TabScroller.Offset.WithX(to);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        finally
+        {
+            if (ReferenceEquals(_tabScrollAnim, cts))
+                _tabScrollAnim = null;
+        }
+    }
+
+    private void StopTabScrollAnim()
+    {
+        _tabScrollAnim?.Cancel();
+        _tabScrollAnim = null;
     }
 
     private void UpdateTabStripOverflow()
@@ -372,15 +748,41 @@ public partial class MainWindow : FAAppWindow
         var available = TitleBarHost.Bounds.Width - 78 - add;
         var content = TabPanel()?.Bounds.Width ?? TabStrip.Bounds.Width;
         var overflow = content > available + 0.5;
-        var chevrons = overflow ? 52 : 0;
-        TabScroller.MaxWidth = Math.Max(0, available - chevrons);
-        TabScrollDecreaseButton.IsVisible = overflow;
-        TabScrollIncreaseButton.IsVisible = overflow;
+        const double chevron = 24;
+        const double gap = 2;
+        var maxWidth = Math.Max(0, available - (overflow ? chevron * 2 + gap * 2 : 0));
+        if (_tabOverflowReady)
+            TabScroller.MaxWidth = maxWidth;
+        else
+        {
+            var transitions = TabScroller.Transitions;
+            TabScroller.Transitions = null;
+            TabScroller.MaxWidth = maxWidth;
+            TabScroller.Transitions = transitions;
+            _tabOverflowReady = true;
+        }
+
+        ShowTabScrollButton(TabScrollDecreaseButton, overflow, new Thickness(0, 0, gap, 0));
+        ShowTabScrollButton(TabScrollIncreaseButton, overflow, new Thickness(gap, 0, 0, 0));
         if (!overflow)
+        {
+            StopTabScrollAnim();
+            if (TabScroller.Offset.X != 0)
+                TabScroller.Offset = TabScroller.Offset.WithX(0);
             return;
+        }
+
         var max = Math.Max(0, TabScroller.Extent.Width - TabScroller.Viewport.Width);
         TabScrollDecreaseButton.IsEnabled = TabScroller.Offset.X > 1;
         TabScrollIncreaseButton.IsEnabled = TabScroller.Offset.X < max - 1;
+    }
+
+    private static void ShowTabScrollButton(RepeatButton button, bool show, Thickness margin)
+    {
+        button.Width = show ? 24 : 0;
+        button.Opacity = show ? 1 : 0;
+        button.IsHitTestVisible = show;
+        button.Margin = show ? margin : default;
     }
 
     private Panel? TabPanel() => TabStrip.ItemsPanelRoot as Panel;
@@ -405,37 +807,65 @@ public partial class MainWindow : FAAppWindow
         PlayTabEnter(border);
     }
 
-    private void PlayTabEnter(Border border)
+    private void PrepareAdoptEnter(ExplorerTabViewModel tab) => _enteredTabs.Add(tab);
+
+    private void CommitAdoptEnter(ExplorerTabViewModel tab)
     {
+        void Play()
+        {
+            if (TabBorder(tab) is { } border)
+            {
+                _enteredTabs.Add(tab);
+                PlayTabEnter(border);
+                return;
+            }
+
+            _enteredTabs.Remove(tab);
+        }
+
+        if (TabBorder(tab) is not null)
+            Play();
+        else
+            Dispatcher.UIThread.Post(Play, DispatcherPriority.Loaded);
+    }
+
+    private void PlayTabEnter(Border border, bool fromZero = true)
+    {
+        var slot = TabSlot(border);
+        var current = Math.Max(
+            border.Bounds.Width,
+            slot is not null ? slot.Bounds.Width : 0);
+        if (!fromZero && current >= 8 && border.Opacity > 0.5)
+            return;
+
         var target = TabSlotWidth(border);
-        var transitions = border.Transitions;
-        border.Transitions = null;
-        border.MinWidth = 0;
-        border.MaxWidth = 0;
-        border.Width = 0;
-        border.Opacity = 0;
-        border.Transitions = transitions;
+        SnapTabSize(border, 0, 0, 0);
+        if (slot is not null && !ReferenceEquals(slot, border))
+            SnapTabSize(slot, 0, 0, 0);
         Dispatcher.UIThread.Post(() =>
         {
-            border.MinWidth = 0;
-            border.MaxWidth = 240;
-            border.Width = target;
-            border.Opacity = 1;
+            if (border.DataContext is ExplorerTabViewModel { IsClosing: true })
+                return;
+            ExpandTabSize(border, 240, target);
+            if (slot is not null && !ReferenceEquals(slot, border))
+                ExpandTabSize(slot, double.PositiveInfinity, target);
             _ = ReleaseTabSize(border);
+            if (slot is not null && !ReferenceEquals(slot, border))
+                _ = ReleaseTabSize(slot);
         }, DispatcherPriority.Render);
     }
 
-    private static async Task ReleaseTabSize(Border border)
+    private static async Task ReleaseTabSize(Control control)
     {
         await Task.Delay(ReorderShift.Duration);
-        if (border.DataContext is ExplorerTabViewModel { IsClosing: true })
+        if (control is Border { DataContext: ExplorerTabViewModel { IsClosing: true } })
             return;
-        var transitions = border.Transitions;
-        border.Transitions = null;
-        border.ClearValue(WidthProperty);
-        border.ClearValue(MinWidthProperty);
-        border.ClearValue(MaxWidthProperty);
-        border.Transitions = transitions;
+        var transitions = control.Transitions;
+        control.Transitions = null;
+        control.ClearValue(WidthProperty);
+        control.ClearValue(MinWidthProperty);
+        control.ClearValue(MaxWidthProperty);
+        control.Transitions = transitions;
     }
 
     private double TabSlotWidth(Visual self)
@@ -460,17 +890,102 @@ public partial class MainWindow : FAAppWindow
         _enteredTabs.Remove(tab);
         if (TabBorder(tab) is not { } border)
             return;
+        PlayTabExit(border);
+    }
+
+    private void PlayTabExit(Border border)
+    {
         var width = border.Bounds.Width;
-        var transitions = border.Transitions;
-        border.Transitions = null;
-        border.Width = width;
-        border.MinWidth = 0;
-        border.MaxWidth = width;
-        border.Transitions = transitions;
-        border.Width = 0;
-        border.MaxWidth = 0;
-        border.Opacity = 0;
-        border.IsHitTestVisible = false;
+        if (width < 8)
+            width = TabSlotWidth(border);
+        var slot = TabSlot(border);
+        SnapTabSize(border, width, 240, 1);
+        if (slot is not null && !ReferenceEquals(slot, border))
+            SnapTabSize(slot, Math.Max(slot.Bounds.Width, width), Math.Max(slot.Bounds.Width, width), 1);
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (border.DataContext is not ExplorerTabViewModel { IsClosing: true })
+                return;
+            CollapseTabSize(border);
+            if (slot is not null && !ReferenceEquals(slot, border))
+                CollapseTabSize(slot);
+        }, DispatcherPriority.Render);
+    }
+
+    private static Control? TabSlot(Border border)
+    {
+        if (TabPanelOf(border) is not { } panel)
+            return border;
+        for (var visual = (Visual?)border; visual is not null; visual = visual.GetVisualParent())
+        {
+            if (ReferenceEquals(visual.GetVisualParent(), panel) && visual is Control slot)
+                return slot;
+        }
+
+        return border;
+    }
+
+    private static Panel? TabPanelOf(Visual border)
+    {
+        for (var visual = border.GetVisualParent(); visual is not null; visual = visual.GetVisualParent())
+        {
+            if (visual is Panel panel)
+                return panel;
+        }
+
+        return null;
+    }
+
+    private static void SnapTabSize(Control control, double width, double max, double opacity)
+    {
+        EnsureTabSizeTransitions(control);
+        var transitions = control.Transitions;
+        control.Transitions = null;
+        control.MinWidth = 0;
+        control.MaxWidth = max;
+        control.Width = width;
+        control.Opacity = opacity;
+        control.IsHitTestVisible = opacity > 0;
+        control.Transitions = transitions;
+    }
+
+    private static void ExpandTabSize(Control control, double max, double width)
+    {
+        control.MinWidth = 0;
+        control.MaxWidth = max;
+        control.Width = width;
+        control.Opacity = 1;
+        control.IsHitTestVisible = true;
+    }
+
+    private static void CollapseTabSize(Control control)
+    {
+        control.MinWidth = 0;
+        control.Width = 0;
+        control.Opacity = 0;
+        control.IsHitTestVisible = false;
+    }
+
+    private static void EnsureTabSizeTransitions(Control control)
+    {
+        var list = control.Transitions ??= new Transitions();
+        Add(WidthProperty);
+        Add(MinWidthProperty);
+        Add(MaxWidthProperty);
+        Add(OpacityProperty);
+        return;
+
+        void Add(AvaloniaProperty property)
+        {
+            if (list.OfType<DoubleTransition>().Any(t => t.Property == property))
+                return;
+            list.Add(new DoubleTransition
+            {
+                Property = property,
+                Duration = ReorderShift.Duration,
+                Easing = ReorderShift.Ease
+            });
+        }
     }
 
     private Border? TabBorder(ExplorerTabViewModel tab)
@@ -495,6 +1010,8 @@ public partial class MainWindow : FAAppWindow
 
     private void AddressBar_OnDragOver(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         if (AddressBar.IsEditing)
         {
             _dragHoverOpen.Cancel();
@@ -531,6 +1048,8 @@ public partial class MainWindow : FAAppWindow
 
     private async void AddressBar_OnDrop(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         _dragHoverOpen.Cancel();
         FileDragTip.Hide();
         await DropAtAsync(FileDrag.Paths(e.DataTransfer), AddressBar.IsEditing ? null : AddressBarPathAt(e), e);

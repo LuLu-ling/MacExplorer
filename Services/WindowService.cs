@@ -19,22 +19,35 @@ public sealed class WindowService(IServiceProvider services)
     private static IClassicDesktopStyleApplicationLifetime Desktop =>
         (IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!;
 
-    public MainWindow OpenWindow(string? path = null)
+    public MainWindow OpenWindow(string? path = null) => Spawn(model => model.NewTab(path));
+
+    public MainWindow OpenWindow(ExplorerTabViewModel tab, PixelPoint position, Size size) =>
+        Spawn(model => model.Adopt(tab), position, size);
+
+    private MainWindow Spawn(Action<MainViewModel> seed, PixelPoint? position = null, Size? size = null)
     {
         Dispatcher.UIThread.VerifyAccess();
         var scope = services.CreateScope();
         MainWindow window;
+        MainViewModel model;
         try
         {
-            var model = scope.ServiceProvider.GetRequiredService<MainViewModel>();
+            model = scope.ServiceProvider.GetRequiredService<MainViewModel>();
             window = new MainWindow
             {
                 DataContext = model,
-                Width = Config.Window.Width,
-                Height = Config.Window.Height
+                Width = size?.Width ?? Config.Window.Width,
+                Height = size?.Height ?? Config.Window.Height
             };
+            if (position is { } origin)
+            {
+                window.WindowStartupLocation = WindowStartupLocation.Manual;
+                window.Position = origin;
+            }
+
             MacApplicationMenu.Attach(window);
-            model.NewTab(path);
+            if (position is null)
+                seed(model);
         }
         catch
         {
@@ -49,6 +62,8 @@ public sealed class WindowService(IServiceProvider services)
         try
         {
             window.Show();
+            if (position is not null)
+                seed(model);
             window.Activate();
             ActiveWindow = window;
             return window;

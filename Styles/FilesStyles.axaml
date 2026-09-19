@@ -425,6 +425,9 @@
 
 
 
+    <Style Selector="Border.tab-drop">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+    </Style>
     <Style Selector="Border.TabItem">
         <Setter Property="MinWidth" Value="140" />
         <Setter Property="MaxWidth" Value="240" />
@@ -452,9 +455,6 @@
         <Setter Property="Background" Value="{DynamicResource TabItemSelectedBackgroundBrush}" />
     </Style>
     <Style Selector="Border.TabItem.closing">
-        <Setter Property="Width" Value="0" />
-        <Setter Property="MinWidth" Value="0" />
-        <Setter Property="MaxWidth" Value="0" />
         <Setter Property="Opacity" Value="0" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
@@ -473,8 +473,10 @@
 
     <Style Selector="RepeatButton.TabScrollButton">
         <Setter Property="Width" Value="24" />
+        <Setter Property="MinWidth" Value="0" />
         <Setter Property="Height" Value="28" />
         <Setter Property="Padding" Value="0" />
+        <Setter Property="ClipToBounds" Value="True" />
         <Setter Property="FontFamily" Value="{StaticResource SymbolThemeFontFamily}" />
         <Setter Property="FontSize" Value="16" />
         <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
@@ -485,6 +487,13 @@
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Width" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+                <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+                <ThicknessTransition Property="Margin" Duration="0:0:0.22" Easing="{StaticResource MotionEase}" />
+            </Transitions>
+        </Setter>
     </Style>
 
     <Style Selector="ctrl|ColumnSplitter">

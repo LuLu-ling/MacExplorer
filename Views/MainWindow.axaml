@@ -27,16 +27,23 @@
                 PointerPressed="TitleBar_OnPointerPressed">
             <Grid ColumnDefinitions="Auto,Auto,*" Margin="78,10,0,0"
                   PointerWheelChanged="TabStrip_OnPointerWheelChanged">
-                <StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                     <RepeatButton x:Name="TabScrollDecreaseButton" Classes="TabScrollButton"
+                                  Width="0" Opacity="0" IsHitTestVisible="False"
                                   Delay="50" Interval="100" Content="&#xEDD9;"
-                                  IsVisible="False" Click="TabScrollDecrease_OnClick" />
-                    <ScrollViewer x:Name="TabScroller"
+                                  Click="TabScrollDecrease_OnClick" />
+                    <ScrollViewer x:Name="TabScroller" Grid.Column="1"
                                   HorizontalScrollBarVisibility="Hidden"
                                   VerticalScrollBarVisibility="Disabled"
                                   HorizontalAlignment="Left"
                                   VerticalAlignment="Center"
                                   ScrollChanged="TabScroller_OnScrollChanged">
+                        <ScrollViewer.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="MaxWidth" Duration="0:0:0.22"
+                                                  Easing="{StaticResource MotionEase}" />
+                            </Transitions>
+                        </ScrollViewer.Transitions>
                         <ItemsControl x:Name="TabStrip" ItemsSource="{Binding Tabs}"
                                       HorizontalAlignment="Left"
                                       VerticalAlignment="Center">
@@ -68,9 +75,15 @@
                                                            VerticalAlignment="Center"
                                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                                             </Panel>
-                                            <TextBlock Grid.Column="1" Classes="TabTitle" Text="{Binding Title}"
-                                                       TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                                                       FontSize="12" />
+                                            <Grid Grid.Column="1">
+                                                <TextBlock Classes="TabTitle" FontWeight="SemiBold" Opacity="0"
+                                                           IsHitTestVisible="False"
+                                                           Text="{Binding Title}" TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center" FontSize="12" />
+                                                <TextBlock Classes="TabTitle" Text="{Binding Title}"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                           FontSize="12" />
+                                            </Grid>
                                             <Button Grid.Column="2" Classes="NavButton" Width="20" Height="20"
                                                     Click="CloseTab_OnClick" Tag="{Binding}">
                                                 <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -82,10 +95,11 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-                    <RepeatButton x:Name="TabScrollIncreaseButton" Classes="TabScrollButton"
+                    <RepeatButton x:Name="TabScrollIncreaseButton" Grid.Column="2" Classes="TabScrollButton"
+                                  Width="0" Opacity="0" IsHitTestVisible="False"
                                   Delay="50" Interval="100" Content="&#xEDDA;"
-                                  IsVisible="False" Click="TabScrollIncrease_OnClick" />
-                </StackPanel>
+                                  Click="TabScrollIncrease_OnClick" />
+                </Grid>
                 <Button x:Name="TabBarAddNewTabButton" Grid.Column="1" Width="30" Height="30"
                         Margin="2,0" Padding="8"
                         VerticalAlignment="Center"

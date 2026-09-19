@@ -372,6 +372,8 @@ public partial class FolderView : UserControl
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         var paths = FileDrag.Paths(e.DataTransfer);
         var dest = DropDestination(e, paths);
         SetDropTarget(dest?.Item);
@@ -400,6 +402,8 @@ public partial class FolderView : UserControl
 
     private async void OnDrop(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         var paths = FileDrag.Paths(e.DataTransfer);
         var dest = DropDestination(e, paths);
         SetDropTarget(null);

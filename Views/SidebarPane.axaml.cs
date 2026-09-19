@@ -277,6 +277,8 @@ public partial class SidebarPane : UserControl
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         var paths = FileDrag.Paths(e.DataTransfer);
         var item = ItemAt(e.Source as Visual);
         if (FavoriteDrop(e, item, paths, e.DragEffects, out var effect, out var dest))
@@ -308,6 +310,8 @@ public partial class SidebarPane : UserControl
 
     private async void OnDrop(object? sender, DragEventArgs e)
     {
+        if (TabDrag.Is(e.DataTransfer))
+            return;
         var paths = FileDrag.Paths(e.DataTransfer);
         var item = ItemAt(e.Source as Visual);
         _hoverOpen.Cancel();

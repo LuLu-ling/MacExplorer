@@ -17,7 +17,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     private readonly FileService _files;
     private readonly ListingService _listing;
     private readonly IconService _icons;
-    private readonly DialogCallbacks _dialogs;
+    private DialogCallbacks _dialogs;
     private readonly Stack<string> _back = new();
     private readonly Stack<string> _forward = new();
     private FileSystemWatcher? _watcher;
@@ -53,6 +53,8 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         Grouping.SettingsChanged += OnGroupingSettingsChanged;
         _ = NavigateAsync(path, record: false);
     }
+
+    internal void AttachDialogs(DialogCallbacks dialogs) => _dialogs = dialogs;
 
     public ObservableCollection<FileItem> Items { get; }
     public ObservableCollection<object> ViewItems { get; }
