@@ -259,26 +259,38 @@
                             <Image Width="{Binding #Root.Metrics.CardIconSize}"
                                    Height="{Binding #Root.Metrics.CardIconSize}"
                                    Source="{Binding Icon}" Stretch="Uniform" VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <Grid Grid.Column="1" VerticalAlignment="Center">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="16" />
+                                    <RowDefinition Height="1" />
+                                    <RowDefinition Height="13" />
+                                </Grid.RowDefinitions>
                                 <DockPanel>
                                     <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,6,0"
                                                   ItemsSource="{Binding NameDots}"
                                                   IsVisible="{Binding HasNameDots}" />
                                     <Grid>
-                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
-                                                   FontSize="{Binding #Root.Metrics.FontSize}"
-                                                   IsVisible="{Binding !IsRenaming}" />
+                                        <Panel ClipToBounds="True">
+                                            <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                                       TextWrapping="NoWrap" MaxLines="1"
+                                                       FontSize="{Binding #Root.Metrics.FontSize}"
+                                                       VerticalAlignment="Center"
+                                                       IsVisible="{Binding !IsRenaming}" />
+                                        </Panel>
                                         <ctrl:RenameTextBox Text="{Binding RenameText}"
                                                             FontSize="{Binding #Root.Metrics.FontSize}"
-                                                            Margin="-6,-3,0,-3"
+                                                            Margin="-6,0"
                                                             HorizontalAlignment="Stretch"
                                                             VerticalAlignment="Center"
                                                             IsVisible="{Binding IsRenaming}"
                                                             KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
                                     </Grid>
                                 </DockPanel>
-                                <TextBlock Classes="ColSecondary" Text="{Binding TypeAndSize}" />
-                            </StackPanel>
+                                <Panel Grid.Row="2" ClipToBounds="True">
+                                    <TextBlock Classes="ColSecondary" Text="{Binding TypeAndSize}"
+                                               TextWrapping="NoWrap" MaxLines="1" />
+                                </Panel>
+                            </Grid>
                         </Grid>
                     </Border>
                 </DataTemplate>
