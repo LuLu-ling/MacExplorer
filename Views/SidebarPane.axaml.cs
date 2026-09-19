@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using MacExplorer.Controls;
 using MacExplorer.Lifecycle;
@@ -24,6 +23,7 @@ public partial class SidebarPane : UserControl
     private double _pressY;
     private bool _dragging;
     private Control? _source;
+    private TopLevel? _root;
 
     public SidebarPane()
     {
@@ -34,6 +34,19 @@ public partial class SidebarPane : UserControl
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(ContextRequestedEvent, OnContextRequested, RoutingStrategies.Tunnel);
     }
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        _root = TopLevel.GetTopLevel(this);
+        ClickOutside.Attach(_root, OnRenameOutsidePointerPressed);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        ClickOutside.Detach(_root, OnRenameOutsidePointerPressed);
+        _root = null;
+        base.OnDetachedFromVisualTree(e);
+    }
 
     private MainViewModel? VM => DataContext as MainViewModel;
 
@@ -43,7 +56,7 @@ public partial class SidebarPane : UserControl
     {
         if (sender is not Border { Tag: SidebarItem item } row || VM is null)
             return;
-        if (item.IsRenaming || e.Source is TextBox)
+        if (item.IsRenaming || RenameTextBox.IsSource(e.Source))
             return;
         if (!e.GetCurrentPoint(row).Properties.IsLeftButtonPressed)
             return;
@@ -67,6 +80,8 @@ public partial class SidebarPane : UserControl
     private void Row_OnPointerMoved(object? sender, PointerEventArgs e)
     {
         if (_from < 0 || _source is null || VM is null || ListPanel is not { } panel)
+            return;
+        if (RenameTextBox.IsSource(e.Source))
             return;
         if (!e.GetCurrentPoint(_source).Properties.IsLeftButtonPressed)
             return;
@@ -105,6 +120,13 @@ public partial class SidebarPane : UserControl
 
     private void Row_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
+        if (RenameTextBox.IsSource(e.Source))
+        {
+            FinishReorder();
+            e.Pointer.Capture(null);
+            return;
+        }
+
         var item = _source is Border { Tag: SidebarItem found } ? found : null;
         var dragged = _dragging;
         FinishReorder();
@@ -202,15 +224,17 @@ public partial class SidebarPane : UserControl
             other.IsRenaming = false;
         item.RenameText = item.Title;
         item.IsRenaming = true;
-        Dispatcher.UIThread.Post(() =>
-        {
-            var box = this.GetVisualDescendants().OfType<TextBox>()
-                .FirstOrDefault(t => ReferenceEquals(t.DataContext, item));
-            if (box is null)
-                return;
-            box.Focus();
-            box.SelectAll();
-        }, DispatcherPriority.Loaded);
+    }
+
+    private void OnRenameOutsidePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (VM?.Sidebar.Items.FirstOrDefault(static item => item.IsRenaming) is not { } item)
+            return;
+        if (e.Source is Visual source &&
+            source.FindAncestorOfType<RenameTextBox>(includeSelf: true) is
+                { DataContext: SidebarItem editor } && ReferenceEquals(editor, item))
+            return;
+        _ = CommitTagRename(item);
     }
 
     private async void OnTagRenameKey(object? sender, KeyEventArgs e)

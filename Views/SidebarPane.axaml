@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MacExplorer.ViewModels"
              xmlns:m="using:MacExplorer.Models"
+             xmlns:ctrl="using:MacExplorer.Controls"
              x:Class="MacExplorer.Views.SidebarPane"
              x:DataType="vm:MainViewModel"
              Background="Transparent">
@@ -13,8 +14,7 @@
             <ItemsControl x:Name="SidebarList" ItemsSource="{Binding Sidebar.Items}">
                 <ItemsControl.Styles>
                     <Style Selector="ContentPresenter">
-                        <Setter Property="Padding" Value="0" />
-                        <Setter Property="ClipToBounds" Value="True" />
+                        <Setter Property="ClipToBounds" Value="False" />
                     </Style>
                 </ItemsControl.Styles>
                 <ItemsControl.ItemsPanel>
@@ -28,6 +28,7 @@
                                 Classes.selected="{Binding IsSelected}"
                                 Classes.section="{Binding IsSection}"
                                 Classes.collapsed="{Binding !IsVisible}"
+                                Classes.renaming="{Binding IsRenaming}"
                                 Tag="{Binding}"
                                 PointerPressed="Row_OnPointerPressed"
                                 PointerMoved="Row_OnPointerMoved"
@@ -59,11 +60,9 @@
                                                Text="{Binding Title}"
                                                TextTrimming="CharacterEllipsis"
                                                IsVisible="{Binding !IsRenaming}" />
-                                    <TextBox Classes="SidebarRename"
-                                             Text="{Binding RenameText}"
-                                             IsVisible="{Binding IsRenaming}"
-                                             KeyDown="OnTagRenameKey"
-                                             LostFocus="OnTagRenameLostFocus" />
+                                    <ctrl:RenameTextBox Classes="SidebarRename"
+                                                         Text="{Binding RenameText}" IsVisible="{Binding IsRenaming}"
+                                                         KeyDown="OnTagRenameKey" LostFocus="OnTagRenameLostFocus" />
                                 </Panel>
                             </Grid>
                         </Border>

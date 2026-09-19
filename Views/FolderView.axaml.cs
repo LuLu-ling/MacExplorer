@@ -40,6 +40,7 @@ public partial class FolderView : UserControl
     }
 
     private ExplorerTabViewModel? _boundTab;
+    private TopLevel? _root;
     private FileItem? _anchor;
     private FileItem? _pressedItem;
     private FileItem? _dropTarget;
@@ -87,6 +88,8 @@ public partial class FolderView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
+        _root = TopLevel.GetTopLevel(this);
+        ClickOutside.Attach(_root, OnRenameOutsidePointerPressed);
         BindTab(Tab);
         HookFileLists();
         ApplyGroupOverview(Tab?.IsGroupOverview == true);
@@ -94,6 +97,8 @@ public partial class FolderView : UserControl
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
+        ClickOutside.Detach(_root, OnRenameOutsidePointerPressed);
+        _root = null;
         EndMarquee();
         BindTab(null);
         base.OnDetachedFromVisualTree(e);
@@ -185,12 +190,26 @@ public partial class FolderView : UserControl
         if (item.IsRenaming)
             await Tab.CommitRenameAsync(item);
     }
+    private void OnRenameOutsidePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (Tab is not { } tab)
+            return;
+        var item = tab.ViewItems.OfType<FileItem>().FirstOrDefault(static file => file.IsRenaming);
+        if (item is null)
+            return;
+        if (e.Source is Visual source &&
+            source.FindAncestorOfType<RenameTextBox>(includeSelf: true) is
+                { DataContext: FileItem editor } && ReferenceEquals(editor, item))
+            return;
+        _ = tab.CommitRenameAsync(item);
+    }
 
     private void OnPreviewPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (Tab is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
-        if (e.Source is TextBox || e.Source is not Visual visual || !IsInsideFileList(visual) || IsScrollChrome(visual))
+        if (RenameTextBox.IsSource(e.Source) || e.Source is not Visual visual ||
+            !IsInsideFileList(visual) || IsScrollChrome(visual))
             return;
         if (FindFileGroup(visual) is not null)
         {

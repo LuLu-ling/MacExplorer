@@ -119,15 +119,17 @@
                                            Source="{Binding Icon}" Stretch="Uniform"
                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
-                                <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="True">
+                                <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="False">
                                     <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
                                                TextAlignment="Left"
                                                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="8,0"
                                                FontSize="{Binding #Root.Metrics.FontSize}"
                                                IsVisible="{Binding !IsRenaming}" />
-                                    <TextBox Text="{Binding RenameText}" VerticalAlignment="Center" Margin="8,0"
-                                             IsVisible="{Binding IsRenaming}"
-                                             KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                    <ctrl:RenameTextBox Text="{Binding RenameText}"
+                                                        FontSize="{Binding #Root.Metrics.FontSize}"
+                                                        Margin="2,0" HorizontalAlignment="Stretch"
+                                                        IsVisible="{Binding IsRenaming}"
+                                                        KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
                                 </Panel>
                                 <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
                                 <Panel Width="{Binding #Root.Columns.Tags}" ClipToBounds="True"
@@ -216,16 +218,15 @@
                                                HorizontalAlignment="Left"
                                                VerticalAlignment="Center"
                                                Text="{Binding DisplayName}"
+                                               FontSize="{Binding #Root.Metrics.FontSize}"
                                                TextTrimming="CharacterEllipsis"
                                                TextWrapping="NoWrap"
                                                IsVisible="{Binding !IsRenaming}" />
-                                    <TextBox Text="{Binding RenameText}"
-                                             HorizontalAlignment="Stretch"
-                                             VerticalAlignment="Center"
-                                             TextWrapping="Wrap"
-                                             IsVisible="{Binding IsRenaming}"
-                                             KeyDown="OnRenameKey"
-                                             LostFocus="OnRenameLostFocus" />
+                                    <ctrl:RenameTextBox Text="{Binding RenameText}"
+                                                        FontSize="{Binding #Root.Metrics.FontSize}"
+                                                        Margin="-1,0" HorizontalAlignment="Stretch"
+                                                        IsVisible="{Binding IsRenaming}"
+                                                        KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
                                 </Panel>
                             </DockPanel>
                         </Grid>
@@ -263,8 +264,18 @@
                                     <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,6,0"
                                                   ItemsSource="{Binding NameDots}"
                                                   IsVisible="{Binding HasNameDots}" />
-                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
-                                               FontSize="{Binding #Root.Metrics.FontSize}" />
+                                    <Grid>
+                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                                   FontSize="{Binding #Root.Metrics.FontSize}"
+                                                   IsVisible="{Binding !IsRenaming}" />
+                                        <ctrl:RenameTextBox Text="{Binding RenameText}"
+                                                            FontSize="{Binding #Root.Metrics.FontSize}"
+                                                            Margin="-6,-3,0,-3"
+                                                            HorizontalAlignment="Stretch"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsRenaming}"
+                                                            KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                    </Grid>
                                 </DockPanel>
                                 <TextBlock Classes="ColSecondary" Text="{Binding TypeAndSize}" />
                             </StackPanel>
@@ -294,14 +305,21 @@
                             <Image Width="{Binding #Root.Metrics.GridItemSize}"
                                    Height="{Binding #Root.Metrics.GridItemSize}"
                                    Source="{Binding Icon}" Stretch="Uniform" HorizontalAlignment="Center" />
-                            <DockPanel Margin="0,4,0,0" HorizontalAlignment="Center">
-                                <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,4,0"
-                                              ItemsSource="{Binding NameDots}"
-                                              IsVisible="{Binding HasNameDots}" />
-                                <TextBlock Text="{Binding DisplayName}" TextAlignment="Center"
-                                           TextTrimming="CharacterEllipsis"
-                                           FontSize="{Binding #Root.Metrics.FontSize}" />
-                            </DockPanel>
+                            <Panel Margin="0,4,0,0" HorizontalAlignment="Stretch">
+                                <DockPanel HorizontalAlignment="Center" IsVisible="{Binding !IsRenaming}">
+                                    <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,4,0"
+                                                  ItemsSource="{Binding NameDots}"
+                                                  IsVisible="{Binding HasNameDots}" />
+                                    <TextBlock Text="{Binding DisplayName}" TextAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               FontSize="{Binding #Root.Metrics.FontSize}" />
+                                </DockPanel>
+                                <ctrl:RenameTextBox Text="{Binding RenameText}"
+                                                    FontSize="{Binding #Root.Metrics.FontSize}"
+                                                    TextAlignment="Center" HorizontalAlignment="Stretch"
+                                                    IsVisible="{Binding IsRenaming}"
+                                                    KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                            </Panel>
                         </StackPanel>
                     </Border>
                 </DataTemplate>
