@@ -83,6 +83,8 @@
     <x:String x:Key="Sort.DateCreated">Date created</x:String>
     <x:String x:Key="Sort.Type">Type</x:String>
     <x:String x:Key="Sort.Size">Size</x:String>
+    <x:String x:Key="Sort.Ascending">Ascending</x:String>
+    <x:String x:Key="Sort.Descending">Descending</x:String>
 
     <!-- Group -->
     <x:String x:Key="Group.By">Group by</x:String>

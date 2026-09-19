@@ -267,6 +267,9 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     public void SetSort(string field) => SelectedTab?.SetSort(field);
 
     [RelayCommand]
+    public void SetSortDirection(string spec) => SelectedTab?.SetSortDirection(spec);
+
+    [RelayCommand]
     public void SetGroup(string spec) => SelectedTab?.SetGroup(spec);
 
     [RelayCommand]

@@ -75,6 +75,9 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty] public partial GroupOption GroupOption { get; set; }
     [ObservableProperty] public partial SortDirection GroupDirection { get; set; }
     [ObservableProperty] public partial GroupByDateUnit GroupByDateUnit { get; set; }
+    public SortField SortField => Config.Layout.SortFieldValue;
+    public SortDirection SortDirection => Config.Layout.SortDirectionValue;
+
     [ObservableProperty] public partial bool IsGroupOverview { get; set; }
 
     [ObservableProperty] public partial IReadOnlyList<BreadcrumbItem> Breadcrumbs { get; set; }
@@ -490,18 +493,36 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     {
         if (!Enum.TryParse<SortField>(field, out var sort))
             return;
-        if (Config.Layout.SortFieldValue == sort)
-        {
-            Config.Layout.SortDirection = Config.Layout.SortDirectionValue is SortDirection.Ascending
-                ? (int)SortDirection.Descending
-                : (int)SortDirection.Ascending;
-        }
-        else
+        if (Config.Layout.SortFieldValue != sort)
         {
             Config.Layout.SortField = (int)sort;
             Config.Layout.SortDirection = (int)SortDirection.Ascending;
         }
         RebuildView();
+    }
+
+    [RelayCommand]
+    public void SetSortDirection(string spec)
+    {
+        if (!Enum.TryParse<SortDirection>(spec, out var direction))
+            return;
+        Config.Layout.SortDirection = (int)direction;
+        RebuildView();
+    }
+
+    public void ToggleSort(string field)
+    {
+        if (!Enum.TryParse<SortField>(field, out var sort))
+            return;
+        if (Config.Layout.SortFieldValue == sort)
+        {
+            SetSortDirection(Config.Layout.SortDirectionValue is SortDirection.Ascending
+                ? "Descending"
+                : "Ascending");
+            return;
+        }
+
+        SetSort(field);
     }
 
     [RelayCommand]

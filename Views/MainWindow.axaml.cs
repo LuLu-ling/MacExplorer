@@ -142,22 +142,11 @@ public partial class MainWindow : FAAppWindow
         ]);
 
     private void Sort_OnClick(object? sender, RoutedEventArgs e) =>
-        ShowToolbarMenu(sender, e, static (vm, tab) =>
-        {
-            var field = Config.Layout.SortFieldValue;
-            return
-            [
-                new(Lang.Text("Sort.By"), Children:
-                [
-                    new(Lang.Text("Sort.Name"), () => vm.SetSort("Name"), Checked: field is SortField.Name),
-                    new(Lang.Text("Sort.DateModified"), () => vm.SetSort("DateModified"), Checked: field is SortField.DateModified),
-                    new(Lang.Text("Sort.DateCreated"), () => vm.SetSort("DateCreated"), Checked: field is SortField.DateCreated),
-                    new(Lang.Text("Sort.Type"), () => vm.SetSort("Type"), Checked: field is SortField.Type),
-                    new(Lang.Text("Sort.Size"), () => vm.SetSort("Size"), Checked: field is SortField.Size),
-                ], Symbol: MacMenuSymbol.Sort),
-                new(Lang.Text("Group.By"), Children: FolderView.GroupByMenu(tab), Symbol: MacMenuSymbol.Group),
-            ];
-        });
+        ShowToolbarMenu(sender, e, static (_, tab) =>
+        [
+            new(Lang.Text("Sort.By"), Children: FolderView.SortByMenu(tab), Symbol: MacMenuSymbol.Sort),
+            new(Lang.Text("Group.By"), Children: FolderView.GroupByMenu(tab), Symbol: MacMenuSymbol.Group),
+        ]);
 
     private void Layout_OnClick(object? sender, RoutedEventArgs e) =>
         ShowToolbarMenu(sender, e, static (vm, tab) =>

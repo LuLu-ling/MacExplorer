@@ -83,6 +83,8 @@
     <x:String x:Key="Sort.DateCreated">创建日期</x:String>
     <x:String x:Key="Sort.Type">类型</x:String>
     <x:String x:Key="Sort.Size">大小</x:String>
+    <x:String x:Key="Sort.Ascending">升序</x:String>
+    <x:String x:Key="Sort.Descending">降序</x:String>
 
     <!-- Group -->
     <x:String x:Key="Group.By">分组方式</x:String>

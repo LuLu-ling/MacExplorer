@@ -585,6 +585,23 @@ public partial class FolderView : UserControl
         new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info),
     ];
 
+    internal static MacMenuEntry[] SortByMenu(ExplorerTabViewModel tab)
+    {
+        var field = tab.SortField;
+        var direction = tab.SortDirection;
+        return
+        [
+            new(Lang.Text("Sort.Name"), () => tab.SetSort("Name"), Checked: field is SortField.Name),
+            new(Lang.Text("Sort.DateModified"), () => tab.SetSort("DateModified"), Checked: field is SortField.DateModified),
+            new(Lang.Text("Sort.DateCreated"), () => tab.SetSort("DateCreated"), Checked: field is SortField.DateCreated),
+            new(Lang.Text("Sort.Type"), () => tab.SetSort("Type"), Checked: field is SortField.Type),
+            new(Lang.Text("Sort.Size"), () => tab.SetSort("Size"), Checked: field is SortField.Size),
+            new("", Separator: true),
+            new(Lang.Text("Sort.Ascending"), () => tab.SetSortDirection("Ascending"), Checked: direction is SortDirection.Ascending),
+            new(Lang.Text("Sort.Descending"), () => tab.SetSortDirection("Descending"), Checked: direction is SortDirection.Descending),
+        ];
+    }
+
     internal static MacMenuEntry[] GroupByMenu(ExplorerTabViewModel tab)
     {
         var option = tab.GroupOption;
@@ -1231,7 +1248,7 @@ public partial class FolderView : UserControl
             return;
         var kind = ColumnStripPanel.GetColumn(units[from]);
         if (kind is not DetailsColumnKind.Tags)
-            Tab.SetSort(kind.ToString());
+            Tab.ToggleSort(kind.ToString());
     }
 
     private void OnColumnCaptureLost(object? sender, PointerCaptureLostEventArgs e) => FinishColumnDrag();
