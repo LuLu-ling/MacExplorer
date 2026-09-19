@@ -589,6 +589,7 @@ public partial class FolderView : UserControl
     {
         var field = tab.SortField;
         var direction = tab.SortDirection;
+        var priority = tab.FolderPriority;
         return
         [
             new(Lang.Text("Sort.Name"), () => tab.SetSort("Name"), Checked: field is SortField.Name),
@@ -599,6 +600,10 @@ public partial class FolderView : UserControl
             new("", Separator: true),
             new(Lang.Text("Sort.Ascending"), () => tab.SetSortDirection("Ascending"), Checked: direction is SortDirection.Ascending),
             new(Lang.Text("Sort.Descending"), () => tab.SetSortDirection("Descending"), Checked: direction is SortDirection.Descending),
+            new("", Separator: true),
+            new(Lang.Text("Sort.FoldersFirst"), () => tab.SetFolderPriority("FoldersFirst"), Checked: priority is FolderPriority.FoldersFirst),
+            new(Lang.Text("Sort.FilesFirst"), () => tab.SetFolderPriority("FilesFirst"), Checked: priority is FolderPriority.FilesFirst),
+            new(Lang.Text("Sort.FilesAndFoldersTogether"), () => tab.SetFolderPriority("Mixed"), Checked: priority is FolderPriority.Mixed),
         ];
     }
 

@@ -85,6 +85,9 @@
     <x:String x:Key="Sort.Size">Size</x:String>
     <x:String x:Key="Sort.Ascending">Ascending</x:String>
     <x:String x:Key="Sort.Descending">Descending</x:String>
+    <x:String x:Key="Sort.FoldersFirst">Sort folders first</x:String>
+    <x:String x:Key="Sort.FilesFirst">Sort files first</x:String>
+    <x:String x:Key="Sort.FilesAndFoldersTogether">Sort files and folders together</x:String>
 
     <!-- Group -->
     <x:String x:Key="Group.By">Group by</x:String>

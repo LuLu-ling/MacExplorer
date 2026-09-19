@@ -109,10 +109,8 @@ public sealed class ListingService
             if (y is null) return 1;
 
             var priority = Config.Layout.FolderPriorityValue;
-            if (priority is FolderPriority.FoldersFirst && x.IsDirectory != y.IsDirectory)
-                return x.IsDirectory ? -1 : 1;
-            if (priority is FolderPriority.FilesFirst && x.IsDirectory != y.IsDirectory)
-                return x.IsDirectory ? 1 : -1;
+            if (priority is not FolderPriority.Mixed && x.IsDirectory != y.IsDirectory)
+                return (priority is FolderPriority.FoldersFirst) == x.IsDirectory ? -1 : 1;
 
             var cmp = Config.Layout.SortFieldValue switch
             {
@@ -122,8 +120,6 @@ public sealed class ListingService
                 SortField.Type => string.Compare(x.ItemType, y.ItemType, StringComparison.CurrentCultureIgnoreCase),
                 _ => string.Compare(x.DisplayName, y.DisplayName, StringComparison.CurrentCultureIgnoreCase)
             };
-            if (cmp == 0)
-                cmp = string.Compare(x.DisplayName, y.DisplayName, StringComparison.CurrentCultureIgnoreCase);
             return Config.Layout.SortDirectionValue is SortDirection.Descending ? -cmp : cmp;
         }
     }

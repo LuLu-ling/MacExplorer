@@ -77,6 +77,7 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     [ObservableProperty] public partial GroupByDateUnit GroupByDateUnit { get; set; }
     public SortField SortField => Config.Layout.SortFieldValue;
     public SortDirection SortDirection => Config.Layout.SortDirectionValue;
+    public FolderPriority FolderPriority => Config.Layout.FolderPriorityValue;
 
     [ObservableProperty] public partial bool IsGroupOverview { get; set; }
 
@@ -507,6 +508,15 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         if (!Enum.TryParse<SortDirection>(spec, out var direction))
             return;
         Config.Layout.SortDirection = (int)direction;
+        RebuildView();
+    }
+
+    [RelayCommand]
+    public void SetFolderPriority(string spec)
+    {
+        if (!Enum.TryParse<FolderPriority>(spec, out var priority))
+            return;
+        Config.Layout.FolderPriority = (int)priority;
         RebuildView();
     }
 

@@ -85,6 +85,9 @@
     <x:String x:Key="Sort.Size">大小</x:String>
     <x:String x:Key="Sort.Ascending">升序</x:String>
     <x:String x:Key="Sort.Descending">降序</x:String>
+    <x:String x:Key="Sort.FoldersFirst">先排序文件夹</x:String>
+    <x:String x:Key="Sort.FilesFirst">先排序文件</x:String>
+    <x:String x:Key="Sort.FilesAndFoldersTogether">将文件和文件夹一同排序</x:String>
 
     <!-- Group -->
     <x:String x:Key="Group.By">分组方式</x:String>
