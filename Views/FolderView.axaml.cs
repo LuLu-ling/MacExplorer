@@ -754,14 +754,27 @@ public partial class FolderView : UserControl
 
     private void DrawMarquee(Point pos)
     {
-        var x = Math.Min(_marqueeOrigin.X, pos.X);
-        var y = Math.Min(_marqueeOrigin.Y, pos.Y);
-        var w = Math.Abs(pos.X - _marqueeOrigin.X);
-        var h = Math.Abs(pos.Y - _marqueeOrigin.Y);
-        Canvas.SetLeft(MarqueeRect, x);
-        Canvas.SetTop(MarqueeRect, y);
-        MarqueeRect.Width = w;
-        MarqueeRect.Height = h;
+        var rect = ClipMarquee(RawMarquee(pos));
+        Canvas.SetLeft(MarqueeRect, rect.X);
+        Canvas.SetTop(MarqueeRect, rect.Y);
+        MarqueeRect.Width = rect.Width;
+        MarqueeRect.Height = rect.Height;
+    }
+
+    private Rect RawMarquee(Point pos) => new(
+        Math.Min(_marqueeOrigin.X, pos.X),
+        Math.Min(_marqueeOrigin.Y, pos.Y),
+        Math.Abs(pos.X - _marqueeOrigin.X),
+        Math.Abs(pos.Y - _marqueeOrigin.Y));
+
+
+    private Rect ClipMarquee(Rect marquee)
+    {
+        if (VisibleList() is not { } list || !list.Classes.Contains("details"))
+            return marquee;
+        if (list.TranslatePoint(default, MarqueeHost) is not { } origin)
+            return marquee;
+        return marquee.Intersect(new Rect(origin, list.Bounds.Size));
     }
 
     private void ApplyMarqueeSelection(KeyModifiers modifiers)
@@ -770,27 +783,74 @@ public partial class FolderView : UserControl
         if (list is null || Tab is null)
             return;
 
-        var marquee = new Rect(
-            Canvas.GetLeft(MarqueeRect), Canvas.GetTop(MarqueeRect),
-            MarqueeRect.Width, MarqueeRect.Height);
-        var hits = new List<FileItem>();
-        var count = list.ItemCount;
-        for (var i = 0; i < count; i++)
-        {
-            if (list.Items[i] is not FileItem file)
-                continue;
-            if (list.ContainerFromIndex(i) is not Control container)
-                continue;
-            if (container.TranslatePoint(default, MarqueeHost) is not { } topLeft)
-                continue;
-            if (marquee.Intersects(new Rect(topLeft, container.Bounds.Size)))
-                hits.Add(file);
-        }
-
+        var hits = MarqueeHits(list, RawMarquee(_marqueePointer));
         ApplySelection(MergeSelection(_selectionSnapshot, hits, modifiers));
         if (!IsRange(modifiers) && !IsToggle(modifiers))
             _anchor = hits.Count > 0 ? hits[^1] : null;
     }
+
+    private List<FileItem> MarqueeHits(ListBox list, Rect marquee)
+    {
+        var count = list.ItemCount;
+        var hits = new List<FileItem>();
+        var details = list.Classes.Contains("details");
+        Control? realized = null;
+        var realizedIndex = -1;
+        var fileHeight = 0.0;
+        var groupHeight = 0.0;
+        for (var i = 0; i < count; i++)
+        {
+            if (list.ContainerFromIndex(i) is not Control container)
+                continue;
+            realized ??= container;
+            if (realizedIndex < 0)
+                realizedIndex = i;
+            if (list.Items[i] is FileGroup)
+                groupHeight = groupHeight == 0 ? container.Bounds.Height : groupHeight;
+            else if (fileHeight == 0)
+                fileHeight = container.Bounds.Height;
+        }
+
+        if (realized is null || realized.TranslatePoint(default, MarqueeHost) is not { } origin)
+            return hits;
+
+        var y = origin.Y;
+        if (details)
+        {
+            for (var i = realizedIndex - 1; i >= 0; i--)
+                y -= MarqueeSlotHeight(list.Items[i], fileHeight, groupHeight);
+        }
+
+        for (var i = 0; i < count; i++)
+        {
+            var height = MarqueeSlotHeight(list.Items[i], fileHeight, groupHeight);
+            Rect rect;
+            if (list.ContainerFromIndex(i) is Control container &&
+                container.TranslatePoint(default, MarqueeHost) is { } topLeft)
+            {
+                rect = new Rect(topLeft, container.Bounds.Size);
+                y = topLeft.Y;
+            }
+            else if (details && height > 0)
+                rect = new Rect(origin.X, y, realized.Bounds.Width, height);
+            else
+            {
+                y += height;
+                continue;
+            }
+
+            if (list.Items[i] is FileItem file && marquee.Intersects(rect))
+                hits.Add(file);
+            y += height;
+        }
+
+        return hits;
+    }
+
+    private static double MarqueeSlotHeight(object? item, double fileHeight, double groupHeight) =>
+        item is FileGroup
+            ? (groupHeight > 0 ? groupHeight : fileHeight)
+            : fileHeight;
 
     private void ApplyItemPointer(FileItem item, KeyModifiers modifiers)
     {
