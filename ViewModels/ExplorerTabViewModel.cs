@@ -840,20 +840,27 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
         _iconCts = new CancellationTokenSource();
         var token = _iconCts.Token;
         var size = Metrics.IconPixels(Layout);
-        foreach (var item in Items.ToArray())
+        var items = Items.ToArray();
+        try
         {
-            if (token.IsCancellationRequested)
-                return;
-            try
+            await Parallel.ForEachAsync(items, new ParallelOptions
             {
-                var icon = await _icons.GetAsync(item.Path, size, token);
-                if (icon is not null && !token.IsCancellationRequested)
-                    item.Icon = icon;
-            }
-            catch (OperationCanceledException)
+                MaxDegreeOfParallelism = Math.Clamp(Environment.ProcessorCount, 2, 8),
+                CancellationToken = token
+            }, async (item, ct) =>
             {
-                return;
-            }
+                var icon = _icons.Get(item.Path, size);
+                if (icon is null || ct.IsCancellationRequested)
+                    return;
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    if (!ct.IsCancellationRequested)
+                        item.Icon = icon;
+                });
+            });
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 

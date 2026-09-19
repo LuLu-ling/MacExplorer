@@ -47,26 +47,51 @@ internal static class MacWorkspace
     public static Bitmap? Icon(string path, int size)
     {
         using var pool = new AutoreleasePool();
-        var pixels = Math.Max(16, size) * 2;
+        var pixels = Math.Clamp(size, 16, 512) * 2;
+        var directory = Directory.Exists(path);
+        var bundle = directory && IsBundle(path);
+        var tint = directory && !bundle ? FolderTint(path) : FileTagColor.None;
+
+        if (directory && !bundle)
+        {
+            var folder = MacFolderIcon.Bitmap(size, !MacThumbnail.HasEntries(path), tint);
+            if (folder is not null)
+                return folder;
+        }
+
+        if (tint == FileTagColor.None)
+        {
+            var preview = MacThumbnail.Create(path, pixels, directory, bundle);
+            if (preview != IntPtr.Zero)
+            {
+                try
+                {
+                    return MacImage.FromCGImage(preview);
+                }
+                finally
+                {
+                    MacImage.CFRelease(preview);
+                }
+            }
+        }
+
         var source = FetchIcon(path);
         if (source == IntPtr.Zero)
             return null;
-
         var icon = ObjC.Call(source, "copy");
         if (icon == IntPtr.Zero)
             return null;
         ObjC.Call(icon, "autorelease");
         ObjC.MsgSendVoid(icon, ObjC.Sel("setSize:"), new NSSize(pixels, pixels));
+        return MacImage.FromNSImage(icon, tint);
+    }
 
-        var tint = FolderTint(path);
-        var png = tint == FileTagColor.None
-            ? EncodePng(icon) ?? EncodePngFromTiff(icon)
-            : EncodeTintedPng(icon, tint) ?? EncodePng(icon) ?? EncodePngFromTiff(icon);
-        if (png is null)
-            return null;
-
-        using var stream = new MemoryStream(png, writable: false);
-        return new Bitmap(stream);
+    private static bool IsBundle(string path)
+    {
+        var ext = Path.GetExtension(path);
+        if (ext is ".app" or ".framework" or ".bundle" or ".plugin" or ".kext")
+            return true;
+        return File.Exists(Path.Combine(path, "Contents", "Info.plist"));
     }
 
     internal static IntPtr MenuIcon(string path, double size = 16)

@@ -69,7 +69,12 @@ public sealed class HomeViewModel : ViewModelBase
 
     private async Task LoadIconsAsync()
     {
-        foreach (var card in QuickAccess.Concat(Drives).Concat(Recents).ToArray())
-            card.Icon = await _icons.GetAsync(card.Path, 32);
+        var cards = QuickAccess.Concat(Drives).Concat(Recents).ToArray();
+        await Task.WhenAll(cards.Select(async card =>
+        {
+            var icon = await _icons.GetAsync(card.Path, 32);
+            if (icon is not null)
+                card.Icon = icon;
+        }));
     }
 }
