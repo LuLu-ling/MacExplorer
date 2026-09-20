@@ -24,14 +24,16 @@ internal sealed class MacApplicationMenu
     private readonly HashSet<Window> _attached = [];
     private readonly IDisposable _windowOpened;
     private readonly NativeMenu _dock = new();
+    private readonly NativeMenuItem _dockNewWindow;
     private readonly List<(WeakReference<NativeMenuItem> Item, Func<string> Title)> _titles = [];
-    private IReadOnlyList<string> _favorites = [];
 
     private MacApplicationMenu(WindowService windows)
     {
         _windows = windows;
         _windowOpened = Window.WindowOpenedEvent.AddClassHandler<Window>((window, _) =>
             Guard(() => AttachCore(window)));
+        _dockNewWindow = Add(_dock, "Menu.App.NewWindow", () => windows.OpenWindow());
+        _dock.NeedsUpdate += (_, _) => Guard(RefreshDock);
     }
 
     public static void Install(WindowService windows)
@@ -42,8 +44,6 @@ internal sealed class MacApplicationMenu
         var application = Application.Current ?? throw new InvalidOperationException("Application is not initialized.");
         var menus = _instance = new MacApplicationMenu(windows);
         menus.InstallApplicationMenu(application);
-        menus.Add(menus._dock, "Menu.App.NewWindow", () => windows.OpenWindow());
-        menus._dock.NeedsUpdate += (_, _) => Guard(menus.RefreshDock);
         menus.RefreshDock();
         NativeDock.SetMenu(application, menus._dock);
         WeakLanguageChanged.Add(menus, static m => m.Relocalize());
@@ -261,31 +261,23 @@ internal sealed class MacApplicationMenu
             while (menu.Items.Count > fixedCount)
                 menu.Items.RemoveAt(menu.Items.Count - 1);
             foreach (var window in _windows.Windows)
-            {
-                var target = new WeakReference<MainWindow>(window);
-                var item = new NativeMenuItem(window.Title ?? "MacExplorer")
-                {
-                    ToggleType = MenuItemToggleType.CheckBox,
-                    IsChecked = ReferenceEquals(window, _windows.ActiveWindow)
-                };
-                item.Click += (_, _) => Guard(() =>
-                {
-                    if (target.TryGetTarget(out var live) && _windows.Windows.Contains(live))
-                        Focus(live);
-                });
-                menu.Add(item);
-            }
+                menu.Add(WindowItem(window));
         });
     }
 
     private void RefreshDock()
     {
+        for (var i = _dock.Items.Count - 1; i >= 0; i--)
+            if (!ReferenceEquals(_dock.Items[i], _dockNewWindow))
+                _dock.Items.RemoveAt(i);
+
+        var insert = 0;
+        foreach (var window in _windows.Windows)
+            _dock.Items.Insert(insert++, WindowItem(window));
+        if (_windows.Windows.Count > 0)
+            _dock.Items.Insert(insert, new NativeMenuItemSeparator());
+
         var favorites = MacFinder.FavoriteFolders();
-        if (_favorites.SequenceEqual(favorites, StringComparer.Ordinal))
-            return;
-        _favorites = favorites;
-        while (_dock.Items.Count > 1)
-            _dock.Items.RemoveAt(_dock.Items.Count - 1);
         if (favorites.Count > 0)
             Separator(_dock);
         foreach (var path in favorites)
@@ -295,6 +287,25 @@ internal sealed class MacApplicationMenu
             item.Click += (_, _) => Guard(() => _windows.OpenWindow(path));
             _dock.Add(item);
         }
+    }
+
+    private NativeMenuItem WindowItem(MainWindow window)
+    {
+        var target = new WeakReference<MainWindow>(window);
+        var header = window.DataContext is MainViewModel { SelectedTab.Title: { Length: > 0 } tab }
+            ? tab
+            : window.Title is { Length: > 0 } title ? title : "MacExplorer";
+        var item = new NativeMenuItem(header)
+        {
+            ToggleType = MenuItemToggleType.CheckBox,
+            IsChecked = ReferenceEquals(window, _windows.ActiveWindow)
+        };
+        item.Click += (_, _) => Guard(() =>
+        {
+            if (target.TryGetTarget(out var live) && _windows.Windows.Contains(live))
+                Focus(live);
+        });
+        return item;
     }
 
     private Window? ActiveWindow
