@@ -1,20 +1,14 @@
 using MacExplorer.Localization;
 using MacExplorer.Models;
+using MacExplorer.Native;
 namespace MacExplorer.Services;
 
 internal static class PathUtil
 {
     public static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
 
-    public static bool IsBundle(string path)
-    {
-        if (!Directory.Exists(path))
-            return false;
-        var ext = Path.GetExtension(path);
-        if (ext is ".app" or ".framework" or ".bundle" or ".plugin" or ".kext")
-            return true;
-        return File.Exists(Path.Combine(path, "Contents", "Info.plist"));
-    }
+    public static bool IsBundle(string path) =>
+        Directory.Exists(path) && MacWorkspace.IsPackage(path);
 
     public static string UniquePath(string directory, string fileName)
     {

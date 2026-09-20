@@ -49,19 +49,21 @@ internal static class MacWorkspace
         using var pool = new AutoreleasePool();
         var pixels = Math.Clamp(size, 16, 512) * 2;
         var directory = Directory.Exists(path);
-        var bundle = directory && IsBundle(path);
-        var tint = directory && !bundle ? FolderTint(path) : FileTagColor.None;
+        var package = directory && PackageAt(path);
+        var volume = directory && VolumeBool(path, "NSURLIsVolumeKey");
+        var folder = directory && !package && !volume;
+        var tint = folder ? FolderTint(path) : FileTagColor.None;
 
-        if (directory && !bundle)
+        if (folder)
         {
-            var folder = MacFolderIcon.Bitmap(size, !MacThumbnail.HasEntries(path), tint);
-            if (folder is not null)
-                return folder;
+            var drawn = MacFolderIcon.Bitmap(size, !MacThumbnail.HasEntries(path), tint);
+            if (drawn is not null)
+                return drawn;
         }
 
-        if (tint == FileTagColor.None)
+        if (tint == FileTagColor.None && !package && !volume)
         {
-            var preview = MacThumbnail.Create(path, pixels, directory, bundle);
+            var preview = MacThumbnail.Create(path, pixels, directory, package);
             if (preview != IntPtr.Zero)
             {
                 try
@@ -86,13 +88,16 @@ internal static class MacWorkspace
         return MacImage.FromNSImage(icon, tint);
     }
 
-    private static bool IsBundle(string path)
+    public static bool IsPackage(string path)
     {
-        var ext = Path.GetExtension(path);
-        if (ext is ".app" or ".framework" or ".bundle" or ".plugin" or ".kext")
-            return true;
-        return File.Exists(Path.Combine(path, "Contents", "Info.plist"));
+        if (string.IsNullOrEmpty(path))
+            return false;
+        using var pool = new AutoreleasePool();
+        return PackageAt(path);
     }
+
+    private static bool PackageAt(string path) =>
+        VolumeBool(path, "NSURLIsPackageKey");
 
     internal static IntPtr MenuIcon(string path, double size = 16)
     {
@@ -160,14 +165,8 @@ internal static class MacWorkspace
 
     private static FileTagColor FolderTint(string path)
     {
-        if (!Directory.Exists(path))
+        if (!Directory.Exists(path) || PackageAt(path) || VolumeBool(path, "NSURLIsVolumeKey"))
             return FileTagColor.None;
-        var ext = Path.GetExtension(path);
-        if (ext is ".app" or ".framework" or ".bundle" or ".plugin" or ".kext")
-            return FileTagColor.None;
-        if (File.Exists(Path.Combine(path, "Contents", "Info.plist")))
-            return FileTagColor.None;
-
         foreach (var tag in MacTags.Read(path))
         {
             if (tag.Color != FileTagColor.None)
