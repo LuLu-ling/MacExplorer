@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MacExplorer.ViewModels"
-             xmlns:loc="using:MacExplorer.Localization"
              xmlns:conv="using:MacExplorer.Converters"
+             xmlns:native="using:MacExplorer.Native"
              x:Class="MacExplorer.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel">
     <Grid ColumnDefinitions="252,*">
@@ -69,54 +69,6 @@
         </Border>
 
 
-        <ScrollViewer Grid.Column="1" Padding="32">
-            <StackPanel MaxWidth="720" Spacing="16">
-                <StackPanel Spacing="12"
-                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Appearance}">
-                    <TextBlock Text="{DynamicResource Settings.Nav.Appearance}" FontSize="24" FontWeight="SemiBold" />
-                    <TextBlock Classes="Caption" Text="{DynamicResource Settings.Theme}" />
-                    <ComboBox SelectedIndex="{Binding ThemeIndex}" Width="240">
-                        <ComboBoxItem Content="{DynamicResource Settings.Theme.System}" />
-                        <ComboBoxItem Content="{DynamicResource Settings.Theme.Light}" />
-                        <ComboBoxItem Content="{DynamicResource Settings.Theme.Dark}" />
-                    </ComboBox>
-                </StackPanel>
-
-                <StackPanel Spacing="12"
-                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Language}">
-                    <TextBlock Text="{DynamicResource Settings.Language.Title}" FontSize="24" FontWeight="SemiBold" />
-                    <TextBlock Classes="Caption" Text="{DynamicResource Settings.Language.UiLanguage}" />
-                    <ComboBox Width="240"
-                              ItemsSource="{Binding LanguageOptions}"
-                              SelectedItem="{Binding SelectedLanguage}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="loc:LanguageOption">
-                                <TextBlock Text="{Binding Title}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </StackPanel>
-
-                <StackPanel Spacing="12"
-                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Folders}">
-                    <TextBlock Text="{DynamicResource Settings.Nav.Folders}" FontSize="24" FontWeight="SemiBold" />
-                    <CheckBox Content="{DynamicResource Settings.Folders.ShowHidden}" IsChecked="{Binding ShowHidden}" />
-                    <CheckBox Content="{DynamicResource Settings.Folders.ShowExtensions}" IsChecked="{Binding ShowExtensions}" />
-                    <CheckBox Content="{DynamicResource Settings.Folders.ShowQuickAccess}" IsChecked="{Binding ShowQuickAccess}" />
-                    <CheckBox Content="{DynamicResource Settings.Folders.ShowVolumes}" IsChecked="{Binding ShowVolumes}" />
-                    <CheckBox Content="{DynamicResource Settings.Folders.ShowRecents}" IsChecked="{Binding ShowRecents}" />
-                </StackPanel>
-
-                <StackPanel Spacing="8"
-                            IsVisible="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=About}">
-                    <TextBlock Text="{DynamicResource Settings.Nav.About}" FontSize="24" FontWeight="SemiBold" />
-                    <TextBlock Text="MacExplorer" FontSize="18" />
-                    <TextBlock Text="{Binding VersionText}"
-                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                    <TextBlock TextWrapping="Wrap" MaxWidth="520"
-                               Text="{DynamicResource Settings.About.Description}" />
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
+        <native:NativeSettingsHost Grid.Column="1" />
     </Grid>
 </UserControl>

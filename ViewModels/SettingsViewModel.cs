@@ -39,22 +39,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public IReadOnlyList<LanguageOption> LanguageOptions { get; }
 
-    public int ThemeIndex
-    {
-        get => (int)Theme;
-        set => Theme = (ThemeMode)value;
-    }
-
     public string Version => "1.0.0";
     public string VersionText => Lang.Text("Settings.About.Version", Version);
 
     partial void OnThemeChanged(ThemeMode value)
     {
         Config.Appearance.Theme = value;
-        OnPropertyChanged(nameof(ThemeIndex));
         App.ApplyTheme(value);
     }
-
 
     partial void OnShowHiddenChanged(bool value) => Config.Files.ShowHidden = value;
     partial void OnShowExtensionsChanged(bool value) => Config.Files.ShowExtensions = value;

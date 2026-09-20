@@ -10,11 +10,18 @@
         <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+        <MacSettingsArch Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">arm64</MacSettingsArch>
+        <MacSettingsArch Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">x86_64</MacSettingsArch>
+        <MacSettingsDylib>$(IntermediateOutputPath)libMacExplorerSettings.dylib</MacSettingsDylib>
     </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
 
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="Native/Settings/**/*.swift" />
+        <MacSettingsSwift Include="Native/Settings/**/*.swift" />
     </ItemGroup>
 
     <ItemGroup>
@@ -32,4 +39,17 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
     </ItemGroup>
+    <Target Name="BuildMacSettings"
+            BeforeTargets="AssignTargetPaths"
+            Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+        <MakeDir Directories="$(IntermediateOutputPath)" />
+        <Exec Command="swiftc -emit-library -parse-as-library -swift-version 5 -target $(MacSettingsArch)-apple-macos13 -module-name MacExplorerSettings -O -framework AppKit -o &quot;$(MacSettingsDylib)&quot; @(MacSettingsSwift->'&quot;%(FullPath)&quot;', ' ')" />
+        <ItemGroup>
+            <Content Include="$(MacSettingsDylib)"
+                     Link="libMacExplorerSettings.dylib"
+                     CopyToOutputDirectory="PreserveNewest"
+                     CopyToPublishDirectory="PreserveNewest"
+                     Visible="false" />
+        </ItemGroup>
+    </Target>
 </Project>
