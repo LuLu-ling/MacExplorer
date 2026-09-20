@@ -27,12 +27,8 @@
         <Border x:Name="TitleBarHost" Background="Transparent"
                 Height="{x:Static native:WindowChrome.TitleBarHeight}"
                 PointerPressed="TitleBar_OnPointerPressed">
-            <Grid ColumnDefinitions="Auto,*" Margin="0,6,0,0">
-                <Panel Width="{x:Static native:WindowChrome.TrafficLightInset}">
-                    <ctrl:TrafficLights HorizontalAlignment="Center" VerticalAlignment="Center" />
-                </Panel>
-                <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,*"
-                      PointerWheelChanged="TabStrip_OnPointerWheelChanged">
+            <Grid ColumnDefinitions="Auto,Auto,*" Margin="78,6,0,0"
+                  PointerWheelChanged="TabStrip_OnPointerWheelChanged">
                 <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                     <RepeatButton x:Name="TabScrollDecreaseButton" Classes="TabScrollButton"
                                   Width="0" Opacity="0" IsHitTestVisible="False"
@@ -115,7 +111,6 @@
                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE710;" FontSize="12" />
                 </Button>
                 <Rectangle x:Name="DragAreaRectangle" Grid.Column="2" Fill="Transparent" />
-            </Grid>
             </Grid>
         </Border>
 
