@@ -12,6 +12,7 @@ public static class Config
         _ = Window.WidthConfig;
         _ = Sidebar.PinsConfig;
         _ = Sidebar.LocationOrderConfig;
+        _ = Sidebar.SectionOrderConfig;
         _ = Layout.KindConfig;
 
         _ = Files.ShowHiddenConfig;
@@ -59,10 +60,12 @@ public static class Config
         public static ConfigItem<bool> IsOpenConfig { get; } = ConfigService.Register("SidebarOpen", true);
         public static ConfigItem<List<string>> PinsConfig { get; } = ConfigService.Register("SidebarPins", DefaultPins);
         public static ConfigItem<List<string>> LocationOrderConfig { get; } = ConfigService.Register("SidebarLocationOrder", static () => new List<string>());
+        public static ConfigItem<List<string>> SectionOrderConfig { get; } = ConfigService.Register("SidebarSectionOrder", static () => new List<string>());
         public static double Width { get => WidthConfig.GetValue(); set => WidthConfig.SetValue(value); }
         public static bool IsOpen { get => IsOpenConfig.GetValue(); set => IsOpenConfig.SetValue(value); }
         public static List<string> Pins { get => PinsConfig.GetValue(); set => PinsConfig.SetValue(value); }
         public static List<string> LocationOrder { get => LocationOrderConfig.GetValue(); set => LocationOrderConfig.SetValue(value); }
+        public static List<string> SectionOrder { get => SectionOrderConfig.GetValue(); set => SectionOrderConfig.SetValue(value); }
 
 
 

@@ -29,24 +29,26 @@ public sealed partial class SidebarViewModel : ViewModelBase
     {
         var selectedId = SelectedItem?.Id;
         Items.Clear();
-        Items.Add(new SidebarItem
+
+        var home = new SidebarItem
         {
             Id = "home",
             Title = Lang.Text("Places.Home"),
             Glyph = Glyphs.ForPath(SpecialFolders.HomeKey),
             Kind = SidebarKind.Home,
             Path = SpecialFolders.HomeKey
-        });
+        };
 
-        AddSection("favorites", Lang.Text("Places.Favorites"), Glyphs.Pin, MacFinder.FavoriteFolders().Select(pin => new SidebarItem
-        {
-            Id = "pin:" + pin,
-            Title = Path.GetFileName(pin.TrimEnd('/')) is { Length: > 0 } n ? n : pin,
-            Glyph = Glyphs.ForPath(pin),
-            Kind = SidebarKind.Favorite,
-            Path = pin,
-            Depth = 1
-        }));
+        var favorites = Section("favorites", Lang.Text("Places.Favorites"), Glyphs.Pin,
+            MacFinder.FavoriteFolders().Select(pin => new SidebarItem
+            {
+                Id = "pin:" + pin,
+                Title = Path.GetFileName(pin.TrimEnd('/')) is { Length: > 0 } n ? n : pin,
+                Glyph = Glyphs.ForPath(pin),
+                Kind = SidebarKind.Favorite,
+                Path = pin,
+                Depth = 1
+            }));
 
         var locations = new List<SidebarItem>();
         if (SpecialFolders.ICloudExists())
@@ -81,11 +83,21 @@ public sealed partial class SidebarViewModel : ViewModelBase
             Depth = 1
         });
         ApplyOrder(locations, Config.Sidebar.LocationOrder);
-        AddSection("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations);
 
+        var blocks = new List<(string Id, List<SidebarItem> Rows)>
+        {
+            ("home", [home]),
+            ("favorites", favorites),
+            ("locations", Section("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations)),
+            ("tags", Section("tags", Lang.Text("Places.FileTags"), Glyphs.Tag, MacTags.All().Select(Tag))),
+        };
+        ApplyOrder(blocks, Config.Sidebar.SectionOrder, static b => b.Id);
 
-        AddSection("tags", Lang.Text("Places.FileTags"), Glyphs.Tag,
-            MacTags.All().Select(Tag));
+        foreach (var block in blocks)
+        {
+            foreach (var row in block.Rows)
+                Items.Add(row);
+        }
 
         if (selectedId is not null)
         {
@@ -118,31 +130,45 @@ public sealed partial class SidebarViewModel : ViewModelBase
         SelectedItem = best;
     }
 
-    public (int Lo, int Hi)? ReorderRange(int index)
+    public (int Start, int Count)[]? ReorderUnits(int index)
     {
         if ((uint)index >= (uint)Items.Count)
             return null;
         var item = Items[index];
-        if (!item.CanReorder)
+        if (item.IsSection || item.Kind == SidebarKind.Home)
+            return BlockUnits();
+        if (ReorderRange(index) is not { } range)
             return null;
-        var lo = index;
-        var hi = index;
-        while (lo > 0 && Items[lo - 1].CanReorder)
-            lo--;
-        while (hi + 1 < Items.Count && Items[hi + 1].CanReorder)
-            hi++;
-        return hi > lo ? (lo, hi) : null;
+        var n = range.Hi - range.Lo + 1;
+        var units = new (int Start, int Count)[n];
+        for (var i = 0; i < n; i++)
+            units[i] = (range.Lo + i, 1);
+        return units;
     }
 
-
-    public bool TryMove(int from, int to)
+    public bool TryMoveUnits(IReadOnlyList<(int Start, int Count)> units, int from, int to)
     {
-        if ((uint)from >= (uint)Items.Count || (uint)to >= (uint)Items.Count || from == to)
+        if ((uint)from >= (uint)units.Count || (uint)to >= (uint)units.Count || from == to)
             return false;
-        if (ReorderRange(from) is not { } range || to < range.Lo || to > range.Hi)
+        var src = units[from];
+        var dst = units[to];
+        if (src.Count <= 0 || dst.Count <= 0 ||
+            (uint)src.Start >= (uint)Items.Count || (uint)dst.Start >= (uint)Items.Count)
             return false;
-        var kind = Items[from].Kind;
-        Items.Move(from, to);
+
+        var kind = Items[src.Start].Kind;
+        if (from < to)
+        {
+            var insert = dst.Start + dst.Count - 1;
+            for (var i = 0; i < src.Count; i++)
+                Items.Move(src.Start, insert);
+        }
+        else
+        {
+            for (var i = 0; i < src.Count; i++)
+                Items.Move(src.Start + i, dst.Start + i);
+        }
+
         Persist(kind);
         return true;
     }
@@ -169,20 +195,39 @@ public sealed partial class SidebarViewModel : ViewModelBase
         }
     }
 
-    private void AddSection(string id, string title, string glyph, IEnumerable<SidebarItem> children)
+    private (int Start, int Count)[] BlockUnits()
     {
-        var section = new SidebarItem
+        var units = new List<(int Start, int Count)>();
+        for (var i = 0; i < Items.Count;)
         {
-            Id = id,
-            Title = title,
-            Glyph = glyph,
-            Kind = SidebarKind.Section,
-            IsSection = true,
-            IsExpanded = true
+            var start = i++;
+            while (i < Items.Count && !IsBlockStart(Items[i]))
+                i++;
+            units.Add((start, i - start));
+        }
+
+        return units.ToArray();
+    }
+
+    private static bool IsBlockStart(SidebarItem item) =>
+        item.IsSection || item.Kind == SidebarKind.Home;
+
+    private static List<SidebarItem> Section(string id, string title, string glyph, IEnumerable<SidebarItem> children)
+    {
+        var rows = new List<SidebarItem>
+        {
+            new()
+            {
+                Id = id,
+                Title = title,
+                Glyph = glyph,
+                Kind = SidebarKind.Section,
+                IsSection = true,
+                IsExpanded = true
+            }
         };
-        Items.Add(section);
-        foreach (var child in children)
-            Items.Add(child);
+        rows.AddRange(children);
+        return rows;
     }
 
     private void Persist(SidebarKind kind)
@@ -209,26 +254,54 @@ public sealed partial class SidebarViewModel : ViewModelBase
                         .Select(static i => i.Id)
                 ];
                 break;
+            case SidebarKind.Home:
+            case SidebarKind.Section:
+                Config.Sidebar.SectionOrder =
+                [
+                    .. BlockUnits().Select(u => Items[u.Start].Id)
+                ];
+                break;
         }
     }
 
-    private static void ApplyOrder(List<SidebarItem> items, List<string> ids)
+    private (int Lo, int Hi)? ReorderRange(int index)
+    {
+        if ((uint)index >= (uint)Items.Count)
+            return null;
+        var item = Items[index];
+        if (!item.CanReorder)
+            return null;
+        var lo = index;
+        var hi = index;
+        while (lo > 0 && Items[lo - 1].CanReorder)
+            lo--;
+        while (hi + 1 < Items.Count && Items[hi + 1].CanReorder)
+            hi++;
+        return hi > lo ? (lo, hi) : null;
+    }
+
+    private static void ApplyOrder(List<SidebarItem> items, List<string> ids) =>
+        ApplyOrder(items, ids, static i => i.Id);
+
+    private static void ApplyOrder<T>(List<T> items, List<string> ids, Func<T, string> key)
     {
         if (ids.Count == 0 || items.Count < 2)
             return;
-        var map = items.ToDictionary(static i => i.Id, StringComparer.Ordinal);
-        var ordered = new List<SidebarItem>(items.Count);
+        var map = items.ToDictionary(key, StringComparer.Ordinal);
+        var ordered = new List<T>(items.Count);
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var id in ids)
         {
             if (map.TryGetValue(id, out var item) && seen.Add(id))
                 ordered.Add(item);
         }
+
         foreach (var item in items)
         {
-            if (seen.Add(item.Id))
+            if (seen.Add(key(item)))
                 ordered.Add(item);
         }
+
         items.Clear();
         items.AddRange(ordered);
     }

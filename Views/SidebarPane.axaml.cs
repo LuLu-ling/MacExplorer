@@ -16,9 +16,9 @@ public partial class SidebarPane : UserControl
 {
     private readonly DragHoverOpen _hoverOpen = new();
     private int _from = -1;
-    private int _hover = -1;
-    private int _lo;
-    private int _hi;
+    private int _fromRun;
+    private int _hoverRun;
+    private (int Start, int Count)[]? _units;
     private double _pressY;
     private bool _dragging;
     private Control? _source;
@@ -65,14 +65,11 @@ public partial class SidebarPane : UserControl
         _from = VM.Sidebar.Items.IndexOf(item);
         if (_from < 0)
             return;
-        _hover = _from;
+        _units = VM.Sidebar.ReorderUnits(_from);
+        _fromRun = _hoverRun = IndexOf(_units, _from);
         _dragging = false;
         _source = row;
         _pressY = e.GetPosition(panel).Y;
-        if (VM.Sidebar.ReorderRange(_from) is { } range)
-            (_lo, _hi) = range;
-        else
-            _lo = _hi = _from;
         e.Handled = true;
     }
 
@@ -84,36 +81,45 @@ public partial class SidebarPane : UserControl
             return;
         if (!e.GetCurrentPoint(_source).Properties.IsLeftButtonPressed)
             return;
-        if (_hi <= _lo || (uint)_from >= (uint)panel.Children.Count || (uint)_hi >= (uint)panel.Children.Count)
+        if (_units is not { Length: > 1 } units || (uint)_fromRun >= (uint)units.Length)
+            return;
+
+        var from = units[_fromRun];
+        var last = units[^1];
+        if ((uint)from.Start >= (uint)panel.Children.Count ||
+            (uint)(last.Start + last.Count - 1) >= (uint)panel.Children.Count)
             return;
 
         var y = e.GetPosition(panel).Y;
+        var slot = ReorderShift.RunSize(panel.Children, from.Start, from.Count, horizontal: false);
         if (!_dragging)
         {
             if (Math.Abs(y - _pressY) < FileDrag.Threshold)
                 return;
             _dragging = true;
-            _source.Classes.Set("dragging", true);
-            panel.Children[_from].ZIndex = 100;
-            ReorderShift.Item(panel.Children[_from], 0, horizontal: false, animate: false);
+            MarkRun(panel, from, dragging: true);
+            ReorderShift.Offset(panel.Children, from.Start, from.Count, 0, horizontal: false, animate: false);
             e.Pointer.Capture(_source);
         }
-        var origin = Top(panel, _from);
-        var height = panel.Children[_from].Bounds.Height;
-        var min = Top(panel, _lo) - origin;
-        var max = Top(panel, _hi) + panel.Children[_hi].Bounds.Height - origin - height;
+
+        var origin = panel.Children[from.Start].Bounds.Y;
+        var first = units[0];
+        var min = panel.Children[first.Start].Bounds.Y - origin;
+        var max = panel.Children[last.Start].Bounds.Y
+            + ReorderShift.RunSize(panel.Children, last.Start, last.Count, horizontal: false)
+            - origin - slot;
         var delta = Math.Clamp(y - _pressY, min, max);
-        var hover = ReorderShift.HoverAt(
-            panel, _from, origin + height / 2 + delta, horizontal: false, _lo, _hi);
+        var hover = ReorderShift.HoverRun(
+            panel.Children, _fromRun, origin + slot / 2 + delta, horizontal: false, units);
         if (delta <= min + 0.5)
-            hover = _lo;
+            hover = 0;
         else if (delta >= max - 0.5)
-            hover = _hi;
-        ReorderShift.Item(panel.Children[_from], delta, horizontal: false, animate: false);
-        if (hover != _hover)
+            hover = units.Length - 1;
+        ReorderShift.Offset(panel.Children, from.Start, from.Count, delta, horizontal: false, animate: false);
+        if (hover != _hoverRun)
         {
-            ReorderShift.Siblings(panel, _from, hover, height, horizontal: false);
-            _hover = hover;
+            ReorderShift.SiblingRuns(panel.Children, _fromRun, hover, units, slot, horizontal: false);
+            _hoverRun = hover;
         }
     }
 
@@ -150,26 +156,58 @@ public partial class SidebarPane : UserControl
         if (_from < 0 || VM is null)
             return;
 
-        var from = _from;
-        var to = _hover;
+        var fromRun = _fromRun;
+        var toRun = _hoverRun;
+        var units = _units;
         var dragged = _dragging;
-        var panel = ListPanel;
         _from = -1;
-        _hover = -1;
+        _fromRun = 0;
+        _hoverRun = 0;
+        _units = null;
         _dragging = false;
-        if (_source is not null)
-            _source.Classes.Set("dragging", false);
         _source = null;
-        if (panel is not null)
+        if (ListPanel is { } panel)
         {
             foreach (var child in panel.Children)
+            {
                 child.ZIndex = 0;
+                RowOf(child)?.Classes.Set("dragging", false);
+            }
             ReorderShift.Reset(panel);
         }
 
-        if (dragged && to >= 0 && to != from)
-            VM.Sidebar.TryMove(from, to);
+        if (dragged && units is { Length: > 1 } && toRun != fromRun)
+            VM.Sidebar.TryMoveUnits(units, fromRun, toRun);
     }
+
+    private static void MarkRun(Panel panel, (int Start, int Count) run, bool dragging)
+    {
+        var last = Math.Min(run.Start + run.Count, panel.Children.Count);
+        for (var i = run.Start; i < last; i++)
+        {
+            var child = panel.Children[i];
+            child.ZIndex = dragging ? 100 : 0;
+            if (RowOf(child) is { } row && !row.Classes.Contains("collapsed"))
+                row.Classes.Set("dragging", dragging);
+        }
+    }
+
+    private static int IndexOf((int Start, int Count)[]? units, int index)
+    {
+        if (units is null)
+            return 0;
+        for (var i = 0; i < units.Length; i++)
+        {
+            var (start, count) = units[i];
+            if (index >= start && index < start + count)
+                return i;
+        }
+
+        return 0;
+    }
+
+    private static Border? RowOf(Control child) =>
+        child as Border ?? child.FindDescendantOfType<Border>();
 
     private void OnContextRequested(object? sender, ContextRequestedEventArgs e)
     {
@@ -415,13 +453,6 @@ public partial class SidebarPane : UserControl
         return p.X >= 0 && p.Y >= 0 && p.X <= host.Bounds.Width && p.Y <= host.Bounds.Height;
     }
 
-    private static double Top(Panel panel, int index)
-    {
-        var y = 0.0;
-        for (var i = 0; i < index && i < panel.Children.Count; i++)
-            y += panel.Children[i].Bounds.Height;
-        return y;
-    }
 
 
 }

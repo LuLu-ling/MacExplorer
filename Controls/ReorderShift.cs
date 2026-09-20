@@ -97,6 +97,112 @@ internal static class ReorderShift
         }
     }
 
+    public static double RunSize(IReadOnlyList<Control> items, int start, int count, bool horizontal)
+    {
+        if (count <= 0 || (uint)start >= (uint)items.Count)
+            return 0;
+        if (count == 1)
+            return Extent(items[start], horizontal);
+        var from = Pos(items[start], horizontal);
+        var end = start + count;
+        if ((uint)end < (uint)items.Count)
+            return Pos(items[end], horizontal) - from;
+        var last = items[end - 1];
+        return Pos(last, horizontal) + Extent(last, horizontal) - from;
+    }
+
+    public static int HoverRun(
+        IReadOnlyList<Control> items,
+        int fromRun,
+        double center,
+        bool horizontal,
+        IReadOnlyList<(int Start, int Count)> runs)
+    {
+        var n = runs.Count;
+        if ((uint)fromRun >= (uint)n)
+            return fromRun;
+
+        var mids = new double[n];
+        var sizes = new double[n];
+        for (var i = 0; i < n; i++)
+        {
+            var (start, count) = runs[i];
+            sizes[i] = RunSize(items, start, count, horizontal);
+            var pos = (uint)start < (uint)items.Count ? Pos(items[start], horizontal) : 0;
+            mids[i] = sizes[i] < 1 ? pos : pos + sizes[i] / 2;
+        }
+
+        var hover = fromRun;
+        var prev = fromRun;
+        for (var i = fromRun + 1; i < n; i++)
+        {
+            if (sizes[i] < 1)
+                continue;
+            if (center >= (mids[prev] + mids[i]) / 2)
+                hover = i;
+            else
+                break;
+            prev = i;
+        }
+
+        prev = fromRun;
+        for (var i = fromRun - 1; i >= 0; i--)
+        {
+            if (sizes[i] < 1)
+                continue;
+            if (center <= (mids[i] + mids[prev]) / 2)
+                hover = i;
+            else
+                break;
+            prev = i;
+        }
+
+        return hover;
+    }
+
+    public static void SiblingRuns(
+        IReadOnlyList<Control> items,
+        int fromRun,
+        int hoverRun,
+        IReadOnlyList<(int Start, int Count)> runs,
+        double slot,
+        bool horizontal)
+    {
+        if ((uint)fromRun >= (uint)runs.Count || (uint)hoverRun >= (uint)runs.Count)
+            return;
+
+        var fromStart = runs[fromRun].Start;
+        var fromEnd = fromStart + runs[fromRun].Count;
+        var hoverStart = runs[hoverRun].Start;
+        var hoverEnd = hoverStart + runs[hoverRun].Count;
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (i >= fromStart && i < fromEnd)
+                continue;
+            var shift = 0.0;
+            if (fromRun < hoverRun && i >= fromEnd && i < hoverEnd)
+                shift = -slot;
+            else if (fromRun > hoverRun && i >= hoverStart && i < fromStart)
+                shift = slot;
+            Item(items[i], shift, horizontal, animate: true);
+        }
+    }
+
+    public static void Offset(
+        IReadOnlyList<Control> items, int start, int count, double delta, bool horizontal, bool animate)
+    {
+        var last = Math.Min(start + count, items.Count);
+        for (var i = start; i < last; i++)
+            Item(items[i], delta, horizontal, animate);
+    }
+
+    private static double Pos(Control child, bool horizontal)
+    {
+        var b = child.Bounds;
+        return horizontal ? b.X : b.Y;
+    }
+
     public static void Reset(Panel panel, bool animate = false)
     {
         foreach (var child in panel.Children)
