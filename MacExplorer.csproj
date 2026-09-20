@@ -22,6 +22,7 @@
     <ItemGroup>
         <None Include="Native/Settings/**/*.swift" />
         <MacSettingsSwift Include="Native/Settings/**/*.swift" />
+        <None Remove="libMacExplorerSettings.dylib" />
     </ItemGroup>
 
     <ItemGroup>

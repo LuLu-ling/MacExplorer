@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Platform;
 using MacExplorer.Localization;
 using MacExplorer.Models;
@@ -12,7 +13,7 @@ public sealed class NativeSettingsHost : NativeControlHost
 {
     private MacSettingsPane? _pane;
     private SettingsViewModel? _model;
-    private bool _owns;
+    private bool _echo;
 
     public NativeSettingsHost()
     {
@@ -39,42 +40,42 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.ThemeChanged += OnThemeChanged;
         _pane.LanguageChanged += OnLanguageChanged;
         _pane.ToggleChanged += OnToggleChanged;
-        _owns = true;
         AttachModel(DataContext as SettingsViewModel);
-        Push();
         MacAppearance.ApplyTo(_pane.View);
         return new PlatformHandle(_pane.View, "NSView");
     }
 
     protected override void DestroyNativeControlCore(IPlatformHandle control)
     {
-        if (!_owns)
+        if (_pane is null)
         {
             base.DestroyNativeControlCore(control);
             return;
         }
 
-        if (_pane is { } pane)
-        {
-            pane.ThemeChanged -= OnThemeChanged;
-            pane.LanguageChanged -= OnLanguageChanged;
-            pane.ToggleChanged -= OnToggleChanged;
-            pane.Dispose();
-            _pane = null;
-        }
-
-        _owns = false;
+        _pane.ThemeChanged -= OnThemeChanged;
+        _pane.LanguageChanged -= OnLanguageChanged;
+        _pane.ToggleChanged -= OnToggleChanged;
+        _pane.Dispose();
+        _pane = null;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LocalizationService.LanguageChanged += OnLanguageResourcesChanged;
+        ActualThemeVariantChanged += OnThemeVariantChanged;
+        if (Application.Current is { } app)
+            app.ActualThemeVariantChanged += OnThemeVariantChanged;
         base.OnAttachedToVisualTree(e);
+        Push();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LocalizationService.LanguageChanged -= OnLanguageResourcesChanged;
+        ActualThemeVariantChanged -= OnThemeVariantChanged;
+        if (Application.Current is { } app)
+            app.ActualThemeVariantChanged -= OnThemeVariantChanged;
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -97,9 +98,15 @@ public sealed class NativeSettingsHost : NativeControlHost
         Push();
     }
 
-    private void OnModelChanged(object? sender, PropertyChangedEventArgs e) => Push();
+    private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_echo)
+            Push();
+    }
 
     private void OnLanguageResourcesChanged() => Push();
+
+    private void OnThemeVariantChanged(object? sender, EventArgs e) => Push();
 
     private void OnThemeChanged(int theme)
     {
@@ -107,14 +114,14 @@ public sealed class NativeSettingsHost : NativeControlHost
             _model.Theme = (ThemeMode)theme;
     }
 
-    private void OnLanguageChanged(int index)
+    private void OnLanguageChanged(int index) => FromNative(() =>
     {
         if (_model is null || index < 0 || index >= _model.LanguageOptions.Count)
             return;
         _model.SelectedLanguage = _model.LanguageOptions[index];
-    }
+    });
 
-    private void OnToggleChanged(int id, bool on)
+    private void OnToggleChanged(int id, bool on) => FromNative(() =>
     {
         if (_model is null)
             return;
@@ -136,6 +143,19 @@ public sealed class NativeSettingsHost : NativeControlHost
                 _model.ShowRecents = on;
                 break;
         }
+    });
+
+    private void FromNative(Action set)
+    {
+        _echo = true;
+        try
+        {
+            set();
+        }
+        finally
+        {
+            _echo = false;
+        }
     }
 
     private void Push()
@@ -150,50 +170,75 @@ public sealed class NativeSettingsHost : NativeControlHost
     {
         var languages = vm.LanguageOptions;
         var languageIndex = 0;
-        for (var i = 0; i < languages.Count; i++)
-        {
-            if (ReferenceEquals(languages[i], vm.SelectedLanguage))
-            {
-                languageIndex = i;
-                break;
-            }
-        }
-
         var titles = new string[languages.Count];
         for (var i = 0; i < languages.Count; i++)
-            titles[i] = languages[i].Title;
-
-        return new MacSettingsSnapshot
         {
-            Page = vm.SelectedPage switch
+            titles[i] = languages[i].Title;
+            if (ReferenceEquals(languages[i], vm.SelectedLanguage))
+                languageIndex = i;
+        }
+
+        return new MacSettingsSnapshot(
+            Page: vm.SelectedPage switch
             {
                 "Language" => 1,
                 "Folders" => 2,
                 "About" => 3,
                 _ => 0
             },
-            Theme = (int)vm.Theme,
-            LanguageIndex = languageIndex,
-            Flags = MacSettingsToggle.Pack(
+            Theme: (int)vm.Theme,
+            LanguageIndex: languageIndex,
+            Flags: MacSettingsToggle.Pack(
                 vm.ShowHidden, vm.ShowExtensions, vm.ShowQuickAccess, vm.ShowVolumes, vm.ShowRecents),
-            AppearanceTitle = Lang.Text("Settings.Nav.Appearance"),
-            LanguageTitle = Lang.Text("Settings.Language.Title"),
-            FoldersTitle = Lang.Text("Settings.Nav.Folders"),
-            AboutTitle = Lang.Text("Settings.Nav.About"),
-            ThemeLabel = Lang.Text("Settings.Theme"),
-            ThemeSystem = Lang.Text("Settings.Theme.System"),
-            ThemeLight = Lang.Text("Settings.Theme.Light"),
-            ThemeDark = Lang.Text("Settings.Theme.Dark"),
-            LanguageLabel = Lang.Text("Settings.Language.UiLanguage"),
-            Languages = titles,
-            ShowHidden = Lang.Text("Settings.Folders.ShowHidden"),
-            ShowExtensions = Lang.Text("Settings.Folders.ShowExtensions"),
-            ShowQuickAccess = Lang.Text("Settings.Folders.ShowQuickAccess"),
-            ShowVolumes = Lang.Text("Settings.Folders.ShowVolumes"),
-            ShowRecents = Lang.Text("Settings.Folders.ShowRecents"),
-            AppName = "MacExplorer",
-            Version = vm.VersionText,
-            Description = Lang.Text("Settings.About.Description")
-        };
+            PageTitles: Join(
+                Lang.Text("Settings.Nav.Appearance"),
+                Lang.Text("Settings.Language.Title"),
+                Lang.Text("Settings.Nav.Folders"),
+                Lang.Text("Settings.Nav.About")),
+            ThemeLabel: Lang.Text("Settings.Theme"),
+            ThemeOptions: Join(
+                Lang.Text("Settings.Theme.System"),
+                Lang.Text("Settings.Theme.Light"),
+                Lang.Text("Settings.Theme.Dark")),
+            LanguageLabel: Lang.Text("Settings.Language.UiLanguage"),
+            Languages: Join(titles),
+            FolderLabels: Join(
+                Lang.Text("Settings.Folders.ShowHidden"),
+                Lang.Text("Settings.Folders.ShowExtensions"),
+                Lang.Text("Settings.Folders.ShowQuickAccess"),
+                Lang.Text("Settings.Folders.ShowVolumes"),
+                Lang.Text("Settings.Folders.ShowRecents")),
+            AppName: "MacExplorer",
+            Version: vm.VersionText,
+            Description: Lang.Text("Settings.About.Description"),
+            CardArgb: Palette.Card,
+            StrokeArgb: Palette.Stroke);
+    }
+
+    private static string Join(params string[] parts) => string.Join('\n', parts);
+
+    private static class Palette
+    {
+        public static uint Card => Resolve("LayerFillColorDefaultBrush", 0xFFF3F3F3);
+        public static uint Stroke => Resolve("CardStrokeColorDefaultBrush", 0x26000000);
+
+        private static uint Resolve(string key, uint fallback)
+        {
+            var app = Application.Current;
+            if (app is null || !app.TryGetResource(key, app.ActualThemeVariant, out var value))
+                return fallback;
+            return value switch
+            {
+                ISolidColorBrush brush => Pack(brush.Color, brush.Opacity),
+                Color color => Pack(color, 1),
+                _ => fallback
+            };
+        }
+
+        private static uint Pack(Color color, double opacity)
+        {
+            var alpha = (byte)Math.Clamp(Math.Round(color.A * opacity), 0, 255);
+            return (uint)(alpha << 24 | color.R << 16 | color.G << 8 | color.B);
+        }
     }
 }

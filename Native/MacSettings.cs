@@ -3,31 +3,22 @@ using Avalonia.Threading;
 
 namespace MacExplorer.Native;
 
-internal sealed class MacSettingsSnapshot
-{
-    public int Page { get; init; }
-    public int Theme { get; init; }
-    public int LanguageIndex { get; init; }
-    public int Flags { get; init; }
-    public string AppearanceTitle { get; init; } = "";
-    public string LanguageTitle { get; init; } = "";
-    public string FoldersTitle { get; init; } = "";
-    public string AboutTitle { get; init; } = "";
-    public string ThemeLabel { get; init; } = "";
-    public string ThemeSystem { get; init; } = "";
-    public string ThemeLight { get; init; } = "";
-    public string ThemeDark { get; init; } = "";
-    public string LanguageLabel { get; init; } = "";
-    public string[] Languages { get; init; } = [];
-    public string ShowHidden { get; init; } = "";
-    public string ShowExtensions { get; init; } = "";
-    public string ShowQuickAccess { get; init; } = "";
-    public string ShowVolumes { get; init; } = "";
-    public string ShowRecents { get; init; } = "";
-    public string AppName { get; init; } = "";
-    public string Version { get; init; } = "";
-    public string Description { get; init; } = "";
-}
+internal readonly record struct MacSettingsSnapshot(
+    int Page,
+    int Theme,
+    int LanguageIndex,
+    int Flags,
+    string PageTitles,
+    string ThemeLabel,
+    string ThemeOptions,
+    string LanguageLabel,
+    string Languages,
+    string FolderLabels,
+    string AppName,
+    string Version,
+    string Description,
+    uint CardArgb,
+    uint StrokeArgb);
 
 internal static class MacSettingsToggle
 {
@@ -49,7 +40,7 @@ internal static class MacSettingsToggle
     }
 }
 
-/// <summary>Owns one Swift AppKit settings pane and forwards mutations to C#.</summary>
+/// <summary>Owns one AppKit settings pane and forwards mutations to C#.</summary>
 internal sealed class MacSettingsPane : IDisposable
 {
     private const string Lib = "MacExplorerSettings";
@@ -66,6 +57,7 @@ internal sealed class MacSettingsPane : IDisposable
 
     private IntPtr _handle;
     private GCHandle _self;
+    private MacSettingsSnapshot _applied;
     private bool _disposed;
 
     static MacSettingsPane()
@@ -102,52 +94,40 @@ internal sealed class MacSettingsPane : IDisposable
         return pane;
     }
 
-    public void Apply(MacSettingsSnapshot snapshot)
+    public void Apply(in MacSettingsSnapshot snapshot)
     {
-        if (_disposed || _handle == IntPtr.Zero)
+        if (_disposed || _handle == IntPtr.Zero || snapshot == _applied)
             return;
-        using var appearanceTitle = new Utf8(snapshot.AppearanceTitle);
-        using var languageTitle = new Utf8(snapshot.LanguageTitle);
-        using var foldersTitle = new Utf8(snapshot.FoldersTitle);
-        using var aboutTitle = new Utf8(snapshot.AboutTitle);
-        using var themeLabel = new Utf8(snapshot.ThemeLabel);
-        using var themeSystem = new Utf8(snapshot.ThemeSystem);
-        using var themeLight = new Utf8(snapshot.ThemeLight);
-        using var themeDark = new Utf8(snapshot.ThemeDark);
-        using var languageLabel = new Utf8(snapshot.LanguageLabel);
-        using var languages = new Utf8(string.Join('\n', snapshot.Languages));
-        using var showHidden = new Utf8(snapshot.ShowHidden);
-        using var showExtensions = new Utf8(snapshot.ShowExtensions);
-        using var showQuickAccess = new Utf8(snapshot.ShowQuickAccess);
-        using var showVolumes = new Utf8(snapshot.ShowVolumes);
-        using var showRecents = new Utf8(snapshot.ShowRecents);
-        using var appName = new Utf8(snapshot.AppName);
-        using var version = new Utf8(snapshot.Version);
-        using var description = new Utf8(snapshot.Description);
-        Native.MXSettingsApply(
-            _handle,
-            snapshot.Page,
-            snapshot.Theme,
-            snapshot.LanguageIndex,
-            snapshot.Flags,
-            appearanceTitle.Ptr,
-            languageTitle.Ptr,
-            foldersTitle.Ptr,
-            aboutTitle.Ptr,
-            themeLabel.Ptr,
-            themeSystem.Ptr,
-            themeLight.Ptr,
-            themeDark.Ptr,
-            languageLabel.Ptr,
-            languages.Ptr,
-            showHidden.Ptr,
-            showExtensions.Ptr,
-            showQuickAccess.Ptr,
-            showVolumes.Ptr,
-            showRecents.Ptr,
-            appName.Ptr,
-            version.Ptr,
-            description.Ptr);
+        _applied = snapshot;
+        using var utf8 = new Utf8(
+            snapshot.PageTitles,
+            snapshot.ThemeLabel,
+            snapshot.ThemeOptions,
+            snapshot.LanguageLabel,
+            snapshot.Languages,
+            snapshot.FolderLabels,
+            snapshot.AppName,
+            snapshot.Version,
+            snapshot.Description);
+        var payload = new Payload
+        {
+            Page = snapshot.Page,
+            Theme = snapshot.Theme,
+            LanguageIndex = snapshot.LanguageIndex,
+            Flags = snapshot.Flags,
+            CardArgb = snapshot.CardArgb,
+            StrokeArgb = snapshot.StrokeArgb,
+            PageTitles = utf8[0],
+            ThemeLabel = utf8[1],
+            ThemeOptions = utf8[2],
+            LanguageLabel = utf8[3],
+            Languages = utf8[4],
+            FolderLabels = utf8[5],
+            AppName = utf8[6],
+            Version = utf8[7],
+            Description = utf8[8]
+        };
+        Native.MXSettingsApply(_handle, ref payload);
     }
 
     public void Dispose()
@@ -203,11 +183,31 @@ internal sealed class MacSettingsPane : IDisposable
         });
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Payload
+    {
+        public int Page, Theme, LanguageIndex, Flags;
+        public uint CardArgb, StrokeArgb;
+        public IntPtr PageTitles, ThemeLabel, ThemeOptions, LanguageLabel, Languages, FolderLabels, AppName, Version, Description;
+    }
+
     private readonly struct Utf8 : IDisposable
     {
-        public IntPtr Ptr { get; }
-        public Utf8(string? value) => Ptr = Marshal.StringToCoTaskMemUTF8(value ?? "");
-        public void Dispose() => Marshal.FreeCoTaskMem(Ptr);
+        private readonly IntPtr[] _ptrs;
+        public Utf8(params string[] values)
+        {
+            _ptrs = new IntPtr[values.Length];
+            for (var i = 0; i < values.Length; i++)
+                _ptrs[i] = Marshal.StringToCoTaskMemUTF8(values[i]);
+        }
+
+        public IntPtr this[int i] => _ptrs[i];
+
+        public void Dispose()
+        {
+            foreach (var ptr in _ptrs)
+                Marshal.FreeCoTaskMem(ptr);
+        }
     }
 
     private static class Native
@@ -217,30 +217,7 @@ internal sealed class MacSettingsPane : IDisposable
             IntPtr context, IntCallback themeChanged, IntCallback languageChanged, ToggleCallback toggleChanged);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern void MXSettingsApply(
-            IntPtr view,
-            int page,
-            int theme,
-            int languageIndex,
-            int flags,
-            IntPtr appearanceTitle,
-            IntPtr languageTitle,
-            IntPtr foldersTitle,
-            IntPtr aboutTitle,
-            IntPtr themeLabel,
-            IntPtr themeSystem,
-            IntPtr themeLight,
-            IntPtr themeDark,
-            IntPtr languageLabel,
-            IntPtr languages,
-            IntPtr showHidden,
-            IntPtr showExtensions,
-            IntPtr showQuickAccess,
-            IntPtr showVolumes,
-            IntPtr showRecents,
-            IntPtr appName,
-            IntPtr version,
-            IntPtr description);
+        public static extern void MXSettingsApply(IntPtr view, ref Payload data);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void MXSettingsRelease(IntPtr view);
