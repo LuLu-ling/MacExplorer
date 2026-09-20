@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using MacExplorer.Controls;
-using MacExplorer.Lifecycle;
 using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
@@ -190,30 +189,21 @@ public partial class SidebarPane : UserControl
     {
         if (item.Path is not { Length: > 0 } path || item.IsSection)
             return [];
-
-        List<MacMenuEntry> entries =
-        [
-            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow),
-        ];
-        if (item.Kind == SidebarKind.Favorite)
-            entries.Add(new(Lang.Text("Context.Unfavorite"), () => MacFinder.RemoveFavorite(path), Symbol: MacMenuSymbol.Unfavorite));
-        if (item.Kind == SidebarKind.Location && MacWorkspace.IsEjectable(path))
-            entries.Add(new(Lang.Text("Context.Eject"), () => _ = VM!.EjectVolumeAsync(path), Symbol: MacMenuSymbol.Eject));
         if (item.Kind == SidebarKind.Tag)
         {
-            entries.Add(new("", Separator: true));
-            entries.Add(new(Lang.Text("Common.Action.Rename"), () => BeginTagRename(item), Symbol: MacMenuSymbol.Rename));
-            entries.Add(new(Lang.Text("Common.Action.Delete"), () => _ = VM!.DeleteTagAsync(item.Title), Symbol: MacMenuSymbol.Trash));
-            return [..entries];
+            return
+            [
+                PlaceMenu.OpenWindow(path),
+                new("", Separator: true),
+                new(Lang.Text("Common.Action.Rename"), () => BeginTagRename(item), Symbol: MacMenuSymbol.Rename),
+                new(Lang.Text("Common.Action.Delete"), () => _ = VM!.DeleteTagAsync(item.Title), Symbol: MacMenuSymbol.Trash),
+            ];
         }
-        if (SpecialFolders.IsVirtual(path) || !PathUtil.Exists(path))
-            return [..entries];
 
-        entries.Add(new("", Separator: true));
-        entries.Add(new(Lang.Text("Menu.File.GetInfo"), () => VM!.ShowInfo([path]), Symbol: MacMenuSymbol.Info));
-        if (!SpecialFolders.IsTrash(path))
-            entries.Add(DockEntry(path));
-        return [..entries];
+        return PlaceMenu.For(
+            path,
+            unfavorite: item.Kind == SidebarKind.Favorite,
+            eject: item.Kind == SidebarKind.Location ? VM!.EjectVolumeAsync : null);
     }
 
     private void BeginTagRename(SidebarItem item)
@@ -269,11 +259,6 @@ public partial class SidebarPane : UserControl
             return;
         await VM.RenameTagAsync(item.Title, name);
     }
-
-    private static MacMenuEntry DockEntry(string path) =>
-        MacDock.Contains(path)
-            ? new(Lang.Text("Context.RemoveFromDock"), () => MacDock.Remove(path), Symbol: MacMenuSymbol.Dock)
-            : new(Lang.Text("Context.AddToDock"), () => MacDock.Add(path), Symbol: MacMenuSymbol.Dock);
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {

@@ -8,11 +8,19 @@ using MacExplorer.Services;
 
 namespace MacExplorer.ViewModels;
 
+public enum HomeCardKind
+{
+    Favorite,
+    Drive,
+    Recent
+}
+
 public sealed partial class HomeCard : ObservableObject
 {
     public required string Title { get; init; }
     public required string Path { get; init; }
     public required string Glyph { get; init; }
+    public required HomeCardKind Kind { get; init; }
     public string? Subtitle { get; init; }
     [ObservableProperty] public partial Bitmap? Icon { get; set; }
 }
@@ -44,15 +52,16 @@ public sealed class HomeViewModel : ViewModelBase
     {
         QuickAccess.Clear();
         foreach (var pin in MacFinder.FavoriteFolders().Where(Directory.Exists))
-            QuickAccess.Add(Card(pin, Path.GetFileName(pin.TrimEnd('/'))));
+            QuickAccess.Add(Card(pin, Path.GetFileName(pin.TrimEnd('/')), HomeCardKind.Favorite));
 
         Drives.Clear();
         foreach (var volume in _volumes.List())
-            Drives.Add(Card(volume.Path, volume.Name, Glyphs.Drive));
+            Drives.Add(Card(volume.Path, volume.Name, HomeCardKind.Drive, Glyphs.Drive));
 
         Recents.Clear();
         foreach (var path in Config.Home.Recents.Where(PathUtil.Exists).Take(16))
-            Recents.Add(Card(path, Path.GetFileName(path), File.Exists(path) ? Glyphs.Document : Glyphs.Folder));
+            Recents.Add(Card(path, Path.GetFileName(path), HomeCardKind.Recent,
+                File.Exists(path) ? Glyphs.Document : Glyphs.Folder));
 
         _ = LoadIconsAsync();
         OnPropertyChanged(nameof(ShowQuickAccess));
@@ -60,11 +69,12 @@ public sealed class HomeViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowRecents));
     }
 
-    private static HomeCard Card(string path, string? title, string? glyph = null) => new()
+    private static HomeCard Card(string path, string? title, HomeCardKind kind, string? glyph = null) => new()
     {
         Title = string.IsNullOrEmpty(title) ? path : title,
         Path = path,
-        Glyph = glyph ?? Glyphs.Folder
+        Glyph = glyph ?? Glyphs.Folder,
+        Kind = kind
     };
 
     private async Task LoadIconsAsync()

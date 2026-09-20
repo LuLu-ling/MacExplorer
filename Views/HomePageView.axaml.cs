@@ -1,13 +1,13 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.VisualTree;
-using MacExplorer.Native;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using MacExplorer.Lifecycle;
+using MacExplorer.Native;
 using MacExplorer.Services;
 using MacExplorer.ViewModels;
 
-using MacExplorer.Localization;
 namespace MacExplorer.Views;
 
 public partial class HomePageView : UserControl
@@ -32,10 +32,21 @@ public partial class HomePageView : UserControl
 
     private void Card_OnContextRequested(object? sender, ContextRequestedEventArgs e)
     {
-        var button = (e.Source as Avalonia.Visual)?.FindAncestorOfType<Button>(includeSelf: true);
-        if (button?.Tag is not string path || !Directory.Exists(path))
+        var button = (e.Source as Visual)?.FindAncestorOfType<Button>(includeSelf: true);
+        if (button?.DataContext is not HomeCard card)
+            return;
+        if (TopLevel.GetTopLevel(this)?.DataContext is not MainViewModel main)
+            return;
+
+        var entries = card.Kind switch
+        {
+            HomeCardKind.Favorite => PlaceMenu.For(card.Path, unfavorite: true),
+            HomeCardKind.Drive => PlaceMenu.For(card.Path, eject: main.EjectVolumeAsync),
+            _ => Directory.Exists(card.Path) ? [PlaceMenu.OpenWindow(card.Path)] : []
+        };
+        if (entries.Length == 0)
             return;
         e.Handled = true;
-        MacContextMenu.Show([new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(path), Symbol: MacMenuSymbol.NewWindow)]);
+        MacContextMenu.Show(entries);
     }
 }
