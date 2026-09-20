@@ -35,20 +35,10 @@ public sealed class TrafficLights : Control
     {
         Focusable = false;
         ClipToBounds = false;
-        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch;
-        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch;
     }
 
-    protected override Size MeasureOverride(Size availableSize)
-    {
-        var width = double.IsFinite(availableSize.Width) && availableSize.Width > 0
-            ? availableSize.Width
-            : WindowChrome.TrafficLightInset;
-        var height = double.IsFinite(availableSize.Height) && availableSize.Height > 0
-            ? availableSize.Height
-            : WindowChrome.TitleBarHeight;
-        return new Size(width, height);
-    }
+    protected override Size MeasureOverride(Size availableSize) =>
+        new(WindowChrome.TrafficLightClusterWidth, WindowChrome.TrafficLightDiameter);
 
     protected override Size ArrangeOverride(Size finalSize)
     {
@@ -300,13 +290,13 @@ public sealed class TrafficLights : Control
 
     private static void DrawGlyph(DrawingContext context, int index, Rect rect)
     {
+        var inset = rect.Width * (3.2 / 12);
         var pen = new Pen(index switch
         {
             0 => CloseGlyph,
             1 => MiniGlyph,
             _ => ZoomGlyph
-        }, 1.05, lineCap: PenLineCap.Round);
-        var inset = 3.2;
+        }, rect.Width * (1.05 / 12), lineCap: PenLineCap.Round);
         var x = rect.X + inset;
         var y = rect.Y + inset;
         var s = rect.Width - inset * 2;

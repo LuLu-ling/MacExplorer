@@ -27,9 +27,9 @@
         <Border x:Name="TitleBarHost" Background="Transparent"
                 Height="{x:Static native:WindowChrome.TitleBarHeight}"
                 PointerPressed="TitleBar_OnPointerPressed">
-            <Grid ColumnDefinitions="Auto,*">
+            <Grid ColumnDefinitions="Auto,*" Margin="0,6,0,0">
                 <Panel Width="{x:Static native:WindowChrome.TrafficLightInset}">
-                    <ctrl:TrafficLights />
+                    <ctrl:TrafficLights HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Panel>
                 <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto,*"
                       PointerWheelChanged="TabStrip_OnPointerWheelChanged">
