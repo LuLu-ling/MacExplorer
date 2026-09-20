@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MacExplorer.Infrastructure;
@@ -16,6 +17,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         ShowQuickAccess = Config.Home.ShowQuickAccess;
         ShowVolumes = Config.Home.ShowVolumes;
         ShowRecents = Config.Home.ShowRecents;
+        NavWidth = Config.Settings.NavWidth;
         LanguageOptions =
         [
             new LanguageOption(LocalizationService.Auto),
@@ -36,6 +38,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] public partial bool ShowRecents { get; set; }
     [ObservableProperty] public partial string SelectedPage { get; set; } = "Appearance";
     [ObservableProperty] public partial LanguageOption SelectedLanguage { get; set; } = null!;
+    [ObservableProperty] public partial double NavWidth { get; set; }
 
     public IReadOnlyList<LanguageOption> LanguageOptions { get; }
 
@@ -61,6 +64,31 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     protected override void OnLanguageChanged() => OnPropertyChanged(nameof(VersionText));
+
+    public const double NavMin = 160;
+    public const double NavMax = 480;
+
+    public GridLength NavColumn
+    {
+        get => new(Math.Clamp(NavWidth, NavMin, NavMax));
+        set
+        {
+            if (value.IsAbsolute)
+                NavWidth = Math.Clamp(value.Value, NavMin, NavMax);
+        }
+    }
+
+    partial void OnNavWidthChanged(double value)
+    {
+        var width = Math.Clamp(value, NavMin, NavMax);
+        if (Math.Abs(width - value) > 0.5)
+        {
+            NavWidth = width;
+            return;
+        }
+        Config.Settings.NavWidth = width;
+        OnPropertyChanged(nameof(NavColumn));
+    }
 
     [RelayCommand]
     private void SelectPage(string page) => SelectedPage = page;

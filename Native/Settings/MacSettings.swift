@@ -100,8 +100,8 @@ private final class SettingsView: NSView {
         ]
         NSLayoutConstraint.activate([
             heading.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            heading.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
-            heading.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            heading.leadingAnchor.constraint(equalTo: leadingAnchor),
+            heading.trailingAnchor.constraint(equalTo: trailingAnchor),
             card.topAnchor.constraint(equalTo: heading.bottomAnchor, constant: 12),
             card.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
             card.trailingAnchor.constraint(equalTo: heading.trailingAnchor),

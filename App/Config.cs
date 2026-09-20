@@ -17,6 +17,7 @@ public static class Config
 
         _ = Files.ShowHiddenConfig;
         _ = InfoPane.ShowConfig;
+        _ = Settings.NavWidthConfig;
         _ = Home.RecentsConfig;
         _ = Logging.MinLevelConfig;
         _ = FileVersionConfig;
@@ -148,6 +149,12 @@ public static class Config
         public static ConfigItem<double> WidthConfig { get; } = ConfigService.Register("InfoPaneWidth", 284d);
         public static bool Show { get => ShowConfig.GetValue(); set => ShowConfig.SetValue(value); }
         public static double Width { get => WidthConfig.GetValue(); set => WidthConfig.SetValue(value); }
+    }
+
+    public static class Settings
+    {
+        public static ConfigItem<double> NavWidthConfig { get; } = ConfigService.Register("SettingsNavWidth", 252d);
+        public static double NavWidth { get => NavWidthConfig.GetValue(); set => NavWidthConfig.SetValue(value); }
     }
 
     public static class Home

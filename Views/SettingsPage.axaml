@@ -5,8 +5,15 @@
              xmlns:native="using:MacExplorer.Native"
              x:Class="MacExplorer.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel">
-    <Grid ColumnDefinitions="252,*">
-        <Border Margin="0,0,8,8"
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="{Binding NavColumn, Mode=TwoWay}"
+                              MinWidth="{x:Static vm:SettingsViewModel.NavMin}"
+                              MaxWidth="{x:Static vm:SettingsViewModel.NavMax}" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="240" />
+        </Grid.ColumnDefinitions>
+        <Border Margin="0,0,1,0"
                 CornerRadius="12"
                 Background="{DynamicResource LayerFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
@@ -68,7 +75,9 @@
             </ScrollViewer>
         </Border>
 
+        <GridSplitter Grid.Column="1" Width="2" Background="Transparent"
+                      ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
 
-        <native:NativeSettingsHost Grid.Column="1" />
+        <native:NativeSettingsHost Grid.Column="2" Margin="1,0,4,0" />
     </Grid>
 </UserControl>
