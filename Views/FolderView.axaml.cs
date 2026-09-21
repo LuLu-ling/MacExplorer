@@ -14,6 +14,7 @@ using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
+using MacExplorer.Files;
 using MacExplorer.ViewModels;
 
 
@@ -575,19 +576,40 @@ public partial class FolderView : UserControl
         ];
     }
 
-    private MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab) =>
-    [
-        new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
-        new("", Separator: true),
-        new(Lang.Text("Context.NewFolder"), () => tab.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder),
-        new(Lang.Text("Context.NewFile"), () => tab.NewFileCommand.Execute(null), Symbol: MacMenuSymbol.NewFile),
-        new("", Separator: true),
-        new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste),
-        new(Lang.Text("Group.By"), Children: GroupByMenu(tab), Symbol: MacMenuSymbol.Group),
-        new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null), Symbol: MacMenuSymbol.Refresh),
-        new("", Separator: true),
-        new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info),
-    ];
+    private MacMenuEntry[] BackgroundMenu(ExplorerTabViewModel tab)
+    {
+        var items = new List<MacMenuEntry>
+        {
+            new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
+            new("", Separator: true)
+        };
+        items.AddRange(NewEntries(tab));
+        items.Add(new("", Separator: true));
+        items.Add(new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste));
+        items.Add(new(Lang.Text("Group.By"), Children: GroupByMenu(tab), Symbol: MacMenuSymbol.Group));
+        items.Add(new(Lang.Text("Common.Action.Refresh"), () => tab.RefreshCommand.Execute(null), Symbol: MacMenuSymbol.Refresh));
+        items.Add(new("", Separator: true));
+        items.Add(new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info));
+        return items.ToArray();
+    }
+
+    private static MacMenuEntry[] NewEntries(ExplorerTabViewModel tab)
+    {
+        var folder = new MacMenuEntry(Lang.Text("Context.NewFolder"), () => tab.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder);
+        var kinds = NewFileKinds.All;
+        if (kinds.Count == 0)
+            return [folder];
+
+        var children = new MacMenuEntry[kinds.Count + 1];
+        children[0] = folder;
+        for (var i = 0; i < kinds.Count; i++)
+        {
+            var ext = kinds[i].Extension;
+            children[i + 1] = new(kinds[i].Name, () => tab.NewFileCommand.Execute(ext), Symbol: MacMenuSymbol.NewFile);
+        }
+
+        return [new(Lang.Text("Toolbar.New"), Children: children, Symbol: MacMenuSymbol.NewFolder)];
+    }
 
     internal static MacMenuEntry[] SortByMenu(ExplorerTabViewModel tab)
     {

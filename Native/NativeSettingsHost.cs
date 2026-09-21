@@ -8,6 +8,7 @@ using MacExplorer.Models;
 using MacExplorer.ViewModels;
 using System.Text;
 using MacExplorer.Input;
+using MacExplorer.Files;
 
 namespace MacExplorer.Native;
 
@@ -43,6 +44,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.LanguageChanged += OnLanguageChanged;
         _pane.ToggleChanged += OnToggleChanged;
         _pane.ShortcutChanged += OnShortcutChanged;
+        _pane.FileTypeChanged += OnFileTypeChanged;
         AttachModel(DataContext as SettingsViewModel);
         MacAppearance.ApplyTo(_pane.View);
         return new PlatformHandle(_pane.View, "NSView");
@@ -60,6 +62,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.LanguageChanged -= OnLanguageChanged;
         _pane.ToggleChanged -= OnToggleChanged;
         _pane.ShortcutChanged -= OnShortcutChanged;
+        _pane.FileTypeChanged -= OnFileTypeChanged;
         _pane.Dispose();
         _pane = null;
     }
@@ -68,6 +71,7 @@ public sealed class NativeSettingsHost : NativeControlHost
     {
         LocalizationService.LanguageChanged += OnLanguageResourcesChanged;
         MacExplorer.Input.Shortcuts.Changed += OnShortcutsChanged;
+        NewFileKinds.Changed += OnNewFilesChanged;
         ActualThemeVariantChanged += OnThemeVariantChanged;
         if (Application.Current is { } app)
             app.ActualThemeVariantChanged += OnThemeVariantChanged;
@@ -79,6 +83,7 @@ public sealed class NativeSettingsHost : NativeControlHost
     {
         LocalizationService.LanguageChanged -= OnLanguageResourcesChanged;
         MacExplorer.Input.Shortcuts.Changed -= OnShortcutsChanged;
+        NewFileKinds.Changed -= OnNewFilesChanged;
         ActualThemeVariantChanged -= OnThemeVariantChanged;
         if (Application.Current is { } app)
             app.ActualThemeVariantChanged -= OnThemeVariantChanged;
@@ -153,7 +158,12 @@ public sealed class NativeSettingsHost : NativeControlHost
     private void OnShortcutChanged(int id, int keyCode, int modifiers) =>
         MacExplorer.Input.Shortcuts.HandleNative(id, keyCode, modifiers);
 
+    private void OnFileTypeChanged(int op, int index, int dest, string? text) => FromNative(() =>
+        NewFileKinds.HandleNative(op, index, dest, text));
+
     private void OnShortcutsChanged() => Push();
+
+    private void OnNewFilesChanged() => Push();
 
     private void FromNative(Action set)
     {
@@ -193,8 +203,9 @@ public sealed class NativeSettingsHost : NativeControlHost
             {
                 "Language" => 1,
                 "Folders" => 2,
-                "Shortcuts" => 3,
-                "About" => 4,
+                "NewFiles" => 3,
+                "Shortcuts" => 4,
+                "About" => 5,
                 _ => 0
             },
             Theme: (int)vm.Theme,
@@ -205,6 +216,7 @@ public sealed class NativeSettingsHost : NativeControlHost
                 Lang.Text("Settings.Nav.Appearance"),
                 Lang.Text("Settings.Language.Title"),
                 Lang.Text("Settings.Nav.Folders"),
+                Lang.Text("Settings.Nav.NewFiles"),
                 Lang.Text("Settings.Nav.Shortcuts"),
                 Lang.Text("Settings.Nav.About")),
             ThemeLabel: Lang.Text("Settings.Theme"),
@@ -230,6 +242,12 @@ public sealed class NativeSettingsHost : NativeControlHost
                 Lang.Text("Settings.Shortcuts.None"),
                 Lang.Text("Settings.Shortcuts.RestoreDefaults"),
                 Lang.Text("Settings.Shortcuts.Restore")),
+            FileTypes: CaptureFileTypes(),
+            FileTypeLabels: Join(
+                Lang.Text("Settings.NewFiles.Add"),
+                Lang.Text("Settings.NewFiles.Name"),
+                Lang.Text("Settings.NewFiles.Extension"),
+                Lang.Text("Settings.NewFiles.Empty")),
             CardArgb: Palette.Card,
             StrokeArgb: Palette.Stroke);
     }
@@ -261,6 +279,22 @@ public sealed class NativeSettingsHost : NativeControlHost
         rows = text.ToString();
         return string.Join('\n', categories);
     }
+
+    private static string CaptureFileTypes()
+    {
+        var text = new StringBuilder();
+        foreach (var kind in NewFileKinds.All)
+        {
+            if (text.Length > 0)
+                text.Append('\n');
+            text.Append(Sanitize(kind.Id)).Append('\t')
+                .Append(Sanitize(kind.Name)).Append('\t')
+                .Append(Sanitize(kind.Extension));
+        }
+
+        return text.ToString();
+    }
+
 
     private static string Sanitize(string value) =>
         value.Replace('\t', ' ').Replace('\n', ' ').Replace('\r', ' ');

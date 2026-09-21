@@ -21,8 +21,10 @@ public static class Config
         _ = Home.RecentsConfig;
         _ = Logging.MinLevelConfig;
         _ = Shortcuts.OverridesConfig;
+        _ = Files.NewKindsConfig;
         _ = FileVersionConfig;
         Input.Shortcuts.Initialize();
+        MacExplorer.Files.NewFileKinds.Initialize();
     }
 
     public static ConfigItem<int> FileVersionConfig { get; } = ConfigService.Register("FileVersion", 1);
@@ -143,6 +145,13 @@ public static class Config
         public static ConfigItem<bool> ShowExtensionsConfig { get; } = ConfigService.Register("ShowExtensions", true);
         public static bool ShowHidden { get => ShowHiddenConfig.GetValue(); set => ShowHiddenConfig.SetValue(value); }
         public static bool ShowExtensions { get => ShowExtensionsConfig.GetValue(); set => ShowExtensionsConfig.SetValue(value); }
+        public static ConfigItem<List<NewFileKind>> NewKindsConfig { get; } =
+            ConfigService.Register("NewFileKinds", static () => new List<NewFileKind>());
+        public static List<NewFileKind> NewKinds
+        {
+            get => NewKindsConfig.GetValue();
+            set => NewKindsConfig.SetValue(value);
+        }
     }
 
     public static class InfoPane

@@ -20,6 +20,8 @@ internal readonly record struct MacSettingsSnapshot(
     string Categories,
     string ShortcutRows,
     string ShortcutLabels,
+    string FileTypes,
+    string FileTypeLabels,
     uint CardArgb,
     uint StrokeArgb);
 
@@ -56,10 +58,14 @@ internal sealed class MacSettingsPane : IDisposable
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void ShortcutCallback(IntPtr context, int id, int keyCode, int modifiers);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate void FileTypeCallback(IntPtr context, int op, int index, int dest, IntPtr text);
+
     private static readonly IntCallback ThemeNative = OnThemeNative;
     private static readonly IntCallback LanguageNative = OnLanguageNative;
     private static readonly ToggleCallback ToggleNative = OnToggleNative;
     private static readonly ShortcutCallback ShortcutNative = OnShortcutNative;
+    private static readonly FileTypeCallback FileTypeNative = OnFileTypeNative;
 
     private IntPtr _handle;
     private GCHandle _self;
@@ -85,13 +91,14 @@ internal sealed class MacSettingsPane : IDisposable
     public event Action<int>? LanguageChanged;
     public event Action<int, bool>? ToggleChanged;
     public event Action<int, int, int>? ShortcutChanged;
+    public event Action<int, int, int, string?>? FileTypeChanged;
 
     public static MacSettingsPane Create()
     {
         var pane = new MacSettingsPane();
         pane._self = GCHandle.Alloc(pane);
         pane._handle = Native.MXSettingsCreate(
-            GCHandle.ToIntPtr(pane._self), ThemeNative, LanguageNative, ToggleNative, ShortcutNative);
+            GCHandle.ToIntPtr(pane._self), ThemeNative, LanguageNative, ToggleNative, ShortcutNative, FileTypeNative);
         if (pane._handle == IntPtr.Zero)
         {
             pane._self.Free();
@@ -118,7 +125,9 @@ internal sealed class MacSettingsPane : IDisposable
             snapshot.Description,
             snapshot.Categories,
             snapshot.ShortcutRows,
-            snapshot.ShortcutLabels);
+            snapshot.ShortcutLabels,
+            snapshot.FileTypes,
+            snapshot.FileTypeLabels);
         var payload = new Payload
         {
             Page = snapshot.Page,
@@ -138,7 +147,9 @@ internal sealed class MacSettingsPane : IDisposable
             Description = utf8[8],
             Categories = utf8[9],
             ShortcutRows = utf8[10],
-            ShortcutLabels = utf8[11]
+            ShortcutLabels = utf8[11],
+            FileTypes = utf8[12],
+            FileTypeLabels = utf8[13]
         };
         Native.MXSettingsApply(_handle, ref payload);
     }
@@ -152,6 +163,7 @@ internal sealed class MacSettingsPane : IDisposable
         LanguageChanged = null;
         ToggleChanged = null;
         ShortcutChanged = null;
+        FileTypeChanged = null;
         if (_handle != IntPtr.Zero)
         {
             Native.MXSettingsRelease(_handle);
@@ -188,6 +200,12 @@ internal sealed class MacSettingsPane : IDisposable
     private static void OnShortcutNative(IntPtr context, int id, int keyCode, int modifiers) =>
         Dispatch(context, pane => pane.ShortcutChanged?.Invoke(id, keyCode, modifiers));
 
+    private static void OnFileTypeNative(IntPtr context, int op, int index, int dest, IntPtr text)
+    {
+        var value = text == IntPtr.Zero ? null : Marshal.PtrToStringUTF8(text);
+        Dispatch(context, pane => pane.FileTypeChanged?.Invoke(op, index, dest, value));
+    }
+
     private static void Dispatch(IntPtr context, Action<MacSettingsPane> action)
     {
         if (From(context) is not { } pane)
@@ -205,7 +223,7 @@ internal sealed class MacSettingsPane : IDisposable
         public int Page, Theme, LanguageIndex, Flags;
         public uint CardArgb, StrokeArgb;
         public IntPtr PageTitles, ThemeLabel, ThemeOptions, LanguageLabel, Languages, FolderLabels, AppName, Version, Description,
-            Categories, ShortcutRows, ShortcutLabels;
+            Categories, ShortcutRows, ShortcutLabels, FileTypes, FileTypeLabels;
     }
 
     private readonly struct Utf8 : IDisposable
@@ -232,7 +250,7 @@ internal sealed class MacSettingsPane : IDisposable
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr MXSettingsCreate(
             IntPtr context, IntCallback themeChanged, IntCallback languageChanged, ToggleCallback toggleChanged,
-            ShortcutCallback shortcutChanged);
+            ShortcutCallback shortcutChanged, FileTypeCallback fileTypeChanged);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void MXSettingsApply(IntPtr view, ref Payload data);

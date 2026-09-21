@@ -199,7 +199,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     private Task NewFolderAsync() => SelectedTab?.NewFolderAsync() ?? Task.CompletedTask;
 
     [RelayCommand]
-    private Task NewFileAsync() => SelectedTab?.NewFileAsync() ?? Task.CompletedTask;
+    private Task NewFileAsync(string? extension) => SelectedTab?.NewFileAsync(extension) ?? Task.CompletedTask;
 
     [RelayCommand]
     public async Task CloseTab(ExplorerTabViewModel? tab = null)

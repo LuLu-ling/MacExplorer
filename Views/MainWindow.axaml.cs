@@ -18,6 +18,7 @@ using MacExplorer.Services;
 using MacExplorer.ViewModels;
 using System.Windows.Input;
 using MacExplorer.Input;
+using MacExplorer.Files;
 
 
 using MacExplorer.Localization;
@@ -162,10 +163,19 @@ public partial class MainWindow : FAAppWindow
 
     private void New_OnClick(object? sender, RoutedEventArgs e) =>
         ShowToolbarMenu(sender, e, static (vm, _) =>
-        [
-            new(Lang.Text("Toolbar.New.Folder"), () => vm.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder),
-            new(Lang.Text("Toolbar.New.File"), () => vm.NewFileCommand.Execute(null), Symbol: MacMenuSymbol.NewFile),
-        ]);
+        {
+            var items = new List<MacMenuEntry>
+            {
+                new(Lang.Text("Toolbar.New.Folder"), () => vm.NewFolderCommand.Execute(null), Symbol: MacMenuSymbol.NewFolder)
+            };
+            foreach (var kind in NewFileKinds.All)
+            {
+                var ext = kind.Extension;
+                items.Add(new(kind.Name, () => vm.NewFileCommand.Execute(ext), Symbol: MacMenuSymbol.NewFile));
+            }
+
+            return items.ToArray();
+        });
 
     private void Selection_OnClick(object? sender, RoutedEventArgs e) =>
         ShowToolbarMenu(sender, e, static (_, tab) =>

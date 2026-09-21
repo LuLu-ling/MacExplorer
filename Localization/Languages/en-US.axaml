@@ -167,6 +167,7 @@
     <x:String x:Key="Settings.Nav.Appearance">Appearance</x:String>
     <x:String x:Key="Settings.Nav.Language">Language</x:String>
     <x:String x:Key="Settings.Nav.Folders">Folders</x:String>
+    <x:String x:Key="Settings.Nav.NewFiles">New Files</x:String>
     <x:String x:Key="Settings.Nav.Shortcuts">Shortcuts</x:String>
     <x:String x:Key="Settings.Nav.About">About</x:String>
     <x:String x:Key="Settings.Theme">Theme</x:String>
@@ -188,6 +189,12 @@
     <x:String x:Key="Settings.Shortcuts.None">None</x:String>
     <x:String x:Key="Settings.Shortcuts.RestoreDefaults">Restore Defaults</x:String>
     <x:String x:Key="Settings.Shortcuts.Restore">Restore Default</x:String>
+    <x:String x:Key="Settings.NewFiles.Add">Add Type</x:String>
+    <x:String x:Key="Settings.NewFiles.Name">Name</x:String>
+    <x:String x:Key="Settings.NewFiles.Extension">Extension</x:String>
+    <x:String x:Key="Settings.NewFiles.PlainText">Plain Text</x:String>
+    <x:String x:Key="Settings.NewFiles.NewKind">New Type</x:String>
+    <x:String x:Key="Settings.NewFiles.Empty">No file types</x:String>
 
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">This folder is empty</x:String>
@@ -245,6 +252,7 @@
     <x:String x:Key="File.CopyPatternNumbered">{0} copy {2}{1}</x:String>
     <x:String x:Key="File.NewFolder">New folder</x:String>
     <x:String x:Key="File.UntitledName">untitled.txt</x:String>
+    <x:String x:Key="File.Untitled">untitled</x:String>
     <x:String x:Key="File.Tooltip">Name: {0}{1}Type: {2}{1}Date modified: {3}</x:String>
     <x:String x:Key="File.Tooltip.Size">{0}{1}Size: {2}</x:String>
 

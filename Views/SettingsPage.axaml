@@ -60,6 +60,18 @@
                         </Grid>
                     </Border>
                     <Border Classes="SidebarRow"
+                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=NewFiles}"
+                            Tag="NewFiles"
+                            PointerReleased="Nav_OnPointerReleased">
+                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
+                            <TextBlock Classes="SidebarGlyph"
+                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                       Text="&#xE8A5;" Margin="0,0,8,0" />
+                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                       Text="{DynamicResource Settings.Nav.NewFiles}" />
+                        </Grid>
+                    </Border>
+                    <Border Classes="SidebarRow"
                             Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Shortcuts}"
                             Tag="Shortcuts"
                             PointerReleased="Nav_OnPointerReleased">

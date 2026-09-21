@@ -420,10 +420,10 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
     }
 
     [RelayCommand]
-    public async Task NewFileAsync()
+    public async Task NewFileAsync(string? extension)
     {
         if (IsHome || IsSettings || IsTag) return;
-        var result = _files.NewFile(CurrentPath);
+        var result = _files.NewFile(CurrentPath, extension);
         if (!result.Ok)
         {
             await _dialogs.Error(Lang.Text("Explorer.CreateFileFailed"), result.Error ?? "");

@@ -1,8 +1,10 @@
+using MacExplorer.Files;
 using MacExplorer.Localization;
 using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Native;
 namespace MacExplorer.Services;
+
 
 public sealed class FileService
 {
@@ -154,9 +156,9 @@ public sealed class FileService
         }
     }
 
-    public MacFileResult NewFile(string directory)
+    public MacFileResult NewFile(string directory, string? extension = null)
     {
-        var dest = PathUtil.UniquePath(directory, Lang.Text("File.UntitledName"));
+        var dest = PathUtil.UniquePath(directory, NewFileKinds.Untitled(extension));
         try
         {
             using (File.Create(dest)) { }

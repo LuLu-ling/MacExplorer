@@ -167,6 +167,7 @@
     <x:String x:Key="Settings.Nav.Appearance">外观</x:String>
     <x:String x:Key="Settings.Nav.Language">语言</x:String>
     <x:String x:Key="Settings.Nav.Folders">文件夹</x:String>
+    <x:String x:Key="Settings.Nav.NewFiles">新建文件</x:String>
     <x:String x:Key="Settings.Nav.Shortcuts">快捷键</x:String>
     <x:String x:Key="Settings.Nav.About">关于</x:String>
     <x:String x:Key="Settings.Theme">主题</x:String>
@@ -188,6 +189,12 @@
     <x:String x:Key="Settings.Shortcuts.None">无</x:String>
     <x:String x:Key="Settings.Shortcuts.RestoreDefaults">恢复默认快捷键</x:String>
     <x:String x:Key="Settings.Shortcuts.Restore">恢复默认</x:String>
+    <x:String x:Key="Settings.NewFiles.Add">添加类型</x:String>
+    <x:String x:Key="Settings.NewFiles.Name">名称</x:String>
+    <x:String x:Key="Settings.NewFiles.Extension">扩展名</x:String>
+    <x:String x:Key="Settings.NewFiles.PlainText">纯文本</x:String>
+    <x:String x:Key="Settings.NewFiles.NewKind">新类型</x:String>
+    <x:String x:Key="Settings.NewFiles.Empty">没有可新建的文件类型</x:String>
 
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">此文件夹为空</x:String>
@@ -245,6 +252,7 @@
     <x:String x:Key="File.CopyPatternNumbered">{0}的副本 {2}{1}</x:String>
     <x:String x:Key="File.NewFolder">新建文件夹</x:String>
     <x:String x:Key="File.UntitledName">未命名.txt</x:String>
+    <x:String x:Key="File.Untitled">未命名</x:String>
     <x:String x:Key="File.Tooltip">名称：{0}{1}类型：{2}{1}修改日期：{3}</x:String>
     <x:String x:Key="File.Tooltip.Size">{0}{1}大小：{2}</x:String>
 

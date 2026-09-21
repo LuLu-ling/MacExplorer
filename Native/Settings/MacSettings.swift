@@ -5,6 +5,7 @@ import SwiftUI
 public typealias MXIntCallback = @convention(c) (UnsafeMutableRawPointer?, Int32) -> Void
 public typealias MXToggleCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32) -> Void
 public typealias MXShortcutCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32, Int32) -> Void
+public typealias MXFileTypeCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32, Int32, UnsafePointer<CChar>?) -> Void
 
 struct MXSettingsPayload {
     var page: Int32
@@ -25,6 +26,8 @@ struct MXSettingsPayload {
     var categories: UnsafePointer<CChar>?
     var shortcutRows: UnsafePointer<CChar>?
     var shortcutLabels: UnsafePointer<CChar>?
+    var fileTypes: UnsafePointer<CChar>?
+    var fileTypeLabels: UnsafePointer<CChar>?
 }
 
 @_cdecl("MXSettingsCreate")
@@ -33,7 +36,8 @@ public func MXSettingsCreate(
     _ themeChanged: MXIntCallback?,
     _ languageChanged: MXIntCallback?,
     _ toggleChanged: MXToggleCallback?,
-    _ shortcutChanged: MXShortcutCallback?
+    _ shortcutChanged: MXShortcutCallback?,
+    _ fileTypeChanged: MXFileTypeCallback?
 ) -> UnsafeMutableRawPointer {
     let view = SettingsView(frame: .zero)
     view.model.context = context
@@ -41,6 +45,7 @@ public func MXSettingsCreate(
     view.model.languageChanged = languageChanged
     view.model.toggleChanged = toggleChanged
     view.model.shortcutChanged = shortcutChanged
+    view.model.fileTypeChanged = fileTypeChanged
     return Unmanaged.passRetained(view).toOpaque()
 }
 
@@ -62,7 +67,7 @@ private enum Metrics {
     static let rowInset: CGFloat = 14
     static let corner: CGFloat = 12
     static let folderCount = 5
-    static let maxPage = 4
+    static let maxPage = 5
 }
 
 private struct ShortcutRow: Equatable, Identifiable {
@@ -76,6 +81,12 @@ private struct ShortcutGroup: Equatable, Identifiable {
     var id: Int
     var title: String
     var rows: [ShortcutRow]
+}
+
+private struct FileTypeRow: Equatable, Identifiable {
+    var id: String
+    var name: String
+    var ext: String
 }
 
 private struct SettingsState: Equatable {
@@ -97,6 +108,11 @@ private struct SettingsState: Equatable {
     var noneLabel = ""
     var restoreAll = ""
     var restore = ""
+    var fileTypes: [FileTypeRow] = []
+    var addFileType = ""
+    var fileTypeName = ""
+    var fileTypeExt = ""
+    var emptyFileTypes = ""
     var cardArgb: UInt32 = 0
     var strokeArgb: UInt32 = 0
 
@@ -130,6 +146,12 @@ private struct SettingsState: Equatable {
         restoreAll = at(labels, 2)
         restore = at(labels, 3)
         groups = parseGroups(categories: lines(data.categories), rows: lines(data.shortcutRows))
+        let typeLabels = lines(data.fileTypeLabels)
+        addFileType = at(typeLabels, 0)
+        fileTypeName = at(typeLabels, 1)
+        fileTypeExt = at(typeLabels, 2)
+        emptyFileTypes = at(typeLabels, 3)
+        fileTypes = parseFileTypes(lines(data.fileTypes))
         cardArgb = data.cardArgb
         strokeArgb = data.strokeArgb
     }
@@ -144,6 +166,7 @@ private final class SettingsModel: ObservableObject {
     var languageChanged: MXIntCallback?
     var toggleChanged: MXToggleCallback?
     var shortcutChanged: MXShortcutCallback?
+    var fileTypeChanged: MXFileTypeCallback?
 
     private var applying = false
     private var monitors: [Any] = []
@@ -153,7 +176,7 @@ private final class SettingsModel: ObservableObject {
 
     func apply(_ data: MXSettingsPayload) {
         let next = SettingsState(data)
-        if next.page != 3 { endRecording() }
+        if next.page != 4 { endRecording() }
         guard next != state else { return }
         applying = true
         defer { applying = false }
@@ -196,6 +219,39 @@ private final class SettingsModel: ObservableObject {
     func resetAll() {
         endRecording()
         shortcutChanged?(context, 0, -3, 0)
+    }
+
+    func addFileType() {
+        sendFileType(0, 0, 0, nil)
+    }
+
+    func removeFileTypes(_ indices: IndexSet) {
+        for index in indices.sorted(by: >) {
+            sendFileType(1, index, 0, nil)
+        }
+    }
+
+    func moveFileTypes(_ indices: IndexSet, _ dest: Int) {
+        guard let from = indices.first else { return }
+        sendFileType(2, from, dest, nil)
+    }
+
+    func setFileTypeName(_ id: String, _ name: String) {
+        guard let index = state.fileTypes.firstIndex(where: { $0.id == id }) else { return }
+        sendFileType(3, index, 0, name)
+    }
+
+    func setFileTypeExt(_ id: String, _ ext: String) {
+        guard let index = state.fileTypes.firstIndex(where: { $0.id == id }) else { return }
+        sendFileType(4, index, 0, ext)
+    }
+
+    private func sendFileType(_ op: Int, _ index: Int, _ dest: Int, _ text: String?) {
+        if let text {
+            text.withCString { fileTypeChanged?(context, Int32(op), Int32(index), Int32(dest), $0) }
+        } else {
+            fileTypeChanged?(context, Int32(op), Int32(index), Int32(dest), nil)
+        }
     }
 
     private func beginRecording(_ id: Int) {
@@ -269,12 +325,15 @@ private struct SettingsPane: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: Metrics.headingMin, alignment: .leading)
             if state.page == 3 {
+                newFiles(state)
+                    .padding(.top, 12)
+            } else if state.page == 4 {
                 shortcuts(state)
                     .padding(.top, 12)
             } else {
                 card(state)
                     .padding(.top, 12)
-                if state.page == 4 {
+                if state.page == 5 {
                     Text(state.description)
                         .font(.system(size: 12))
                         .foregroundStyle(Color.secondary)
@@ -302,7 +361,7 @@ private struct SettingsPane: View {
                     ForEach(0..<Metrics.folderCount, id: \.self) { index in
                         toggle(state.folderLabels[index], flag(index), divider: index + 1 < Metrics.folderCount)
                     }
-                case 4:
+                case 5:
                     SettingsRow(title: state.appName) {
                         Text(state.version)
                             .font(.system(size: 13))
@@ -315,6 +374,59 @@ private struct SettingsPane: View {
             }
             .glassEffect(.regular, in: shape)
         }
+    }
+
+    private func newFiles(_ state: SettingsState) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            let shape = RoundedRectangle(cornerRadius: Metrics.corner, style: .continuous)
+            GlassEffectContainer {
+                Group {
+                    if state.fileTypes.isEmpty {
+                        Text(state.emptyFileTypes)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .padding(.horizontal, Metrics.rowInset)
+                    } else {
+                        List {
+                            ForEach(state.fileTypes) { row in
+                                HStack(spacing: 8) {
+                                    FileTypeEditor(
+                                        row: row,
+                                        nameLabel: state.fileTypeName,
+                                        extLabel: state.fileTypeExt,
+                                        onName: { model.setFileTypeName(row.id, $0) },
+                                        onExt: { model.setFileTypeExt(row.id, $0) })
+                                    Button {
+                                        if let index = state.fileTypes.firstIndex(where: { $0.id == row.id }) {
+                                            model.removeFileTypes(IndexSet(integer: index))
+                                        }
+                                    } label: {
+                                        Image(systemName: "minus.circle.fill")
+                                            .foregroundStyle(.red)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .onMove(perform: model.moveFileTypes)
+                            .onDelete(perform: model.removeFileTypes)
+                        }
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .glassEffect(.regular, in: shape)
+            }
+            if !state.addFileType.isEmpty {
+                Button(state.addFileType) { model.addFileType() }
+                    .buttonStyle(.glass)
+                    .controlSize(.regular)
+            }
+        }
+        .padding(.bottom, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     private func shortcuts(_ state: SettingsState) -> some View {
@@ -457,6 +569,56 @@ private struct SettingsRow<Accessory: View>: View {
     }
 }
 
+private struct FileTypeEditor: View {
+    enum Field { case name, ext }
+
+    let row: FileTypeRow
+    let nameLabel: String
+    let extLabel: String
+    let onName: (String) -> Void
+    let onExt: (String) -> Void
+    @State private var name: String
+    @State private var ext: String
+    @FocusState private var focus: Field?
+
+    init(row: FileTypeRow, nameLabel: String, extLabel: String, onName: @escaping (String) -> Void, onExt: @escaping (String) -> Void) {
+        self.row = row
+        self.nameLabel = nameLabel
+        self.extLabel = extLabel
+        self.onName = onName
+        self.onExt = onExt
+        _name = State(initialValue: row.name)
+        _ext = State(initialValue: row.ext)
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            TextField(nameLabel, text: $name)
+                .textFieldStyle(.roundedBorder)
+                .focused($focus, equals: .name)
+                .onSubmit { onName(name) }
+            Text(".")
+                .foregroundStyle(Color.secondary)
+            TextField(extLabel, text: $ext)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 72)
+                .focused($focus, equals: .ext)
+                .onSubmit { onExt(ext) }
+        }
+        .onChange(of: focus) { old, value in
+            if old == .name && value != .name { onName(name) }
+            if old == .ext && value != .ext { onExt(ext) }
+        }
+        .onChange(of: row.name) { _, value in
+            if focus != .name { name = value }
+        }
+        .onChange(of: row.ext) { _, value in
+            if focus != .ext { ext = value }
+        }
+    }
+}
+
+
 private final class HostingView: NSHostingView<SettingsPane> {
     override var isOpaque: Bool { false }
 
@@ -561,5 +723,14 @@ private func parseGroups(categories: [String], rows: [String]) -> [ShortcutGroup
     return zip(categories.indices, categories).compactMap { index, title in
         guard buckets.indices.contains(index), !buckets[index].isEmpty else { return nil }
         return ShortcutGroup(id: index, title: title, rows: buckets[index])
+    }
+}
+
+private func parseFileTypes(_ rows: [String]) -> [FileTypeRow] {
+    rows.compactMap { line in
+        if line.isEmpty { return nil }
+        let parts = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 3 else { return nil }
+        return FileTypeRow(id: parts[0], name: parts[1], ext: parts[2])
     }
 }

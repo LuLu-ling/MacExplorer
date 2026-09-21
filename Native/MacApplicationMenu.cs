@@ -12,6 +12,7 @@ using MacExplorer.Models;
 using MacExplorer.Services;
 using MacExplorer.ViewModels;
 using MacExplorer.Input;
+using MacExplorer.Files;
 using MacExplorer.Views;
 
 namespace MacExplorer.Native;
@@ -118,7 +119,25 @@ internal sealed class MacApplicationMenu
         Add(menu, "Menu.File.NewWindow", () => _windows.OpenWindow(), ShortcutId.NewWindow);
         Command(menu, "Menu.File.NewTab", () => Model?.NewTabCommand, ShortcutId.NewTab);
         Command(menu, "Menu.File.NewFolder", () => Tab?.NewFolderCommand, ShortcutId.NewFolder, CanWriteFolder);
-        Command(menu, "Menu.File.NewFile", () => Tab?.NewFileCommand, enabled: CanWriteFolder);
+        var newFiles = Submenu(menu, "Menu.File.NewFile", () => CanWriteFolder() && NewFileKinds.All.Count > 0);
+        void RefreshNewFiles()
+        {
+            newFiles.Items.Clear();
+            var can = CanWriteFolder();
+            foreach (var kind in NewFileKinds.All)
+            {
+                var ext = kind.Extension;
+                var item = new NativeMenuItem(kind.Name) { IsEnabled = can };
+                item.Click += (_, _) => Guard(() =>
+                {
+                    if (CanWriteFolder())
+                        Execute(Tab?.NewFileCommand, ext);
+                });
+                newFiles.Add(item);
+            }
+        }
+        RefreshNewFiles();
+        newFiles.NeedsUpdate += (_, _) => Guard(RefreshNewFiles);
         Separator(menu);
         Command(menu, "Menu.File.Open", () => Tab?.OpenCommand, ShortcutId.Open, () => FileSelection && Tab!.HasSingleSelection);
         Command(menu, "Menu.File.Rename", () => Tab?.RenameCommand, ShortcutId.Rename, () => FileSelection && Tab!.HasSingleSelection);
@@ -380,11 +399,17 @@ internal sealed class MacApplicationMenu
         Command(menu, key, () => Model?.SetLayoutCommand, shortcut, () => Tab is { ShowFolder: true },
             parameter, () => Tab?.Layout == layout);
 
-    private NativeMenu Submenu(NativeMenu root, string key)
+    private NativeMenu Submenu(NativeMenu root, string key, Func<bool>? enabled = null)
     {
         var menu = new NativeMenu();
         var item = new NativeMenuItem(Lang.Text(key)) { Menu = menu };
         Remember(item, () => Lang.Text(key));
+        if (enabled is not null)
+        {
+            void Refresh() => item.IsEnabled = enabled();
+            Refresh();
+            root.NeedsUpdate += (_, _) => Guard(Refresh);
+        }
         root.Add(item);
         return menu;
     }
