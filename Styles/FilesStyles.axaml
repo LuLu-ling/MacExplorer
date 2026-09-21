@@ -357,6 +357,7 @@
         <Setter Property="UseLayoutRounding" Value="False" />
         <Setter Property="ToolTip.Placement" Value="Pointer" />
         <Setter Property="ToolTip.ShowDelay" Value="1000" />
+        <Setter Property="ToolTip.BetweenShowDelay" Value="-1" />
         <Setter Property="ToolTip.Tip" Value="{Binding ItemTooltipText}" />
     </Style>
     <Style Selector="Border.FileRow.details">
