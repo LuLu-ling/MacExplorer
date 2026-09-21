@@ -9,6 +9,7 @@ internal static class MacFinder
     private const nuint BookmarkWithoutUiOrMount = 256 | 512;
     private const nuint MdQuerySynchronous = 1;
     private const uint ResolveFavoriteFlags = 1 | 2;
+    private const nint ActivateIgnoringOtherApps = 2;
     private const int MaxTagResults = 10_000;
 
     public static event Action? FavoritesChanged;
@@ -180,13 +181,24 @@ internal static class MacFinder
             .ToArray();
         if (lines.Length == 0)
             return;
-        var source = $"tell application \"Finder\"\n{string.Join("\n", lines)}\nactivate\nend tell";
+        var source =
+            $"tell application \"Finder\"\n{string.Join("\n", lines)}\ntry\nset index of information window 1 to 1\nend try\nend tell";
         var script = ObjC.Call(ObjC.Call(ObjC.Class("NSAppleScript"), "alloc"),
             "initWithSource:", ObjC.NsString(source));
         if (script == IntPtr.Zero)
             return;
         ObjC.Call(script, "autorelease");
         ObjC.Call(script, "executeAndReturnError:", IntPtr.Zero);
+        RevealFinderKeyWindow();
+    }
+
+    private static void RevealFinderKeyWindow()
+    {
+        var running = ObjC.Call(ObjC.Class("NSRunningApplication"),
+            "runningApplicationsWithBundleIdentifier:", ObjC.NsString("com.apple.finder"));
+        if (running == IntPtr.Zero || ObjC.ArrayCount(running) == 0)
+            return;
+        ObjC.MsgSendBool(ObjC.ArrayAt(running, 0), ObjC.Sel("activateWithOptions:"), ActivateIgnoringOtherApps);
     }
 
     public static IReadOnlyList<string> FilesWithTag(string tag)
