@@ -9,7 +9,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <BuiltInComInteropSupport>false</BuiltInComInteropSupport>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-        <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+        <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
         <MacSettingsArch Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">arm64</MacSettingsArch>
         <MacSettingsArch Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'X64'">x86_64</MacSettingsArch>
         <MacSettingsDylib>$(IntermediateOutputPath)libMacExplorerSettings.dylib</MacSettingsDylib>
@@ -44,7 +44,7 @@
             BeforeTargets="AssignTargetPaths"
             Condition="$([MSBuild]::IsOSPlatform('OSX'))">
         <MakeDir Directories="$(IntermediateOutputPath)" />
-        <Exec Command="swiftc -emit-library -parse-as-library -swift-version 5 -target $(MacSettingsArch)-apple-macos13 -module-name MacExplorerSettings -O -framework AppKit -o &quot;$(MacSettingsDylib)&quot; @(MacSettingsSwift->'&quot;%(FullPath)&quot;', ' ')" />
+        <Exec Command="xcrun --sdk macosx swiftc -emit-library -parse-as-library -swift-version 5 -target $(MacSettingsArch)-apple-macos26 -module-name MacExplorerSettings -O -framework AppKit -framework SwiftUI -o &quot;$(MacSettingsDylib)&quot; @(MacSettingsSwift->'&quot;%(FullPath)&quot;', ' ')" />
         <ItemGroup>
             <Content Include="$(MacSettingsDylib)"
                      Link="libMacExplorerSettings.dylib"
@@ -52,5 +52,10 @@
                      CopyToPublishDirectory="PreserveNewest"
                      Visible="false" />
         </ItemGroup>
+    </Target>
+    <Target Name="StampMacAppHostSdk"
+            AfterTargets="Build"
+            Condition="$([MSBuild]::IsOSPlatform('OSX')) And Exists('$(TargetDir)$(AssemblyName)')">
+        <Exec Command="SDKVER=`xcrun --sdk macosx --show-sdk-version` &amp;&amp; vtool -set-build-version macos 26.0 &quot;$SDKVER&quot; -replace -output &quot;$(TargetDir)$(AssemblyName)&quot; &quot;$(TargetDir)$(AssemblyName)&quot; 2&gt;/dev/null &amp;&amp; codesign --sign - --force --timestamp=none &quot;$(TargetDir)$(AssemblyName)&quot;" />
     </Target>
 </Project>

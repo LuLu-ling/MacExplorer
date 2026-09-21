@@ -40,7 +40,7 @@ internal static class MacSettingsToggle
     }
 }
 
-/// <summary>Owns one AppKit settings pane and forwards mutations to C#.</summary>
+/// <summary>Owns one SwiftUI settings pane and forwards mutations to C#.</summary>
 internal sealed class MacSettingsPane : IDisposable
 {
     private const string Lib = "MacExplorerSettings";

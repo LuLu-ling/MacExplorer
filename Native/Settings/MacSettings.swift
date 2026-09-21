@@ -1,4 +1,6 @@
 import AppKit
+import Combine
+import SwiftUI
 
 public typealias MXIntCallback = @convention(c) (UnsafeMutableRawPointer?, Int32) -> Void
 public typealias MXToggleCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32) -> Void
@@ -29,10 +31,10 @@ public func MXSettingsCreate(
     _ toggleChanged: MXToggleCallback?
 ) -> UnsafeMutableRawPointer {
     let view = SettingsView(frame: .zero)
-    view.context = context
-    view.themeChanged = themeChanged
-    view.languageChanged = languageChanged
-    view.toggleChanged = toggleChanged
+    view.model.context = context
+    view.model.themeChanged = themeChanged
+    view.model.languageChanged = languageChanged
+    view.model.toggleChanged = toggleChanged
     return Unmanaged.passRetained(view).toOpaque()
 }
 
@@ -48,325 +50,279 @@ public func MXSettingsRelease(_ view: UnsafeMutableRawPointer) {
 }
 
 private enum Metrics {
+    static let heading: CGFloat = 26
+    static let headingMin: CGFloat = 32
     static let rowHeight: CGFloat = 40
     static let rowInset: CGFloat = 14
+    static let corner: CGFloat = 12
+    static let folderCount = 5
 }
 
-private final class SettingsView: NSView {
+private struct SettingsState: Equatable {
+    var page = 0
+    var heading = ""
+    var theme = 0
+    var themeLabel = ""
+    var themeOptions: [String] = []
+    var languageIndex = 0
+    var languageLabel = ""
+    var languages: [String] = []
+    var flags = 0
+    var folderLabels = Array(repeating: "", count: Metrics.folderCount)
+    var appName = ""
+    var version = ""
+    var description = ""
+    var cardArgb: UInt32 = 0
+    var strokeArgb: UInt32 = 0
+
+    init() {}
+
+    init(_ data: MXSettingsPayload) {
+        let titles = lines(data.pageTitles)
+        let themeOptions = lines(data.themeOptions)
+        let languages = lines(data.languages)
+        var folderLabels = lines(data.folderLabels)
+        folderLabels += Array(repeating: "", count: max(0, Metrics.folderCount - folderLabels.count))
+        if folderLabels.count > Metrics.folderCount {
+            folderLabels = Array(folderLabels.prefix(Metrics.folderCount))
+        }
+        page = min(max(Int(data.page), 0), 3)
+        heading = at(titles, page)
+        theme = clamp(Int(data.theme), count: themeOptions.count)
+        themeLabel = cString(data.themeLabel)
+        self.themeOptions = themeOptions
+        languageIndex = clamp(Int(data.languageIndex), count: languages.count)
+        languageLabel = cString(data.languageLabel)
+        self.languages = languages
+        flags = Int(data.flags)
+        self.folderLabels = folderLabels
+        appName = cString(data.appName)
+        version = cString(data.version)
+        description = cString(data.description)
+        cardArgb = data.cardArgb
+        strokeArgb = data.strokeArgb
+    }
+}
+
+private final class SettingsModel: ObservableObject {
+    @Published private(set) var state = SettingsState()
+
     var context: UnsafeMutableRawPointer?
     var themeChanged: MXIntCallback?
     var languageChanged: MXIntCallback?
     var toggleChanged: MXToggleCallback?
 
     private var applying = false
-    private var page = -1
-    private var cardArgb: UInt32 = 0
-    private var strokeArgb: UInt32 = 0
-    private var body: NSView?
-    private var bodyPins: [NSLayoutConstraint] = []
-    private var footerPins: [NSLayoutConstraint] = []
 
-    private let heading = makeLabel(size: 26, weight: .bold)
-    private let card = makeCard()
-    private let footer = makeLabel(size: 12, color: .secondaryLabelColor, wrapping: true)
-    private let theme = PopupRow()
-    private let language = PopupRow()
-    private let flags: [ToggleRow]
-    private let version = makeLabel(color: .secondaryLabelColor)
-    private let about: Row
-    private let folders: NSView
+    func apply(_ data: MXSettingsPayload) {
+        let next = SettingsState(data)
+        guard next != state else { return }
+        applying = true
+        defer { applying = false }
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { state = next }
+    }
+
+    func setTheme(_ value: Int) {
+        guard !applying, value != state.theme else { return }
+        state.theme = value
+        themeChanged?(context, Int32(value))
+    }
+
+    func setLanguage(_ value: Int) {
+        guard !applying, value != state.languageIndex else { return }
+        state.languageIndex = value
+        languageChanged?(context, Int32(value))
+    }
+
+    func setFlag(_ index: Int, _ on: Bool) {
+        guard !applying, (0..<Metrics.folderCount).contains(index) else { return }
+        let bit = 1 << index
+        let next = on ? state.flags | bit : state.flags & ~bit
+        guard next != state.flags else { return }
+        state.flags = next
+        toggleChanged?(context, Int32(index), on ? 1 : 0)
+    }
+}
+
+private struct SettingsPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        pane(model.state)
+    }
+
+    private func pane(_ state: SettingsState) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(state.heading)
+                .font(.system(size: Metrics.heading, weight: .bold))
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, minHeight: Metrics.headingMin, alignment: .leading)
+            card(state)
+                .padding(.top, 12)
+            if state.page == 3 {
+                Text(state.description)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 10)
+            }
+            Spacer(minLength: 8)
+        }
+        .padding(.top, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.clear)
+        .ignoresSafeArea()
+    }
+
+    @ViewBuilder
+    private func card(_ state: SettingsState) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Metrics.corner, style: .continuous)
+        GlassEffectContainer {
+            VStack(spacing: 0) {
+                switch state.page {
+                case 1:
+                    picker(state.languageLabel, state.languages, language)
+                case 2:
+                    ForEach(0..<Metrics.folderCount, id: \.self) { index in
+                        toggle(state.folderLabels[index], flag(index), divider: index + 1 < Metrics.folderCount)
+                    }
+                case 3:
+                    SettingsRow(title: state.appName) {
+                        Text(state.version)
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.secondary)
+                            .lineLimit(1)
+                    }
+                default:
+                    picker(state.themeLabel, state.themeOptions, theme)
+                }
+            }
+            .glassEffect(.regular, in: shape)
+        }
+    }
+
+    private func picker(_ title: String, _ options: [String], _ selection: Binding<Int>) -> some View {
+        SettingsRow(title: title) {
+            Picker(title, selection: selection) {
+                ForEach(options.indices, id: \.self) { index in
+                    Text(options[index]).tag(index)
+                }
+            }
+            .pickerStyle(.menu)
+            .buttonStyle(.glass)
+            .labelsHidden()
+            .fixedSize()
+            .controlSize(.regular)
+            .disabled(options.isEmpty)
+        }
+    }
+
+    private func toggle(_ title: String, _ isOn: Binding<Bool>, divider: Bool) -> some View {
+        SettingsRow(title: title, divider: divider) {
+            Toggle(title, isOn: isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .controlSize(.regular)
+        }
+    }
+
+    private var theme: Binding<Int> {
+        Binding(get: { model.state.theme }, set: { model.setTheme($0) })
+    }
+
+    private var language: Binding<Int> {
+        Binding(get: { model.state.languageIndex }, set: { model.setLanguage($0) })
+    }
+
+    private func flag(_ index: Int) -> Binding<Bool> {
+        Binding(
+            get: { (model.state.flags & (1 << index)) != 0 },
+            set: { model.setFlag(index, $0) })
+    }
+}
+
+private struct SettingsRow<Accessory: View>: View {
+    let title: String
+    let divider: Bool
+    let accessory: Accessory
+
+    init(title: String, divider: Bool = false, @ViewBuilder accessory: () -> Accessory) {
+        self.title = title
+        self.divider = divider
+        self.accessory = accessory()
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                Text(title)
+                    .font(.system(size: 13))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                accessory
+            }
+            .padding(.horizontal, Metrics.rowInset)
+            .frame(height: Metrics.rowHeight)
+            if divider {
+                Divider().padding(.leading, Metrics.rowInset)
+            }
+        }
+    }
+}
+
+private final class HostingView: NSHostingView<SettingsPane> {
+    override var isOpaque: Bool { false }
+
+    required init(rootView: SettingsPane) {
+        super.init(rootView: rootView)
+        sizingOptions = []
+        safeAreaRegions = []
+        translatesAutoresizingMaskIntoConstraints = true
+        autoresizingMask = [.width, .height]
+        layer?.isOpaque = false
+        layer?.backgroundColor = NSColor.clear.cgColor
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { nil }
+}
+
+private final class SettingsView: NSView {
+    let model = SettingsModel()
+    private let host: HostingView
 
     override var isOpaque: Bool { false }
 
     override init(frame frameRect: NSRect) {
-        let flags = (0..<5).map { ToggleRow(id: $0, divider: $0 < 4) }
-        self.flags = flags
-        folders = column(flags)
-        about = Row(accessory: version)
+        host = HostingView(rootView: SettingsPane(model: model))
         super.init(frame: frameRect)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.clear.cgColor
         autoresizingMask = [.width, .height]
-        footer.isHidden = true
-        version.setContentCompressionResistancePriority(.required, for: .horizontal)
-        addSubview(heading)
-        addSubview(card)
-        addSubview(footer)
-        footerPins = [
-            footer.topAnchor.constraint(equalTo: card.bottomAnchor, constant: 10),
-            footer.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
-            footer.trailingAnchor.constraint(equalTo: heading.trailingAnchor),
-            footer.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -8)
-        ]
-        NSLayoutConstraint.activate([
-            heading.topAnchor.constraint(equalTo: topAnchor, constant: 10),
-            heading.leadingAnchor.constraint(equalTo: leadingAnchor),
-            heading.trailingAnchor.constraint(equalTo: trailingAnchor),
-            card.topAnchor.constraint(equalTo: heading.bottomAnchor, constant: 12),
-            card.leadingAnchor.constraint(equalTo: heading.leadingAnchor),
-            card.trailingAnchor.constraint(equalTo: heading.trailingAnchor),
-            card.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -8)
-        ])
-        show(body: theme, page: 0)
-        theme.popup.target = self
-        theme.popup.action = #selector(onTheme)
-        language.popup.target = self
-        language.popup.action = #selector(onLanguage)
-        for row in flags {
-            row.toggle.target = self
-            row.toggle.action = #selector(onToggle(_:))
-        }
+        host.frame = bounds
+        addSubview(host)
     }
 
     required init?(coder: NSCoder) { nil }
 
     func apply(_ data: MXSettingsPayload) {
-        applying = true
-        defer { applying = false }
-
-        let titles = lines(data.pageTitles)
-        let folderLabels = lines(data.folderLabels)
-        let nextPage = min(max(Int(data.page), 0), 3)
-        setText(heading, at: nextPage, in: titles)
-        show(body: [theme, language, folders, about][nextPage], page: nextPage)
-        setText(footer, data.description)
-        setText(theme.label, data.themeLabel)
-        setText(language.label, data.languageLabel)
-        theme.refill(titles: lines(data.themeOptions), selected: Int(data.theme), label: theme.label.stringValue)
-        language.refill(titles: lines(data.languages), selected: Int(data.languageIndex), label: language.label.stringValue)
-        for (index, row) in flags.enumerated() {
-            setText(row.label, at: index, in: folderLabels)
-            let on: NSControl.StateValue = (data.flags & (1 << index)) != 0 ? .on : .off
-            if row.toggle.state != on { row.toggle.state = on }
-        }
-        setText(about.label, data.appName)
-        setText(version, data.version)
-        paint(cardArgb: data.cardArgb, strokeArgb: data.strokeArgb)
-        layoutSubtreeIfNeeded()
-        needsDisplay = true
-    }
-
-    private func show(body next: NSView, page: Int) {
-        let showFooter = page == 3
-        if footer.isHidden == showFooter {
-            footer.isHidden = !showFooter
-            if showFooter {
-                NSLayoutConstraint.activate(footerPins)
-            } else {
-                NSLayoutConstraint.deactivate(footerPins)
-            }
-        }
-        guard page != self.page else { return }
-        self.page = page
-        NSLayoutConstraint.deactivate(bodyPins)
-        body?.removeFromSuperview()
-        next.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(next)
-        bodyPins = [
-            next.topAnchor.constraint(equalTo: card.topAnchor),
-            next.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            next.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            next.bottomAnchor.constraint(equalTo: card.bottomAnchor)
-        ]
-        NSLayoutConstraint.activate(bodyPins)
-        body = next
-    }
-
-    private func paint(cardArgb: UInt32, strokeArgb: UInt32) {
-        self.cardArgb = cardArgb
-        self.strokeArgb = strokeArgb
-        applyCardColors()
-    }
-
-    private func applyCardColors() {
-        card.layer?.backgroundColor = argbColor(cardArgb).cgColor
-        card.layer?.borderColor = argbColor(strokeArgb).cgColor
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        applyCardColors()
-        needsDisplay = true
+        model.apply(data)
     }
 
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
-        layoutSubtreeIfNeeded()
+        host.frame = bounds
     }
 
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        layoutSubtreeIfNeeded()
+    override func layout() {
+        super.layout()
+        host.frame = bounds
     }
-
-    @objc private func onTheme() {
-        guard !applying else { return }
-        themeChanged?(context, Int32(theme.popup.indexOfSelectedItem))
-    }
-
-    @objc private func onLanguage() {
-        guard !applying else { return }
-        languageChanged?(context, Int32(language.popup.indexOfSelectedItem))
-    }
-
-    @objc private func onToggle(_ sender: NSSwitch) {
-        guard !applying else { return }
-        toggleChanged?(context, Int32(sender.tag), sender.state == .on ? 1 : 0)
-    }
-}
-
-private class Row: NSView {
-    let label = makeLabel()
-
-    init(accessory: NSView, divider: Bool = false) {
-        super.init(frame: .zero)
-        translatesAutoresizingMaskIntoConstraints = false
-        accessory.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(label)
-        addSubview(accessory)
-        var constraints = [
-            heightAnchor.constraint(equalToConstant: Metrics.rowHeight),
-            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Metrics.rowInset),
-            label.centerYAnchor.constraint(equalTo: centerYAnchor),
-            label.trailingAnchor.constraint(lessThanOrEqualTo: accessory.leadingAnchor, constant: -12),
-            accessory.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Metrics.rowInset),
-            accessory.centerYAnchor.constraint(equalTo: centerYAnchor)
-        ]
-        if divider {
-            let line = NSBox()
-            line.boxType = .separator
-            line.translatesAutoresizingMaskIntoConstraints = false
-            addSubview(line)
-            constraints.append(contentsOf: [
-                line.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Metrics.rowInset),
-                line.trailingAnchor.constraint(equalTo: trailingAnchor),
-                line.bottomAnchor.constraint(equalTo: bottomAnchor)
-            ])
-        }
-        NSLayoutConstraint.activate(constraints)
-    }
-
-    required init?(coder: NSCoder) { nil }
-}
-
-private final class PopupRow: Row {
-    let popup: NSPopUpButton
-    private let widthConstraint: NSLayoutConstraint
-    private let heightConstraint: NSLayoutConstraint
-
-    init() {
-        let popup = NSPopUpButton(frame: .zero, pullsDown: false)
-        popup.translatesAutoresizingMaskIntoConstraints = false
-        popup.controlSize = .regular
-        popup.autoenablesItems = false
-        popup.bezelStyle = .rounded
-        popup.isBordered = true
-        popup.font = .systemFont(ofSize: NSFont.systemFontSize)
-        self.popup = popup
-        widthConstraint = popup.widthAnchor.constraint(equalToConstant: 1)
-        heightConstraint = popup.heightAnchor.constraint(equalToConstant: 21)
-        super.init(accessory: popup)
-        NSLayoutConstraint.activate([widthConstraint, heightConstraint])
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    func refill(titles: [String], selected: Int, label: String) {
-        if popup.itemTitles != titles {
-            popup.removeAllItems()
-            popup.addItems(withTitles: titles)
-            let probe = NSPopUpButton(frame: .zero, pullsDown: false)
-            probe.controlSize = popup.controlSize
-            probe.bezelStyle = popup.bezelStyle
-            probe.isBordered = true
-            probe.font = popup.font
-            probe.addItems(withTitles: titles)
-            probe.sizeToFit()
-            widthConstraint.constant = max(ceil(probe.fittingSize.width), 1)
-            heightConstraint.constant = max(ceil(probe.fittingSize.height), 21)
-        }
-        popup.setAccessibilityLabel(label)
-        if titles.isEmpty {
-            popup.selectItem(at: -1)
-        } else {
-            popup.selectItem(at: min(max(selected, 0), titles.count - 1))
-        }
-    }
-}
-
-private final class ToggleRow: Row {
-    let toggle: NSSwitch
-
-    init(id: Int, divider: Bool) {
-        let toggle = NSSwitch()
-        toggle.tag = id
-        toggle.controlSize = .regular
-        self.toggle = toggle
-        super.init(accessory: toggle, divider: divider)
-    }
-
-    required init?(coder: NSCoder) { nil }
-}
-
-private func makeCard() -> NSView {
-    let view = NSView()
-    view.translatesAutoresizingMaskIntoConstraints = false
-    view.wantsLayer = true
-    view.layer?.backgroundColor = NSColor.clear.cgColor
-    view.layer?.cornerRadius = 12
-    view.layer?.cornerCurve = .continuous
-    view.layer?.borderWidth = 1
-    view.layer?.masksToBounds = true
-    return view
-}
-
-private func makeLabel(
-    size: CGFloat = 13,
-    weight: NSFont.Weight = .regular,
-    color: NSColor = .labelColor,
-    wrapping: Bool = false
-) -> NSTextField {
-    let field = wrapping ? NSTextField(wrappingLabelWithString: "") : NSTextField(labelWithString: "")
-    field.translatesAutoresizingMaskIntoConstraints = false
-    field.font = .systemFont(ofSize: size, weight: weight)
-    field.textColor = color
-    field.maximumNumberOfLines = wrapping ? 0 : 1
-    field.lineBreakMode = wrapping ? .byWordWrapping : .byTruncatingTail
-    field.usesSingleLineMode = !wrapping
-    field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    return field
-}
-
-private func column(_ rows: [NSView]) -> NSView {
-    let view = NSView()
-    view.translatesAutoresizingMaskIntoConstraints = false
-    var top = view.topAnchor
-    for row in rows {
-        view.addSubview(row)
-        NSLayoutConstraint.activate([
-            row.topAnchor.constraint(equalTo: top),
-            row.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            row.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-        ])
-        top = row.bottomAnchor
-    }
-    rows.last?.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-    return view
-}
-
-private func setText(_ field: NSTextField, _ value: UnsafePointer<CChar>?) {
-    let text = cString(value)
-    if field.stringValue != text { field.stringValue = text }
-}
-
-private func setText(_ field: NSTextField, at index: Int, in items: [String]) {
-    let text = items.indices.contains(index) ? items[index] : ""
-    if field.stringValue != text { field.stringValue = text }
 }
 
 private func cString(_ ptr: UnsafePointer<CChar>?) -> String {
-    guard let ptr else { return "" }
-    return String(cString: ptr)
+    ptr.map { String(cString: $0) } ?? ""
 }
 
 private func lines(_ ptr: UnsafePointer<CChar>?) -> [String] {
@@ -374,11 +330,11 @@ private func lines(_ ptr: UnsafePointer<CChar>?) -> [String] {
     return raw.isEmpty ? [] : raw.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
 }
 
-private func argbColor(_ value: UInt32) -> NSColor {
-    NSColor(
-        srgbRed: CGFloat((value >> 16) & 0xFF) / 255,
-        green: CGFloat((value >> 8) & 0xFF) / 255,
-        blue: CGFloat(value & 0xFF) / 255,
-        alpha: CGFloat((value >> 24) & 0xFF) / 255
-    )
+private func at(_ items: [String], _ index: Int) -> String {
+    items.indices.contains(index) ? items[index] : ""
+}
+
+private func clamp(_ value: Int, count: Int) -> Int {
+    guard count > 0 else { return 0 }
+    return min(max(value, 0), count - 1)
 }
