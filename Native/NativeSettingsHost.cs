@@ -6,6 +6,8 @@ using Avalonia.Platform;
 using MacExplorer.Localization;
 using MacExplorer.Models;
 using MacExplorer.ViewModels;
+using System.Text;
+using MacExplorer.Input;
 
 namespace MacExplorer.Native;
 
@@ -40,6 +42,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.ThemeChanged += OnThemeChanged;
         _pane.LanguageChanged += OnLanguageChanged;
         _pane.ToggleChanged += OnToggleChanged;
+        _pane.ShortcutChanged += OnShortcutChanged;
         AttachModel(DataContext as SettingsViewModel);
         MacAppearance.ApplyTo(_pane.View);
         return new PlatformHandle(_pane.View, "NSView");
@@ -56,6 +59,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.ThemeChanged -= OnThemeChanged;
         _pane.LanguageChanged -= OnLanguageChanged;
         _pane.ToggleChanged -= OnToggleChanged;
+        _pane.ShortcutChanged -= OnShortcutChanged;
         _pane.Dispose();
         _pane = null;
     }
@@ -63,6 +67,7 @@ public sealed class NativeSettingsHost : NativeControlHost
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LocalizationService.LanguageChanged += OnLanguageResourcesChanged;
+        MacExplorer.Input.Shortcuts.Changed += OnShortcutsChanged;
         ActualThemeVariantChanged += OnThemeVariantChanged;
         if (Application.Current is { } app)
             app.ActualThemeVariantChanged += OnThemeVariantChanged;
@@ -73,6 +78,7 @@ public sealed class NativeSettingsHost : NativeControlHost
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         LocalizationService.LanguageChanged -= OnLanguageResourcesChanged;
+        MacExplorer.Input.Shortcuts.Changed -= OnShortcutsChanged;
         ActualThemeVariantChanged -= OnThemeVariantChanged;
         if (Application.Current is { } app)
             app.ActualThemeVariantChanged -= OnThemeVariantChanged;
@@ -144,6 +150,10 @@ public sealed class NativeSettingsHost : NativeControlHost
                 break;
         }
     });
+    private void OnShortcutChanged(int id, int keyCode, int modifiers) =>
+        MacExplorer.Input.Shortcuts.HandleNative(id, keyCode, modifiers);
+
+    private void OnShortcutsChanged() => Push();
 
     private void FromNative(Action set)
     {
@@ -183,7 +193,8 @@ public sealed class NativeSettingsHost : NativeControlHost
             {
                 "Language" => 1,
                 "Folders" => 2,
-                "About" => 3,
+                "Shortcuts" => 3,
+                "About" => 4,
                 _ => 0
             },
             Theme: (int)vm.Theme,
@@ -194,6 +205,7 @@ public sealed class NativeSettingsHost : NativeControlHost
                 Lang.Text("Settings.Nav.Appearance"),
                 Lang.Text("Settings.Language.Title"),
                 Lang.Text("Settings.Nav.Folders"),
+                Lang.Text("Settings.Nav.Shortcuts"),
                 Lang.Text("Settings.Nav.About")),
             ThemeLabel: Lang.Text("Settings.Theme"),
             ThemeOptions: Join(
@@ -211,11 +223,48 @@ public sealed class NativeSettingsHost : NativeControlHost
             AppName: "MacExplorer",
             Version: vm.VersionText,
             Description: Lang.Text("Settings.About.Description"),
+            Categories: CaptureShortcuts(out var shortcutRows),
+            ShortcutRows: shortcutRows,
+            ShortcutLabels: Join(
+                Lang.Text("Settings.Shortcuts.TypePrompt"),
+                Lang.Text("Settings.Shortcuts.None"),
+                Lang.Text("Settings.Shortcuts.RestoreDefaults"),
+                Lang.Text("Settings.Shortcuts.Restore")),
             CardArgb: Palette.Card,
             StrokeArgb: Palette.Stroke);
     }
 
     private static string Join(params string[] parts) => string.Join('\n', parts);
+    private static string CaptureShortcuts(out string rows)
+    {
+        var categories = new List<string>();
+        var text = new StringBuilder();
+        string? last = null;
+        foreach (var spec in ShortcutCatalog.All)
+        {
+            var category = Lang.Text(spec.CategoryKey);
+            if (category != last)
+            {
+                categories.Add(category);
+                last = category;
+            }
+
+            if (text.Length > 0)
+                text.Append('\n');
+            text.Append((int)spec.Id).Append('\t')
+                .Append(categories.Count - 1).Append('\t')
+                .Append(Sanitize(Lang.Text(spec.TitleKey))).Append('\t')
+                .Append(Sanitize(MacExplorer.Input.Shortcuts.Display(spec.Id))).Append('\t')
+                .Append(MacExplorer.Input.Shortcuts.IsCustom(spec.Id) ? '1' : '0');
+        }
+
+        rows = text.ToString();
+        return string.Join('\n', categories);
+    }
+
+    private static string Sanitize(string value) =>
+        value.Replace('\t', ' ').Replace('\n', ' ').Replace('\r', ' ');
+
 
     private static class Palette
     {

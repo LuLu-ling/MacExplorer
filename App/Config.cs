@@ -20,7 +20,9 @@ public static class Config
         _ = Settings.NavWidthConfig;
         _ = Home.RecentsConfig;
         _ = Logging.MinLevelConfig;
+        _ = Shortcuts.OverridesConfig;
         _ = FileVersionConfig;
+        Input.Shortcuts.Initialize();
     }
 
     public static ConfigItem<int> FileVersionConfig { get; } = ConfigService.Register("FileVersion", 1);
@@ -155,6 +157,17 @@ public static class Config
     {
         public static ConfigItem<double> NavWidthConfig { get; } = ConfigService.Register("SettingsNavWidth", 252d);
         public static double NavWidth { get => NavWidthConfig.GetValue(); set => NavWidthConfig.SetValue(value); }
+    }
+
+    public static class Shortcuts
+    {
+        public static ConfigItem<Dictionary<string, string>> OverridesConfig { get; } =
+            ConfigService.Register("ShortcutOverrides", static () => new Dictionary<string, string>());
+        public static Dictionary<string, string> Overrides
+        {
+            get => OverridesConfig.GetValue();
+            set => OverridesConfig.SetValue(value);
+        }
     }
 
     public static class Home

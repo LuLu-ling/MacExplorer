@@ -11,6 +11,7 @@ using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Services;
 using MacExplorer.ViewModels;
+using MacExplorer.Input;
 using MacExplorer.Views;
 
 namespace MacExplorer.Native;
@@ -25,7 +26,7 @@ internal sealed class MacApplicationMenu
     private readonly IDisposable _windowOpened;
     private readonly NativeMenu _dock = new();
     private readonly NativeMenuItem _dockNewWindow;
-    private readonly List<(WeakReference<NativeMenuItem> Item, Func<string> Title)> _titles = [];
+    private readonly List<(WeakReference<NativeMenuItem> Item, Func<string> Title, ShortcutId? Shortcut)> _titles = [];
 
     private MacApplicationMenu(WindowService windows)
     {
@@ -34,6 +35,7 @@ internal sealed class MacApplicationMenu
             Guard(() => AttachCore(window)));
         _dockNewWindow = Add(_dock, "Menu.App.NewWindow", () => windows.OpenWindow());
         _dock.NeedsUpdate += (_, _) => Guard(RefreshDock);
+        Shortcuts.Changed += () => Guard(RefreshGestures);
     }
 
     public static void Install(WindowService windows)
@@ -73,8 +75,8 @@ internal sealed class MacApplicationMenu
         }
 
         var additions = new NativeMenu();
-        Add(additions, "Menu.App.NewWindow", () => _windows.OpenWindow(), "Meta+N");
-        Add(additions, "Menu.App.Settings", OpenSettings, "Meta+OemComma");
+        Add(additions, "Menu.App.NewWindow", () => _windows.OpenWindow(), ShortcutId.NewWindow);
+        Add(additions, "Menu.App.Settings", OpenSettings, ShortcutId.Settings);
         for (var i = additions.Items.Count - 1; i >= 0; i--)
         {
             var item = additions.Items[i];
@@ -85,7 +87,7 @@ internal sealed class MacApplicationMenu
         while (menu.Items.LastOrDefault() is NativeMenuItemSeparator)
             menu.Items.RemoveAt(menu.Items.Count - 1);
         menu.Add(new NativeMenuItemSeparator());
-        Add(menu, "Menu.App.Quit", _windows.Quit, "Meta+Q");
+        Add(menu, "Menu.App.Quit", _windows.Quit, ShortcutId.Quit);
         NativeMenu.SetMenu(application, menu);
     }
 
@@ -113,16 +115,16 @@ internal sealed class MacApplicationMenu
 
     private void BuildFile(NativeMenu menu)
     {
-        Add(menu, "Menu.File.NewWindow", () => _windows.OpenWindow(), "Meta+N");
-        Command(menu, "Menu.File.NewTab", () => Model?.NewTabCommand, "Meta+T");
-        Command(menu, "Menu.File.NewFolder", () => Tab?.NewFolderCommand, "Meta+Shift+N", CanWriteFolder);
+        Add(menu, "Menu.File.NewWindow", () => _windows.OpenWindow(), ShortcutId.NewWindow);
+        Command(menu, "Menu.File.NewTab", () => Model?.NewTabCommand, ShortcutId.NewTab);
+        Command(menu, "Menu.File.NewFolder", () => Tab?.NewFolderCommand, ShortcutId.NewFolder, CanWriteFolder);
         Command(menu, "Menu.File.NewFile", () => Tab?.NewFileCommand, enabled: CanWriteFolder);
         Separator(menu);
-        Command(menu, "Menu.File.Open", () => Tab?.OpenCommand, "Meta+O", () => FileSelection && Tab!.HasSingleSelection);
-        Command(menu, "Menu.File.Rename", () => Tab?.RenameCommand, enabled: () => FileSelection && Tab!.HasSingleSelection);
-        Command(menu, "Menu.File.GetInfo", () => Model?.OpenPropertiesCommand, "Meta+I", () => FileSelection);
+        Command(menu, "Menu.File.Open", () => Tab?.OpenCommand, ShortcutId.Open, () => FileSelection && Tab!.HasSingleSelection);
+        Command(menu, "Menu.File.Rename", () => Tab?.RenameCommand, ShortcutId.Rename, () => FileSelection && Tab!.HasSingleSelection);
+        Command(menu, "Menu.File.GetInfo", () => Model?.OpenPropertiesCommand, ShortcutId.GetInfo, () => FileSelection);
         Command(menu, () => Lang.Text(Tab is { IsTrash: true } ? "Menu.File.DeletePermanently" : "Menu.File.MoveToTrash"),
-            () => Execute(Tab?.DeleteCommand), "Meta+Back",
+            () => Execute(Tab?.DeleteCommand), ShortcutId.MoveToTrash,
             () => FileSelection);
         Command(menu, "Menu.File.EmptyTrash", () => Tab?.EmptyTrashCommand,
             enabled: () => CanUseFiles && Tab is { IsTrash: true, Items.Count: > 0 });
@@ -131,8 +133,8 @@ internal sealed class MacApplicationMenu
                 ActiveWindow is MainWindow && Model is { Tabs.Count: > 1 }
                     ? "Menu.File.CloseTab"
                     : "Menu.File.CloseWindow"),
-            Close, "Meta+W", () => ActiveWindow is not null);
-        var closeWindow = Add(menu, "Menu.File.CloseWindow", () => ActiveWindow?.Close(), "Meta+Shift+W",
+            Close, ShortcutId.CloseTab, () => ActiveWindow is not null);
+        var closeWindow = Add(menu, "Menu.File.CloseWindow", () => ActiveWindow?.Close(), ShortcutId.CloseWindow,
             () => ActiveWindow is MainWindow && Model is { Tabs.Count: > 1 });
         void RefreshCloseItems()
         {
@@ -150,30 +152,34 @@ internal sealed class MacApplicationMenu
         menu.NeedsUpdate += (_, _) => Guard(() =>
         {
             RefreshCloseItems();
-            foreach (var item in menu.Items.OfType<NativeMenuItem>())
-                if (item.Gesture is { Key: Key.Back, KeyModifiers: KeyModifiers.Meta })
-                    item.Header = Lang.Text(Tab is { IsTrash: true } ? "Menu.File.DeletePermanently" : "Menu.File.MoveToTrash");
+            foreach (var entry in _titles)
+            {
+                if (entry.Shortcut != ShortcutId.MoveToTrash)
+                    continue;
+                if (entry.Item.TryGetTarget(out var item))
+                    item.Header = entry.Title();
+            }
         });
     }
 
     private void BuildEdit(NativeMenu menu)
     {
-        TextAction(menu, "Common.Action.Undo", "Meta+Z", box => box.Undo(), box => box.CanUndo);
-        TextAction(menu, "Common.Action.Redo", "Meta+Shift+Z", box => box.Redo(), box => box.CanRedo);
+        TextAction(menu, "Common.Action.Undo", ShortcutId.Undo, box => box.Undo(), box => box.CanUndo);
+        TextAction(menu, "Common.Action.Redo", ShortcutId.Redo, box => box.Redo(), box => box.CanRedo);
         Separator(menu);
-        TextAction(menu, "Common.Action.Cut", "Meta+X", box => box.Cut(), box => box.CanCut,
+        TextAction(menu, "Common.Action.Cut", ShortcutId.Cut, box => box.Cut(), box => box.CanCut,
             () => Tab?.CutCommand, () => FileSelection);
-        TextAction(menu, "Common.Action.Copy", "Meta+C", box => box.Copy(), box => box.CanCopy,
+        TextAction(menu, "Common.Action.Copy", ShortcutId.Copy, box => box.Copy(), box => box.CanCopy,
             () => Tab?.CopyCommand, () => FileSelection,
             block => block.Copy(), block => block.CanCopy);
-        TextAction(menu, "Common.Action.Paste", "Meta+V", box => box.Paste(), box => box.CanPaste,
+        TextAction(menu, "Common.Action.Paste", ShortcutId.Paste, box => box.Paste(), box => box.CanPaste,
             () => Tab?.PasteCommand, () => CanWriteFolder() && MacPasteboard.HasFiles());
         Separator(menu);
-        TextAction(menu, "Common.Action.SelectAll", "Meta+A", box => box.SelectAll(), box => box.Text is { Length: > 0 },
+        TextAction(menu, "Common.Action.SelectAll", ShortcutId.SelectAll, box => box.SelectAll(), box => box.Text is { Length: > 0 },
             () => Tab?.SelectAllCommand, () => CanUseFiles && Tab is { Items.Count: > 0 },
             block => block.SelectAll(), block => block.Text is { Length: > 0 });
         Separator(menu);
-        Command(menu, "Menu.Edit.Find", () => Model?.FocusSearchCommand, "Meta+F");
+        Command(menu, "Menu.Edit.Find", () => Model?.FocusSearchCommand, ShortcutId.Find);
         menu.NeedsUpdate += (_, _) => Guard(RemoveAutomaticEditItems);
     }
 
@@ -203,48 +209,49 @@ internal sealed class MacApplicationMenu
 
     private void BuildView(NativeMenu menu)
     {
-        Layout(menu, "Menu.View.AsDetails", "Details", "Meta+D1", LayoutKind.Details);
-        Layout(menu, "Menu.View.AsList", "List", "Meta+D2", LayoutKind.List);
-        Layout(menu, "Menu.View.AsCards", "Cards", "Meta+D3", LayoutKind.Cards);
-        Layout(menu, "Menu.View.AsGrid", "Grid", "Meta+D4", LayoutKind.Grid);
+        Layout(menu, "Menu.View.AsDetails", "Details", ShortcutId.AsDetails, LayoutKind.Details);
+        Layout(menu, "Menu.View.AsList", "List", ShortcutId.AsList, LayoutKind.List);
+        Layout(menu, "Menu.View.AsCards", "Cards", ShortcutId.AsCards, LayoutKind.Cards);
+        Layout(menu, "Menu.View.AsGrid", "Grid", ShortcutId.AsGrid, LayoutKind.Grid);
         Separator(menu);
-        Command(menu, "Menu.View.ShowInfoPane", () => Model?.ToggleInfoPaneCommand, "Meta+P",
+        Command(menu, "Menu.View.ShowInfoPane", () => Model?.ToggleInfoPaneCommand, ShortcutId.ShowInfoPane,
             check: () => Model?.ShowInfoPane == true);
-        Command(menu, "Menu.View.ShowHidden", () => Model?.ToggleHiddenCommand, "Meta+Shift+OemPeriod",
+        Command(menu, "Menu.View.ShowHidden", () => Model?.ToggleHiddenCommand, ShortcutId.ShowHidden,
             check: () => Model?.ShowHidden == true);
         Command(menu, "Menu.View.ShowExtensions", () => Model?.ToggleExtensionsCommand,
             check: () => Model?.ShowExtensions == true);
         Separator(menu);
-        Command(menu, "Common.Action.Refresh", () => Tab?.RefreshCommand, "Meta+R", () => Tab is { IsBusy: false });
+        Command(menu, "Common.Action.Refresh", () => Tab?.RefreshCommand, ShortcutId.Refresh, () => Tab is { IsBusy: false });
     }
 
     private void BuildGo(NativeMenu menu)
     {
-        Command(menu, "Menu.Go.Back", () => Tab?.BackCommand, "Meta+Left", () => !HasTextFocus && Tab is { CanGoBack: true });
-        Command(menu, "Menu.Go.Forward", () => Tab?.ForwardCommand, "Meta+Right", () => !HasTextFocus && Tab is { CanGoForward: true });
-        Command(menu, "Menu.Go.EnclosingFolder", () => Tab?.UpCommand, "Meta+Up", () => !HasTextFocus && Tab is { CanGoUp: true });
+        Command(menu, "Menu.Go.Back", () => Tab?.BackCommand, ShortcutId.GoBack, () => !HasTextFocus && Tab is { CanGoBack: true });
+        Command(menu, "Menu.Go.Forward", () => Tab?.ForwardCommand, ShortcutId.GoForward, () => !HasTextFocus && Tab is { CanGoForward: true });
+        Command(menu, "Menu.Go.EnclosingFolder", () => Tab?.UpCommand, ShortcutId.GoEnclosingFolder, () => !HasTextFocus && Tab is { CanGoUp: true });
+        Command(menu, "Menu.Go.GoToFolder", () => Model?.FocusPathCommand, ShortcutId.FocusPath);
         Separator(menu);
-        Location(menu, "Places.Home", SpecialFolders.UserHome, "Meta+Shift+H");
-        Location(menu, "Places.Desktop", SpecialFolders.Desktop, "Meta+Shift+D");
-        Location(menu, "Places.Documents", SpecialFolders.Documents, "Meta+Shift+O");
-        Location(menu, "Places.Downloads", SpecialFolders.Downloads, "Meta+Alt+L");
-        Location(menu, "Places.Applications", SpecialFolders.Applications, "Meta+Shift+A");
-        Location(menu, "Places.Computer", SpecialFolders.Computer, "Meta+Shift+C");
+        Location(menu, "Places.Home", SpecialFolders.UserHome, ShortcutId.GoHome);
+        Location(menu, "Places.Desktop", SpecialFolders.Desktop, ShortcutId.GoDesktop);
+        Location(menu, "Places.Documents", SpecialFolders.Documents, ShortcutId.GoDocuments);
+        Location(menu, "Places.Downloads", SpecialFolders.Downloads, ShortcutId.GoDownloads);
+        Location(menu, "Places.Applications", SpecialFolders.Applications, ShortcutId.GoApplications);
+        Location(menu, "Places.Computer", SpecialFolders.Computer, ShortcutId.GoComputer);
         Location(menu, "Places.Trash", SpecialFolders.Trash);
     }
 
     private void BuildWindow(NativeMenu menu)
     {
         Add(menu, "Menu.Window.Minimize", () => { if (ActiveWindow is { } window) window.WindowState = WindowState.Minimized; },
-            "Meta+M", () => ActiveWindow is { CanMinimize: true });
+            ShortcutId.Minimize, () => ActiveWindow is { CanMinimize: true });
         Add(menu, "Menu.Window.Zoom", () =>
         {
             if (ActiveWindow is { } window)
                 window.WindowState = window.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         }, enabled: () => ActiveWindow is { CanMaximize: true });
         Separator(menu);
-        Add(menu, "Menu.Window.ShowPreviousTab", () => SelectTab(-1), "Meta+Shift+OemOpenBrackets", () => Model is { Tabs.Count: > 1 });
-        Add(menu, "Menu.Window.ShowNextTab", () => SelectTab(1), "Meta+Shift+OemCloseBrackets", () => Model is { Tabs.Count: > 1 });
+        Add(menu, "Menu.Window.ShowPreviousTab", () => SelectTab(-1), ShortcutId.PreviousTab, () => Model is { Tabs.Count: > 1 });
+        Add(menu, "Menu.Window.ShowNextTab", () => SelectTab(1), ShortcutId.NextTab, () => Model is { Tabs.Count: > 1 });
         Separator(menu);
         Add(menu, "Menu.Window.BringAllToFront", () =>
         {
@@ -366,11 +373,11 @@ internal sealed class MacApplicationMenu
         window.Activate();
     }
 
-    private void Location(NativeMenu menu, string key, string path, string? gesture = null) =>
-        Command(menu, key, () => Model?.OpenPathCommand, gesture, parameter: path);
+    private void Location(NativeMenu menu, string key, string path, ShortcutId? shortcut = null) =>
+        Command(menu, key, () => Model?.OpenPathCommand, shortcut, parameter: path);
 
-    private void Layout(NativeMenu menu, string key, string parameter, string gesture, LayoutKind layout) =>
-        Command(menu, key, () => Model?.SetLayoutCommand, gesture, () => Tab is { ShowFolder: true },
+    private void Layout(NativeMenu menu, string key, string parameter, ShortcutId shortcut, LayoutKind layout) =>
+        Command(menu, key, () => Model?.SetLayoutCommand, shortcut, () => Tab is { ShowFolder: true },
             parameter, () => Tab?.Layout == layout);
 
     private NativeMenu Submenu(NativeMenu root, string key)
@@ -384,16 +391,16 @@ internal sealed class MacApplicationMenu
 
     private static void Separator(NativeMenu menu) => menu.Add(new NativeMenuItemSeparator());
 
-    private void Command(NativeMenu menu, string key, Func<ICommand?> command, string? gesture = null,
+    private void Command(NativeMenu menu, string key, Func<ICommand?> command, ShortcutId? shortcut = null,
         Func<bool>? enabled = null, object? parameter = null, Func<bool>? check = null) =>
-        Add(menu, key, () => Execute(command(), parameter), gesture,
+        Add(menu, key, () => Execute(command(), parameter), shortcut,
             () => (enabled?.Invoke() ?? true) && command()?.CanExecute(parameter) == true, check);
 
-    private void Command(NativeMenu menu, Func<string> title, Action action, string? gesture = null,
+    private void Command(NativeMenu menu, Func<string> title, Action action, ShortcutId? shortcut = null,
         Func<bool>? enabled = null) =>
-        Add(menu, title, action, gesture, enabled);
+        Add(menu, title, action, shortcut, enabled);
 
-    private void TextAction(NativeMenu menu, string key, string gesture, Action<TextBox> action,
+    private void TextAction(NativeMenu menu, string key, ShortcutId shortcut, Action<TextBox> action,
         Func<TextBox, bool> enabled, Func<ICommand?>? fileCommand = null, Func<bool>? fileEnabled = null,
         Action<SelectableTextBlock>? selectableAction = null, Func<SelectableTextBlock, bool>? selectableEnabled = null)
     {
@@ -405,7 +412,7 @@ internal sealed class MacApplicationMenu
                 selectableAction?.Invoke(block);
             else
                 Execute(fileCommand?.Invoke());
-        }, gesture, () =>
+        }, shortcut, () =>
         {
             if (Focused<TextBox>() is { } box)
                 return enabled(box);
@@ -415,19 +422,19 @@ internal sealed class MacApplicationMenu
         });
     }
 
-    private NativeMenuItem Add(NativeMenu menu, string key, Action action, string? gesture = null,
+    private NativeMenuItem Add(NativeMenu menu, string key, Action action, ShortcutId? shortcut = null,
         Func<bool>? enabled = null, Func<bool>? check = null) =>
-        Add(menu, () => Lang.Text(key), action, gesture, enabled, check);
+        Add(menu, () => Lang.Text(key), action, shortcut, enabled, check);
 
-    private NativeMenuItem Add(NativeMenu menu, Func<string> title, Action action, string? gesture = null,
+    private NativeMenuItem Add(NativeMenu menu, Func<string> title, Action action, ShortcutId? shortcut = null,
         Func<bool>? enabled = null, Func<bool>? check = null)
     {
         var item = new NativeMenuItem(title())
         {
-            Gesture = gesture is null ? null : KeyGesture.Parse(gesture),
+            Gesture = shortcut is { } id ? Shortcuts.Gesture(id) : null,
             ToggleType = check is null ? MenuItemToggleType.None : MenuItemToggleType.CheckBox
         };
-        Remember(item, title);
+        Remember(item, title, shortcut);
         void Refresh()
         {
             item.IsEnabled = enabled?.Invoke() ?? true;
@@ -444,8 +451,24 @@ internal sealed class MacApplicationMenu
         return item;
     }
 
-    private void Remember(NativeMenuItem item, Func<string> title) =>
-        _titles.Add((new WeakReference<NativeMenuItem>(item), title));
+    private void Remember(NativeMenuItem item, Func<string> title, ShortcutId? shortcut = null) =>
+        _titles.Add((new WeakReference<NativeMenuItem>(item), title, shortcut));
+
+    private void RefreshGestures()
+    {
+        for (var i = _titles.Count - 1; i >= 0; i--)
+        {
+            var entry = _titles[i];
+            if (!entry.Item.TryGetTarget(out var item))
+            {
+                _titles.RemoveAt(i);
+                continue;
+            }
+
+            if (entry.Shortcut is { } id)
+                item.Gesture = Shortcuts.Gesture(id);
+        }
+    }
 
     private void Relocalize()
     {

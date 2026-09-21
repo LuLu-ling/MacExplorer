@@ -16,12 +16,6 @@
                  TransparencyLevelHint="Mica,AcrylicBlur,None"
                  ExtendClientAreaToDecorationsHint="True"
                  ExtendClientAreaTitleBarHeightHint="{x:Static native:WindowChrome.TitleBarHeight}">
-    <wnd:FAAppWindow.KeyBindings>
-        <KeyBinding Gesture="Meta+L" Command="{Binding FocusPathCommand}" />
-        <KeyBinding Gesture="F2" Command="{Binding SelectedTab.RenameCommand}" />
-        <KeyBinding Gesture="Alt+Enter" Command="{Binding OpenPropertiesCommand}" />
-        <KeyBinding Gesture="F5" Command="{Binding SelectedTab.RefreshCommand}" />
-    </wnd:FAAppWindow.KeyBindings>
 
     <Grid RowDefinitions="Auto,48,*">
         <Border x:Name="TitleBarHost" Background="Transparent"
@@ -107,7 +101,7 @@
                         VerticalAlignment="Center"
                         Background="Transparent" BorderThickness="0"
                         Command="{Binding NewTabCommand}"
-                        ToolTip.Tip="{DynamicResource Tab.New.Tip}">
+                        ToolTip.Tip="{Binding NewTabTip}">
                     <TextBlock FontFamily="{StaticResource SymbolThemeFontFamily}" Text="&#xE710;" FontSize="12" />
                 </Button>
                 <Rectangle x:Name="DragAreaRectangle" Grid.Column="2" Fill="Transparent" />

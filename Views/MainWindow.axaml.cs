@@ -16,6 +16,8 @@ using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
 using MacExplorer.ViewModels;
+using System.Windows.Input;
+using MacExplorer.Input;
 
 
 using MacExplorer.Localization;
@@ -120,6 +122,26 @@ public partial class MainWindow : FAAppWindow
         _tabsReady = true;
         RememberOpenTabs();
         UpdateTabStripOverflow();
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Handled || VM is null)
+            return;
+        if (Dispatch(ShortcutId.FocusPath, VM.FocusPathCommand)
+            || Dispatch(ShortcutId.Rename, VM.SelectedTab?.RenameCommand)
+            || Dispatch(ShortcutId.GetInfo, VM.OpenPropertiesCommand)
+            || Dispatch(ShortcutId.Refresh, VM.SelectedTab?.RefreshCommand))
+            e.Handled = true;
+
+        bool Dispatch(ShortcutId id, ICommand? command)
+        {
+            if (!Shortcuts.Matches(id, e) || command?.CanExecute(null) != true)
+                return false;
+            command.Execute(null);
+            return true;
+        }
     }
 
     private void RefreshFinderPlaces() => VM?.RefreshPlaces();

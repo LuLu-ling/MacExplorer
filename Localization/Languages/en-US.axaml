@@ -167,6 +167,7 @@
     <x:String x:Key="Settings.Nav.Appearance">Appearance</x:String>
     <x:String x:Key="Settings.Nav.Language">Language</x:String>
     <x:String x:Key="Settings.Nav.Folders">Folders</x:String>
+    <x:String x:Key="Settings.Nav.Shortcuts">Shortcuts</x:String>
     <x:String x:Key="Settings.Nav.About">About</x:String>
     <x:String x:Key="Settings.Theme">Theme</x:String>
     <x:String x:Key="Settings.Theme.System">Use system setting</x:String>
@@ -182,6 +183,11 @@
     <x:String x:Key="Settings.Folders.ShowRecents">Show Recent files widget</x:String>
     <x:String x:Key="Settings.About.Version">Version {0}</x:String>
     <x:String x:Key="Settings.About.Description">A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash.</x:String>
+    <x:String x:Key="Settings.Shortcuts.App">Application</x:String>
+    <x:String x:Key="Settings.Shortcuts.TypePrompt">Type a shortcut</x:String>
+    <x:String x:Key="Settings.Shortcuts.None">None</x:String>
+    <x:String x:Key="Settings.Shortcuts.RestoreDefaults">Restore Defaults</x:String>
+    <x:String x:Key="Settings.Shortcuts.Restore">Restore Default</x:String>
 
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">This folder is empty</x:String>
@@ -282,6 +288,7 @@
     <x:String x:Key="Menu.Go.Back">Back</x:String>
     <x:String x:Key="Menu.Go.Forward">Forward</x:String>
     <x:String x:Key="Menu.Go.EnclosingFolder">Enclosing Folder</x:String>
+    <x:String x:Key="Menu.Go.GoToFolder">Go to Folder</x:String>
     <x:String x:Key="Menu.Window.Minimize">Minimize</x:String>
     <x:String x:Key="Menu.Window.Zoom">Zoom</x:String>
     <x:String x:Key="Menu.Window.ShowPreviousTab">Show Previous Tab</x:String>

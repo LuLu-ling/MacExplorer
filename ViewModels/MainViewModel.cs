@@ -10,6 +10,7 @@ using MacExplorer.Logging;
 using MacExplorer.Models;
 using MacExplorer.Native;
 using MacExplorer.Services;
+using MacExplorer.Input;
 
 namespace MacExplorer.ViewModels;
 
@@ -46,6 +47,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         ShowHidden = Config.Files.ShowHidden;
         ShowExtensions = Config.Files.ShowExtensions;
         MacFinder.FavoritesChanged += OnFavoritesChanged;
+        Shortcuts.Changed += OnShortcutsChanged;
     }
 
     public ObservableCollection<ExplorerTabViewModel> Tabs { get; }
@@ -74,6 +76,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         ? Lang.Text("Window.Title.Format", t)
         : "MacExplorer";
     public bool IsInfoPaneVisible => ShowInfoPane && SelectedTab is not { IsSettings: true };
+    public string NewTabTip => Shortcuts.Tip("Tab.New", ShortcutId.NewTab);
 
     public const double SidebarMin = 160;
     public const double SidebarMax = 480;
@@ -106,22 +109,34 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
 
     public IReadOnlyList<PaletteCommand> PaletteCommands =>
     [
-        new(Lang.Text("Palette.NewTab"), Glyphs.Add, "⌘T", NewTabCommand),
-        new(Lang.Text("Palette.CloseTab"), Glyphs.Delete, "⌘W", CloseTabCommand),
-        new(Lang.Text("Palette.NewFolder"), Glyphs.NewFolder, "⇧⌘N", SelectedTab?.NewFolderCommand),
-        new(Lang.Text("Palette.Copy"), Glyphs.Copy, "⌘C", SelectedTab?.CopyCommand),
-        new(Lang.Text("Palette.Cut"), Glyphs.Cut, "⌘X", SelectedTab?.CutCommand),
-        new(Lang.Text("Palette.Paste"), Glyphs.Paste, "⌘V", SelectedTab?.PasteCommand),
-        new(Lang.Text("Menu.File.GetInfo"), Glyphs.Properties, "⌥↩", OpenPropertiesCommand),
-        new(Lang.Text("Palette.Delete"), Glyphs.Delete, "⌘⌫", SelectedTab?.DeleteCommand),
-        new(Lang.Text("Palette.SelectAll"), Glyphs.Select, "⌘A", SelectedTab?.SelectAllCommand),
-        new(Lang.Text("Palette.DetailsLayout"), Glyphs.Details, "⌘1", SetLayoutCommand, "Details"),
-        new(Lang.Text("Palette.ListLayout"), Glyphs.List, "⌘2", SetLayoutCommand, "List"),
-        new(Lang.Text("Palette.CardsLayout"), Glyphs.Cards, "⌘3", SetLayoutCommand, "Cards"),
-        new(Lang.Text("Palette.GridLayout"), Glyphs.Grid, "⌘4", SetLayoutCommand, "Grid"),
-        new(Lang.Text("Palette.ToggleInfoPane"), Glyphs.PanelRight, "⌘P", ToggleInfoPaneCommand),
-        new(Lang.Text("Palette.Settings"), Glyphs.Settings, "⌘,", OpenSettingsCommand)
+        new(Lang.Text("Palette.NewTab"), Glyphs.Add, Display(ShortcutId.NewTab), NewTabCommand),
+        new(Lang.Text("Palette.CloseTab"), Glyphs.Delete, Display(ShortcutId.CloseTab), CloseTabCommand),
+        new(Lang.Text("Palette.NewFolder"), Glyphs.NewFolder, Display(ShortcutId.NewFolder), SelectedTab?.NewFolderCommand),
+        new(Lang.Text("Palette.Copy"), Glyphs.Copy, Display(ShortcutId.Copy), SelectedTab?.CopyCommand),
+        new(Lang.Text("Palette.Cut"), Glyphs.Cut, Display(ShortcutId.Cut), SelectedTab?.CutCommand),
+        new(Lang.Text("Palette.Paste"), Glyphs.Paste, Display(ShortcutId.Paste), SelectedTab?.PasteCommand),
+        new(Lang.Text("Menu.File.GetInfo"), Glyphs.Properties, Display(ShortcutId.GetInfo), OpenPropertiesCommand),
+        new(Lang.Text("Palette.Delete"), Glyphs.Delete, Display(ShortcutId.MoveToTrash), SelectedTab?.DeleteCommand),
+        new(Lang.Text("Palette.SelectAll"), Glyphs.Select, Display(ShortcutId.SelectAll), SelectedTab?.SelectAllCommand),
+        new(Lang.Text("Palette.DetailsLayout"), Glyphs.Details, Display(ShortcutId.AsDetails), SetLayoutCommand, "Details"),
+        new(Lang.Text("Palette.ListLayout"), Glyphs.List, Display(ShortcutId.AsList), SetLayoutCommand, "List"),
+        new(Lang.Text("Palette.CardsLayout"), Glyphs.Cards, Display(ShortcutId.AsCards), SetLayoutCommand, "Cards"),
+        new(Lang.Text("Palette.GridLayout"), Glyphs.Grid, Display(ShortcutId.AsGrid), SetLayoutCommand, "Grid"),
+        new(Lang.Text("Palette.ToggleInfoPane"), Glyphs.PanelRight, Display(ShortcutId.ShowInfoPane), ToggleInfoPaneCommand),
+        new(Lang.Text("Palette.Settings"), Glyphs.Settings, Display(ShortcutId.Settings), OpenSettingsCommand)
     ];
+
+    private static string? Display(ShortcutId id)
+    {
+        var text = Shortcuts.Display(id);
+        return text.Length == 0 ? null : text;
+    }
+
+    private void OnShortcutsChanged()
+    {
+        OnPropertyChanged(nameof(NewTabTip));
+        OnPropertyChanged(nameof(PaletteCommands));
+    }
 
     [RelayCommand]
     public void NewTab(string? path = null)
@@ -565,6 +580,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     protected override void OnLanguageChanged()
     {
         OnPropertyChanged(nameof(WindowTitle));
+        OnPropertyChanged(nameof(NewTabTip));
         OnPropertyChanged(nameof(PaletteCommands));
     }
 
@@ -573,6 +589,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         if (_disposed) return;
         _disposed = true;
         MacFinder.FavoritesChanged -= OnFavoritesChanged;
+        Shortcuts.Changed -= OnShortcutsChanged;
         SelectedTab = null;
         foreach (var tab in Tabs)
             tab.Dispose();

@@ -167,6 +167,7 @@
     <x:String x:Key="Settings.Nav.Appearance">外观</x:String>
     <x:String x:Key="Settings.Nav.Language">语言</x:String>
     <x:String x:Key="Settings.Nav.Folders">文件夹</x:String>
+    <x:String x:Key="Settings.Nav.Shortcuts">快捷键</x:String>
     <x:String x:Key="Settings.Nav.About">关于</x:String>
     <x:String x:Key="Settings.Theme">主题</x:String>
     <x:String x:Key="Settings.Theme.System">使用系统设置</x:String>
@@ -182,6 +183,11 @@
     <x:String x:Key="Settings.Folders.ShowRecents">显示“最近的文件”小组件</x:String>
     <x:String x:Key="Settings.About.Version">版本 {0}</x:String>
     <x:String x:Key="Settings.About.Description">一款采用 Files Community 界面、FluentAvalonia 外观，并兼容 Finder 拷贝、剪切、粘贴、重命名和废纸篓操作的 macOS 文件管理器。</x:String>
+    <x:String x:Key="Settings.Shortcuts.App">应用程序</x:String>
+    <x:String x:Key="Settings.Shortcuts.TypePrompt">输入快捷键</x:String>
+    <x:String x:Key="Settings.Shortcuts.None">无</x:String>
+    <x:String x:Key="Settings.Shortcuts.RestoreDefaults">恢复默认快捷键</x:String>
+    <x:String x:Key="Settings.Shortcuts.Restore">恢复默认</x:String>
 
     <!-- Explorer -->
     <x:String x:Key="Explorer.Empty.Folder">此文件夹为空</x:String>
@@ -282,6 +288,7 @@
     <x:String x:Key="Menu.Go.Back">后退</x:String>
     <x:String x:Key="Menu.Go.Forward">前进</x:String>
     <x:String x:Key="Menu.Go.EnclosingFolder">上层文件夹</x:String>
+    <x:String x:Key="Menu.Go.GoToFolder">前往文件夹</x:String>
     <x:String x:Key="Menu.Window.Minimize">最小化</x:String>
     <x:String x:Key="Menu.Window.Zoom">缩放</x:String>
     <x:String x:Key="Menu.Window.ShowPreviousTab">显示上一个标签页</x:String>

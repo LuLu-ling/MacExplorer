@@ -4,6 +4,7 @@ import SwiftUI
 
 public typealias MXIntCallback = @convention(c) (UnsafeMutableRawPointer?, Int32) -> Void
 public typealias MXToggleCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32) -> Void
+public typealias MXShortcutCallback = @convention(c) (UnsafeMutableRawPointer?, Int32, Int32, Int32) -> Void
 
 struct MXSettingsPayload {
     var page: Int32
@@ -21,6 +22,9 @@ struct MXSettingsPayload {
     var appName: UnsafePointer<CChar>?
     var version: UnsafePointer<CChar>?
     var description: UnsafePointer<CChar>?
+    var categories: UnsafePointer<CChar>?
+    var shortcutRows: UnsafePointer<CChar>?
+    var shortcutLabels: UnsafePointer<CChar>?
 }
 
 @_cdecl("MXSettingsCreate")
@@ -28,13 +32,15 @@ public func MXSettingsCreate(
     _ context: UnsafeMutableRawPointer?,
     _ themeChanged: MXIntCallback?,
     _ languageChanged: MXIntCallback?,
-    _ toggleChanged: MXToggleCallback?
+    _ toggleChanged: MXToggleCallback?,
+    _ shortcutChanged: MXShortcutCallback?
 ) -> UnsafeMutableRawPointer {
     let view = SettingsView(frame: .zero)
     view.model.context = context
     view.model.themeChanged = themeChanged
     view.model.languageChanged = languageChanged
     view.model.toggleChanged = toggleChanged
+    view.model.shortcutChanged = shortcutChanged
     return Unmanaged.passRetained(view).toOpaque()
 }
 
@@ -56,6 +62,20 @@ private enum Metrics {
     static let rowInset: CGFloat = 14
     static let corner: CGFloat = 12
     static let folderCount = 5
+    static let maxPage = 4
+}
+
+private struct ShortcutRow: Equatable, Identifiable {
+    var id: Int
+    var title: String
+    var chord: String
+    var custom: Bool
+}
+
+private struct ShortcutGroup: Equatable, Identifiable {
+    var id: Int
+    var title: String
+    var rows: [ShortcutRow]
 }
 
 private struct SettingsState: Equatable {
@@ -72,6 +92,11 @@ private struct SettingsState: Equatable {
     var appName = ""
     var version = ""
     var description = ""
+    var groups: [ShortcutGroup] = []
+    var typePrompt = ""
+    var noneLabel = ""
+    var restoreAll = ""
+    var restore = ""
     var cardArgb: UInt32 = 0
     var strokeArgb: UInt32 = 0
 
@@ -86,7 +111,7 @@ private struct SettingsState: Equatable {
         if folderLabels.count > Metrics.folderCount {
             folderLabels = Array(folderLabels.prefix(Metrics.folderCount))
         }
-        page = min(max(Int(data.page), 0), 3)
+        page = min(max(Int(data.page), 0), Metrics.maxPage)
         heading = at(titles, page)
         theme = clamp(Int(data.theme), count: themeOptions.count)
         themeLabel = cString(data.themeLabel)
@@ -99,6 +124,12 @@ private struct SettingsState: Equatable {
         appName = cString(data.appName)
         version = cString(data.version)
         description = cString(data.description)
+        let labels = lines(data.shortcutLabels)
+        typePrompt = at(labels, 0)
+        noneLabel = at(labels, 1)
+        restoreAll = at(labels, 2)
+        restore = at(labels, 3)
+        groups = parseGroups(categories: lines(data.categories), rows: lines(data.shortcutRows))
         cardArgb = data.cardArgb
         strokeArgb = data.strokeArgb
     }
@@ -106,16 +137,23 @@ private struct SettingsState: Equatable {
 
 private final class SettingsModel: ObservableObject {
     @Published private(set) var state = SettingsState()
+    @Published private(set) var recordingId = -1
 
     var context: UnsafeMutableRawPointer?
     var themeChanged: MXIntCallback?
     var languageChanged: MXIntCallback?
     var toggleChanged: MXToggleCallback?
+    var shortcutChanged: MXShortcutCallback?
 
     private var applying = false
+    private var monitors: [Any] = []
+    fileprivate weak var recordingChip: NSView?
+
+    deinit { endRecording() }
 
     func apply(_ data: MXSettingsPayload) {
         let next = SettingsState(data)
+        if next.page != 3 { endRecording() }
         guard next != state else { return }
         applying = true
         defer { applying = false }
@@ -144,6 +182,77 @@ private final class SettingsModel: ObservableObject {
         state.flags = next
         toggleChanged?(context, Int32(index), on ? 1 : 0)
     }
+
+    func toggleRecording(_ id: Int) {
+        if recordingId == id { return }
+        beginRecording(id)
+    }
+
+    func reset(_ id: Int) {
+        endRecording()
+        shortcutChanged?(context, Int32(id), -2, 0)
+    }
+
+    func resetAll() {
+        endRecording()
+        shortcutChanged?(context, 0, -3, 0)
+    }
+
+    private func beginRecording(_ id: Int) {
+        endRecording()
+        recordingId = id
+        let mouse: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        if let local = NSEvent.addLocalMonitorForEvents(matching: mouse.union(.keyDown), handler: { [weak self] event in
+            self?.handleLocal(event) ?? event
+        }) {
+            monitors.append(local)
+        }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: mouse, handler: { [weak self] _ in
+            self?.endRecording()
+        }) {
+            monitors.append(global)
+        }
+    }
+
+    func endRecording() {
+        monitors.forEach { NSEvent.removeMonitor($0) }
+        monitors.removeAll()
+        recordingChip = nil
+        if recordingId != -1 {
+            recordingId = -1
+        }
+    }
+
+    private func handleLocal(_ event: NSEvent) -> NSEvent? {
+        if event.type == .keyDown {
+            handleKey(event)
+            return nil
+        }
+        if !clickIsOnChip(event) {
+            let id = recordingId
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.recordingId == id else { return }
+                self.endRecording()
+            }
+        }
+        return event
+    }
+    private func clickIsOnChip(_ event: NSEvent) -> Bool {
+        guard let chip = recordingChip, event.window === chip.window else { return false }
+        if chip.bounds.isEmpty { return true }
+        return chip.convert(chip.bounds, to: nil).insetBy(dx: -2, dy: -2).contains(event.locationInWindow)
+    }
+
+    private func handleKey(_ event: NSEvent) {
+        if event.isARepeat { return }
+        let keyCode = Int(event.keyCode)
+        if (0x36...0x3F).contains(keyCode) { return }
+        let flags = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        let id = recordingId
+        endRecording()
+        guard id >= 0 else { return }
+        shortcutChanged?(context, Int32(id), Int32(keyCode), Int32(flags.rawValue))
+    }
 }
 
 private struct SettingsPane: View {
@@ -159,16 +268,21 @@ private struct SettingsPane: View {
                 .font(.system(size: Metrics.heading, weight: .bold))
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, minHeight: Metrics.headingMin, alignment: .leading)
-            card(state)
-                .padding(.top, 12)
             if state.page == 3 {
-                Text(state.description)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Color.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 10)
+                shortcuts(state)
+                    .padding(.top, 12)
+            } else {
+                card(state)
+                    .padding(.top, 12)
+                if state.page == 4 {
+                    Text(state.description)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Color.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 10)
+                }
+                Spacer(minLength: 8)
             }
-            Spacer(minLength: 8)
         }
         .padding(.top, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -188,7 +302,7 @@ private struct SettingsPane: View {
                     ForEach(0..<Metrics.folderCount, id: \.self) { index in
                         toggle(state.folderLabels[index], flag(index), divider: index + 1 < Metrics.folderCount)
                     }
-                case 3:
+                case 4:
                     SettingsRow(title: state.appName) {
                         Text(state.version)
                             .font(.system(size: 13))
@@ -200,6 +314,76 @@ private struct SettingsPane: View {
                 }
             }
             .glassEffect(.regular, in: shape)
+        }
+    }
+
+    private func shortcuts(_ state: SettingsState) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ScrollView {
+                VStack(spacing: 12) {
+                    ForEach(state.groups) { group in
+                        shortcutGroup(group, state)
+                    }
+                }
+            }
+            if !state.restoreAll.isEmpty {
+                Button(state.restoreAll) { model.resetAll() }
+                    .buttonStyle(.glass)
+                    .controlSize(.regular)
+            }
+        }
+        .padding(.bottom, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func shortcutGroup(_ group: ShortcutGroup, _ state: SettingsState) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Metrics.corner, style: .continuous)
+        return VStack(alignment: .leading, spacing: 6) {
+            Text(group.title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Color.secondary)
+                .padding(.leading, 4)
+            GlassEffectContainer {
+                VStack(spacing: 0) {
+                    ForEach(Array(group.rows.enumerated()), id: \.element.id) { index, row in
+                        shortcutRow(row, state, divider: index + 1 < group.rows.count)
+                    }
+                }
+                .glassEffect(.regular, in: shape)
+            }
+        }
+    }
+
+    private func shortcutRow(_ row: ShortcutRow, _ state: SettingsState, divider: Bool) -> some View {
+        let recording = model.recordingId == row.id
+        return SettingsRow(title: row.title, divider: divider) {
+            Button {
+                model.toggleRecording(row.id)
+            } label: {
+                Text(recording ? state.typePrompt : (row.chord.isEmpty ? state.noneLabel : row.chord))
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(recording ? Color.accentColor : (row.chord.isEmpty ? Color.secondary : Color.primary))
+                    .lineLimit(1)
+                    .padding(.horizontal, 8)
+                    .frame(minWidth: 36, minHeight: 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.primary.opacity(recording ? 0.12 : 0.06)))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(recording ? Color.accentColor : Color.clear, lineWidth: 1)
+                        if recording {
+                            ChipProbe(model: model)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .allowsHitTesting(false)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+            .contextMenu {
+                Button(state.restore) { model.reset(row.id) }
+                    .disabled(!row.custom)
+            }
         }
     }
 
@@ -321,6 +505,31 @@ private final class SettingsView: NSView {
     }
 }
 
+private struct ChipProbe: NSViewRepresentable {
+    let model: SettingsModel
+
+    func makeNSView(context: Context) -> Probe {
+        let view = Probe()
+        view.model = model
+        model.recordingChip = view
+        return view
+    }
+
+    func updateNSView(_ view: Probe, context: Context) {
+        view.model = model
+        model.recordingChip = view
+    }
+
+    final class Probe: NSView {
+        weak var model: SettingsModel?
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            model?.recordingChip = window == nil ? nil : self
+        }
+    }
+}
+
 private func cString(_ ptr: UnsafePointer<CChar>?) -> String {
     ptr.map { String(cString: $0) } ?? ""
 }
@@ -337,4 +546,20 @@ private func at(_ items: [String], _ index: Int) -> String {
 private func clamp(_ value: Int, count: Int) -> Int {
     guard count > 0 else { return 0 }
     return min(max(value, 0), count - 1)
+}
+
+private func parseGroups(categories: [String], rows: [String]) -> [ShortcutGroup] {
+    var buckets = Array(repeating: [ShortcutRow](), count: max(categories.count, 1))
+    for line in rows where !line.isEmpty {
+        let parts = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count >= 5, let id = Int(parts[0]), let cat = Int(parts[1]) else { continue }
+        let row = ShortcutRow(id: id, title: parts[2], chord: parts[3], custom: parts[4] != "0")
+        if buckets.indices.contains(cat) {
+            buckets[cat].append(row)
+        }
+    }
+    return zip(categories.indices, categories).compactMap { index, title in
+        guard buckets.indices.contains(index), !buckets[index].isEmpty else { return nil }
+        return ShortcutGroup(id: index, title: title, rows: buckets[index])
+    }
 }
