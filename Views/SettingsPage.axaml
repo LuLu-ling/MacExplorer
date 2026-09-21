@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MacExplorer.ViewModels"
-             xmlns:conv="using:MacExplorer.Converters"
              xmlns:native="using:MacExplorer.Native"
              x:Class="MacExplorer.Views.SettingsPage"
              x:DataType="vm:SettingsViewModel">
@@ -15,88 +14,11 @@
         </Grid.ColumnDefinitions>
         <Border Margin="0,0,1,0"
                 CornerRadius="12"
-                Background="{DynamicResource LayerFillColorDefaultBrush}"
+                Background="Transparent"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 ClipToBounds="True">
-            <ScrollViewer Padding="0,6,0,4"
-                          HorizontalScrollBarVisibility="Disabled"
-                          Background="Transparent">
-                <StackPanel>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Appearance}"
-                            Tag="Appearance"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE771;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.Appearance}" />
-                        </Grid>
-                    </Border>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Language}"
-                            Tag="Language"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE774;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.Language}" />
-                        </Grid>
-                    </Border>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Folders}"
-                            Tag="Folders"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE8B7;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.Folders}" />
-                        </Grid>
-                    </Border>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=NewFiles}"
-                            Tag="NewFiles"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE8A5;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.NewFiles}" />
-                        </Grid>
-                    </Border>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=Shortcuts}"
-                            Tag="Shortcuts"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE92E;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.Shortcuts}" />
-                        </Grid>
-                    </Border>
-                    <Border Classes="SidebarRow"
-                            Classes.selected="{Binding SelectedPage, Converter={x:Static conv:EqualityConverter.Instance}, ConverterParameter=About}"
-                            Tag="About"
-                            PointerReleased="Nav_OnPointerReleased">
-                        <Grid ColumnDefinitions="Auto,*" Margin="8,0,10,0">
-                            <TextBlock Classes="SidebarGlyph"
-                                       FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                       Text="&#xE946;" Margin="0,0,8,0" />
-                            <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                                       Text="{DynamicResource Settings.Nav.About}" />
-                        </Grid>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
+            <native:NativeSidebarHost Mode="Settings" />
         </Border>
 
         <GridSplitter Grid.Column="1" Width="2" Background="Transparent"

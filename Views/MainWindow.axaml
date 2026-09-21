@@ -153,7 +153,7 @@
                     IsVisible="{Binding IsSidebarOpen}"
                     Margin="8,0,1,8"
                     CornerRadius="12"
-                    Background="{DynamicResource LayerFillColorDefaultBrush}"
+                    Background="Transparent"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     ClipToBounds="True">

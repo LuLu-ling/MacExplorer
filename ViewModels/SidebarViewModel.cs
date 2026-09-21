@@ -173,6 +173,57 @@ public sealed partial class SidebarViewModel : ViewModelBase
         return true;
     }
 
+    public bool TryMove(int from, int to)
+    {
+        if ((uint)from >= (uint)Items.Count)
+            return false;
+        var dest = to < 0 ? 0 : Math.Min(to, Items.Count - 1);
+        var units = ReorderUnits(from);
+        if (units is null)
+            return false;
+        var fromRun = RunOf(units, from);
+        var toRun = RunOf(units, dest);
+        if (fromRun < 0 || toRun < 0)
+            return false;
+        return TryMoveUnits(units, fromRun, toRun);
+    }
+
+    public bool TryMoveVisible(int fromVisible, int toVisible)
+    {
+        var map = VisibleIndices();
+        if ((uint)fromVisible >= (uint)map.Length)
+            return false;
+        var dest = toVisible < 0 ? 0 : Math.Min(toVisible, map.Length - 1);
+        if ((uint)dest >= (uint)map.Length)
+            return false;
+        return TryMove(map[fromVisible], map[dest]);
+    }
+
+    public int[] VisibleIndices()
+    {
+        var map = new List<int>(Items.Count);
+        for (var i = 0; i < Items.Count; i++)
+        {
+            if (Items[i].IsSection || Items[i].IsVisible)
+                map.Add(i);
+        }
+
+        return map.ToArray();
+    }
+
+    private static int RunOf((int Start, int Count)[] units, int index)
+    {
+        for (var i = 0; i < units.Length; i++)
+        {
+            var (start, count) = units[i];
+            if (index >= start && index < start + count)
+                return i;
+        }
+
+        return -1;
+    }
+
+
     public void ToggleSection(SidebarItem section)
     {
         if (!section.IsSection) return;

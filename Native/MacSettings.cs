@@ -72,16 +72,7 @@ internal sealed class MacSettingsPane : IDisposable
     private MacSettingsSnapshot _applied;
     private bool _disposed;
 
-    static MacSettingsPane()
-    {
-        NativeLibrary.SetDllImportResolver(typeof(MacSettingsPane).Assembly, static (name, _, _) =>
-        {
-            if (name != Lib)
-                return IntPtr.Zero;
-            var path = Path.Combine(AppContext.BaseDirectory, "libMacExplorerSettings.dylib");
-            return File.Exists(path) ? NativeLibrary.Load(path) : IntPtr.Zero;
-        });
-    }
+    static MacSettingsPane() => NativeLib.Touch();
 
     private MacSettingsPane() { }
 

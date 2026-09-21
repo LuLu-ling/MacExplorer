@@ -28,6 +28,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.ShutdownMode = Avalonia.Controls.ShutdownMode.OnExplicitShutdown;
+            MacSidebarPane.Warmup();
             var windows = AppServices.Get<WindowService>();
             windows.OpenWindow();
             MacApplicationMenu.Install(windows);

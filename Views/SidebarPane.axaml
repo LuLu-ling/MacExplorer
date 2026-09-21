@@ -1,91 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MacExplorer.ViewModels"
-             xmlns:m="using:MacExplorer.Models"
-             xmlns:ctrl="using:MacExplorer.Controls"
+             xmlns:native="using:MacExplorer.Native"
              x:Class="MacExplorer.Views.SidebarPane"
              x:DataType="vm:MainViewModel"
              Background="Transparent">
-    <Grid RowDefinitions="*,Auto">
-        <ScrollViewer x:Name="Scroller"
-                      Padding="0,6,0,4"
-                      HorizontalScrollBarVisibility="Disabled"
-                      Background="Transparent">
-            <ItemsControl x:Name="SidebarList" ItemsSource="{Binding Sidebar.Items}">
-                <ItemsControl.Styles>
-                    <Style Selector="ContentPresenter">
-                        <Setter Property="ClipToBounds" Value="False" />
-                    </Style>
-                </ItemsControl.Styles>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="0" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="m:SidebarItem">
-                        <Border Classes="SidebarRow"
-                                Classes.selected="{Binding IsSelected}"
-                                Classes.section="{Binding IsSection}"
-                                Classes.collapsed="{Binding !IsVisible}"
-                                Classes.renaming="{Binding IsRenaming}"
-                                Tag="{Binding}"
-                                PointerPressed="Row_OnPointerPressed"
-                                PointerMoved="Row_OnPointerMoved"
-                                PointerReleased="Row_OnPointerReleased"
-                                PointerCaptureLost="Row_OnPointerCaptureLost">
-                            <Grid ColumnDefinitions="Auto,Auto,*"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch"
-                                  Margin="8,0,10,0">
-                                <TextBlock Classes="SidebarChevron"
-                                           Classes.expanded="{Binding IsExpanded}"
-                                           FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                           Text="&#xE76C;"
-                                           IsVisible="{Binding ShowChevron}" />
-                                <Panel Grid.Column="1" Width="16" Height="16" Margin="0,0,8,0"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
-                                       IsVisible="{Binding !IsSection}">
-                                    <Ellipse Width="12" Height="12"
-                                             Fill="{Binding Marker}"
-                                             IsVisible="{Binding HasMarker}"
-                                             HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    <TextBlock Classes="SidebarGlyph"
-                                               FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                               Text="{Binding Glyph}"
-                                               IsVisible="{Binding !HasMarker}" />
-                                </Panel>
-                                <Panel Grid.Column="2">
-                                    <TextBlock Classes="SidebarTitle"
-                                               Text="{Binding Title}"
-                                               TextTrimming="CharacterEllipsis"
-                                               IsVisible="{Binding !IsRenaming}" />
-                                    <ctrl:RenameTextBox Classes="SidebarRename"
-                                                         Text="{Binding RenameText}" IsVisible="{Binding IsRenaming}"
-                                                         KeyDown="OnTagRenameKey" LostFocus="OnTagRenameLostFocus" />
-                                </Panel>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-        <StackPanel Grid.Row="1" Margin="0,0,0,6">
-            <Border Height="1" Margin="16,4"
-                    Background="{DynamicResource ControlStrokeColorDefaultBrush}" />
-            <Border Classes="SidebarRow" Classes.selected="{Binding ShowSettings}"
-                    PointerReleased="Settings_OnPointerReleased">
-                <Grid ColumnDefinitions="Auto,*"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      Margin="8,0,10,0">
-                    <TextBlock Classes="SidebarGlyph"
-                               FontFamily="{StaticResource SymbolThemeFontFamily}"
-                               Text="&#xE713;" Margin="0,0,8,0" />
-                    <TextBlock Grid.Column="1" Classes="SidebarTitle"
-                               Text="{DynamicResource Settings.Title}" />
-                </Grid>
-            </Border>
-        </StackPanel>
-    </Grid>
+    <native:NativeSidebarHost />
 </UserControl>
