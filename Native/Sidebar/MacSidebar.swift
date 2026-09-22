@@ -66,9 +66,7 @@ public func MXSidebarWarmup() {
     window.alphaValue = 0
     window.ignoresMouseEvents = true
     window.contentView = view
-    view.attachHostIfReady(reveal: true)
-    view.layoutSubtreeIfNeeded()
-    view.displayIfNeeded()
+    view.warmDisplay()
     window.contentView = nil
     window.close()
 }
@@ -84,7 +82,7 @@ private enum RowFlag {
 
 private enum Metrics {
     static let item: CGFloat = 34
-    static let section: CGFloat = 40
+    static let section: CGFloat = 37
 
     static func height(_ row: SidebarRow) -> CGFloat {
         row.collapsed ? 0 : (row.section ? section : item)
@@ -94,7 +92,22 @@ private enum Metrics {
 private enum Motion {
     static let shift = Animation.timingCurve(0.22, 1, 0.36, 1, duration: 0.22)
     static let collapse = Animation.easeOut(duration: 0.22)
-    static let theme = Animation.easeInOut(duration: 0.3)
+}
+
+private enum Chrome {
+    static let theme = Animation.easeInOut(duration: 0.25)
+
+    static func select(_ scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 58 / 255, green: 58 / 255, blue: 60 / 255)
+            : Color(red: 228 / 255, green: 229 / 255, blue: 235 / 255)
+    }
+
+    static func hover(_ scheme: ColorScheme) -> Color {
+        scheme == .dark
+            ? Color(red: 44 / 255, green: 44 / 255, blue: 46 / 255)
+            : Color(red: 238 / 255, green: 239 / 255, blue: 243 / 255)
+    }
 }
 
 private struct SidebarRow: Equatable, Identifiable {
@@ -291,6 +304,7 @@ private final class SidebarModel: ObservableObject {
     @Published var draggingId = ""
     @Published var dragOffset: CGFloat = 0
     @Published var shifts: [String: CGFloat] = [:]
+    @Published private(set) var paintEpoch = 0
 
     var context: UnsafeMutableRawPointer?
     var select: MXStringCallback?
@@ -308,18 +322,19 @@ private final class SidebarModel: ObservableObject {
     private var dragRuns: [Reorder.Run]?
     private var draggedIds: Set<String> = []
     private var didDrag = false
+    private var fileDrop = false
+
+    func settlePaint() {
+        paintEpoch &+= 1
+    }
 
     func apply(_ data: MXSidebarPayload) {
         let next = SidebarState(data)
         guard next != state else { return }
+        if Self.paletteOnly(from: state, to: next) { return }
         var transaction = Transaction()
-        if Self.layoutChange(from: state, to: next) {
-            transaction.animation = Motion.collapse
-        } else if Self.paletteChange(from: state, to: next) {
-            transaction.animation = Motion.theme
-        } else {
-            transaction.disablesAnimations = true
-        }
+        transaction.animation = Self.layoutChange(from: state, to: next) ? Motion.collapse : nil
+        transaction.disablesAnimations = transaction.animation == nil
         withTransaction(transaction) {
             if next.renamingId != state.renamingId {
                 draft = next.renameText
@@ -347,6 +362,7 @@ private final class SidebarModel: ObservableObject {
     }
 
     func setDropHover(_ id: String, _ on: Bool) {
+        fileDrop = on
         let next = on ? id : ""
         if hoverId != next { hoverId = next }
         send(hover, next)
@@ -367,7 +383,7 @@ private final class SidebarModel: ObservableObject {
     }
 
     func dragChanged(_ row: SidebarRow, _ value: DragGesture.Value) {
-        if fileDragActive { return }
+        if fileDrop { return }
         if draggingId.isEmpty {
             guard row.reorder, abs(value.translation.height) >= 6 else { return }
             guard let index = state.rows.firstIndex(where: { $0.id == row.id }),
@@ -481,19 +497,15 @@ private final class SidebarModel: ObservableObject {
         return changed
     }
 
-    private static func paletteChange(from: SidebarState, to: SidebarState) -> Bool {
+    private static func paletteOnly(from: SidebarState, to: SidebarState) -> Bool {
         guard from.rows.count == to.rows.count else { return false }
         for (a, b) in zip(from.rows, to.rows) {
-            if a.id != b.id || a.flags != b.flags || a.title != b.title || a.symbol != b.symbol { return false }
+            if a != b { return false }
         }
         return from.selectArgb != to.selectArgb
             || from.hoverArgb != to.hoverArgb
             || from.accentArgb != to.accentArgb
             || from.secondaryArgb != to.secondaryArgb
-    }
-
-    private var fileDragActive: Bool {
-        NSPasteboard(name: .drag).availableType(from: [.fileURL]) != nil
     }
 
     private func send(_ callback: MXStringCallback?, _ value: String) {
@@ -512,7 +524,7 @@ private final class SidebarModel: ObservableObject {
 private struct SidebarPane: View {
     @ObservedObject var model: SidebarModel
     @FocusState private var renameFocus: Bool
-
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         let state = model.state
         let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -538,6 +550,7 @@ private struct SidebarPane: View {
             }
             .glassEffect(.regular, in: shape)
         }
+        .animation(Chrome.theme, value: scheme)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.clear)
     }
@@ -548,8 +561,8 @@ private struct SidebarPane: View {
         return rowView(row, state)
             .padding(.horizontal, 8)
             .frame(height: collapsed ? 0 : (row.section ? 28 : 32), alignment: .top)
-            .padding(.top, collapsed ? 0 : (row.section ? 10 : 1))
-            .padding(.bottom, collapsed ? 0 : (row.section ? 2 : 1))
+            .padding(.top, collapsed ? 0 : (row.section ? 7.5 : 1))
+            .padding(.bottom, collapsed ? 0 : (row.section ? 1.5 : 1))
             .opacity(collapsed ? 0 : (dragging ? 0.92 : 1))
             .animation(Motion.collapse, value: collapsed)
             .clipped()
@@ -575,7 +588,7 @@ private struct SidebarPane: View {
                 if row.section {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color(argb: state.secondaryArgb))
+                        .foregroundStyle(Color.secondary)
                         .frame(width: 12)
                         .rotationEffect(.degrees(row.expanded ? 90 : 0))
                 }
@@ -586,7 +599,7 @@ private struct SidebarPane: View {
                 } else if !row.symbol.isEmpty && !row.section {
                     Image(systemName: row.symbol)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(selected ? Color(argb: state.accentArgb) : Color.primary)
+                        .foregroundStyle(selected ? Color.accentColor : Color.primary)
                         .frame(width: 16)
                 }
                 if renaming {
@@ -601,8 +614,8 @@ private struct SidebarPane: View {
                     Text(row.title)
                         .font(row.section ? .system(size: 11, weight: .semibold) : .system(size: 13))
                         .foregroundStyle(selected
-                                         ? Color(argb: state.accentArgb)
-                                         : (row.section ? Color(argb: state.secondaryArgb) : Color.primary))
+                                         ? Color.accentColor
+                                         : (row.section ? Color.secondary : Color.primary))
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
@@ -612,11 +625,12 @@ private struct SidebarPane: View {
             .frame(maxWidth: .infinity, minHeight: row.section ? 28 : 32, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(fill(row, state, selected))
+                    .fill(fill(row, selected))
                     .animation(nil, value: model.hoverId))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .id("\(row.id)-\(model.paintEpoch)")
         .simultaneousGesture(dragGesture(row))
         .background(RightClick { model.showMenu(row.id) })
         .onDrop(of: [UTType.fileURL], isTargeted: dropBinding(row.id)) { providers in
@@ -630,11 +644,11 @@ private struct SidebarPane: View {
             HStack(spacing: 8) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(state.footerSelected ? Color(argb: state.accentArgb) : Color.primary)
+                    .foregroundStyle(state.footerSelected ? Color.accentColor : Color.primary)
                     .frame(width: 16)
                 Text(state.footerTitle)
                     .font(.system(size: 13))
-                    .foregroundStyle(state.footerSelected ? Color(argb: state.accentArgb) : Color.primary)
+                    .foregroundStyle(state.footerSelected ? Color.accentColor : Color.primary)
                     .lineLimit(1)
                 Spacer(minLength: 0)
             }
@@ -643,20 +657,21 @@ private struct SidebarPane: View {
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(state.footerSelected
-                          ? Color(argb: state.selectArgb)
-                          : (hovered ? Color(argb: state.hoverArgb) : Color.clear))
+                          ? Chrome.select(scheme)
+                          : (hovered ? Chrome.hover(scheme) : Color.clear))
                     .animation(nil, value: model.hoverId))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .id("footer-\(model.paintEpoch)")
         .onHover { model.setPointerHover("settings-footer", $0) }
         .padding(.horizontal, 8)
     }
 
-    private func fill(_ row: SidebarRow, _ state: SidebarState, _ selected: Bool) -> Color {
+    private func fill(_ row: SidebarRow, _ selected: Bool) -> Color {
         if row.section { return .clear }
-        if selected { return Color(argb: state.selectArgb) }
-        if model.hoverId == row.id { return Color(argb: state.hoverArgb) }
+        if selected { return Chrome.select(scheme) }
+        if model.hoverId == row.id { return Chrome.hover(scheme) }
         return .clear
     }
 
@@ -676,12 +691,16 @@ private struct SidebarPane: View {
 private final class HostingView: NSHostingView<SidebarPane> {
     override var isOpaque: Bool { false }
 
+
     required init(rootView: SidebarPane) {
         super.init(rootView: rootView)
         sizingOptions = []
         safeAreaRegions = []
         translatesAutoresizingMaskIntoConstraints = true
         autoresizingMask = [.width, .height]
+        isFlipped = true
+        wantsLayer = true
+        layerContentsPlacement = .topLeft
     }
 
     @available(*, unavailable)
@@ -691,14 +710,18 @@ private final class HostingView: NSHostingView<SidebarPane> {
 private final class SidebarHostView: NSView {
     let model = SidebarModel()
     private let host: HostingView
+    private var pendingReveal = false
 
     override var isOpaque: Bool { false }
     override var isFlipped: Bool { true }
+
 
     override init(frame frameRect: NSRect) {
         host = HostingView(rootView: SidebarPane(model: model))
         super.init(frame: frameRect)
         autoresizingMask = [.width, .height]
+        wantsLayer = true
+        layerContentsPlacement = .topLeft
         host.autoresizingMask = [.width, .height]
         host.isHidden = true
     }
@@ -725,22 +748,65 @@ private final class SidebarHostView: NSView {
         attachHostIfReady()
     }
 
-    fileprivate func attachHostIfReady(reveal: Bool = false) {
+    fileprivate func attachHostIfReady() {
         let size = bounds.size
         guard window != nil, size.width > 1, size.height > 1 else { return }
-        host.frame = CGRect(origin: .zero, size: size)
+        if host.superview != nil {
+            host.frame = CGRect(origin: .zero, size: size)
+            return
+        }
+        guard !pendingReveal else { return }
+        pendingReveal = true
+        // The first text bitmap can be upside down and is reused until the
+        // text view is recreated. Stay hidden until settleAndShow() does that.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.pendingReveal = false
+            self.revealHost()
+        }
+    }
+
+    fileprivate func revealHost() {
+        guard window != nil, bounds.width > 1, bounds.height > 1 else { return }
+        host.frame = bounds
         if host.superview == nil {
             addSubview(host)
-            layoutSubtreeIfNeeded()
-            displayIfNeeded()
-            if reveal {
-                host.isHidden = false
-            } else {
-                DispatchQueue.main.async { [weak self] in
-                    self?.host.isHidden = false
-                }
+        }
+        host.isHidden = true
+        host.needsLayout = true
+        layoutSubtreeIfNeeded()
+        displayIfNeeded()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.window != nil else { return }
+            self.layoutSubtreeIfNeeded()
+            self.displayIfNeeded()
+            DispatchQueue.main.async { [weak self] in
+                self?.settleAndShow()
             }
         }
+    }
+
+    private func settleAndShow() {
+        guard window != nil, host.superview != nil, bounds.width > 1 else { return }
+        host.frame = bounds
+        model.settlePaint()
+        host.needsLayout = true
+        layoutSubtreeIfNeeded()
+        displayIfNeeded()
+        host.isHidden = false
+    }
+
+    fileprivate func warmDisplay() {
+        host.frame = bounds
+        if host.superview == nil {
+            addSubview(host)
+        }
+        host.isHidden = false
+        layoutSubtreeIfNeeded()
+        displayIfNeeded()
+        model.settlePaint()
+        layoutSubtreeIfNeeded()
+        displayIfNeeded()
     }
 }
 
