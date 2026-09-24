@@ -313,6 +313,7 @@
     <x:String x:Key="Context.OpenWith.ChooseAppMessage">Choose an application to open the document “{0}”.</x:String>
     <x:String x:Key="Context.OpenWith.ChooseAppMessageMany">Choose an application to open the selected documents.</x:String>
     <x:String x:Key="Context.ShowInFinder">Show in Finder</x:String>
+    <x:String x:Key="Context.OpenInTerminal">Open in Terminal</x:String>
     <x:String x:Key="Context.Favorite">Favorite</x:String>
     <x:String x:Key="Context.Unfavorite">Unfavorite</x:String>
     <x:String x:Key="Context.Eject">Eject</x:String>

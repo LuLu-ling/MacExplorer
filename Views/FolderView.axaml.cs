@@ -514,6 +514,7 @@ public partial class FolderView : UserControl
             ..OpenWindowEntry(selected),
             ..OpenWithEntry(tab, selected),
             new(Lang.Text("Context.ShowInFinder"), () => tab.RevealCommand.Execute(null), Icon: MacMenuSymbol.FinderApp),
+            ..TerminalEntry(selected),
             ..FavoriteEntry(selected),
             new("", Separator: true),
             new(Lang.Text("Common.Action.Cut"), () => tab.CutCommand.Execute(null), Symbol: MacMenuSymbol.Cut),
@@ -553,6 +554,23 @@ public partial class FolderView : UserControl
         ];
     }
 
+    private static MacMenuEntry[] TerminalEntry(IList<FileItem> selected)
+    {
+        var folders = selected.Where(static i => i.IsNavigable && MacTerminal.CanOpen(i.Path)).Select(static i => i.Path).ToArray();
+        return folders.Length == 0 ? [] :
+        [
+            new("", Separator: true),
+            OpenInTerminal(() =>
+            {
+                foreach (var path in folders)
+                    MacTerminal.Open(path);
+            }),
+        ];
+    }
+
+    private static MacMenuEntry OpenInTerminal(Action open) =>
+        new(Lang.Text("Context.OpenInTerminal"), open, Icon: MacTerminal.DefaultApp(), Symbol: MacMenuSymbol.Terminal);
+
     private static MacMenuEntry[] OpenWithEntry(ExplorerTabViewModel tab, IList<FileItem> selected)
     {
         if (selected.Count == 0 ||
@@ -581,8 +599,13 @@ public partial class FolderView : UserControl
         var items = new List<MacMenuEntry>
         {
             new(Lang.Text("Tab.OpenInNewWindow"), () => AppServices.Get<WindowService>().OpenWindow(tab.CurrentPath), Symbol: MacMenuSymbol.NewWindow),
-            new("", Separator: true)
         };
+        if (MacTerminal.CanOpen(tab.CurrentPath))
+        {
+            items.Add(new("", Separator: true));
+            items.Add(OpenInTerminal(() => MacTerminal.Open(tab.CurrentPath)));
+        }
+        items.Add(new("", Separator: true));
         items.AddRange(NewEntries(tab));
         items.Add(new("", Separator: true));
         items.Add(new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste));

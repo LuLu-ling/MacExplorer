@@ -22,6 +22,7 @@ internal readonly record struct MacMenuEntry(
 internal static class MacMenuSymbol
 {
     public const string Open = "arrow.up.forward.app";
+    public const string Terminal = "terminal";
     public const string NewWindow = "macwindow.badge.plus";
     public const string NewTab = "plus";
     public const string Duplicate = "plus.square.on.square";

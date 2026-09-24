@@ -313,6 +313,7 @@
     <x:String x:Key="Context.OpenWith.ChooseAppMessage">选取用来打开文稿“{0}”的应用程序。</x:String>
     <x:String x:Key="Context.OpenWith.ChooseAppMessageMany">选取用来打开所选文稿的应用程序。</x:String>
     <x:String x:Key="Context.ShowInFinder">在 Finder 中显示</x:String>
+    <x:String x:Key="Context.OpenInTerminal">在终端中打开</x:String>
     <x:String x:Key="Context.Favorite">添加至个人收藏</x:String>
     <x:String x:Key="Context.Unfavorite">从个人收藏中移除</x:String>
     <x:String x:Key="Context.Eject">推出</x:String>
