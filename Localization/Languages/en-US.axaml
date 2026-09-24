@@ -182,6 +182,7 @@
     <x:String x:Key="Settings.Folders.ShowQuickAccess">Show Quick Access widget</x:String>
     <x:String x:Key="Settings.Folders.ShowVolumes">Show Drives widget</x:String>
     <x:String x:Key="Settings.Folders.ShowRecents">Show Recent files widget</x:String>
+    <x:String x:Key="Settings.Folders.Terminal">Default Terminal</x:String>
     <x:String x:Key="Settings.About.Version">Version {0}</x:String>
     <x:String x:Key="Settings.About.Description">A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash.</x:String>
     <x:String x:Key="Settings.Shortcuts.App">Application</x:String>

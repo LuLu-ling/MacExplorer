@@ -28,6 +28,9 @@ struct MXSettingsPayload {
     var shortcutLabels: UnsafePointer<CChar>?
     var fileTypes: UnsafePointer<CChar>?
     var fileTypeLabels: UnsafePointer<CChar>?
+    var terminalLabel: UnsafePointer<CChar>?
+    var terminalOptions: UnsafePointer<CChar>?
+    var terminalIndex: Int32
 }
 
 @_cdecl("MXSettingsCreate")
@@ -37,7 +40,8 @@ public func MXSettingsCreate(
     _ languageChanged: MXIntCallback?,
     _ toggleChanged: MXToggleCallback?,
     _ shortcutChanged: MXShortcutCallback?,
-    _ fileTypeChanged: MXFileTypeCallback?
+    _ fileTypeChanged: MXFileTypeCallback?,
+    _ terminalChanged: MXIntCallback?
 ) -> UnsafeMutableRawPointer {
     let view = SettingsView(frame: .zero)
     view.model.context = context
@@ -46,6 +50,7 @@ public func MXSettingsCreate(
     view.model.toggleChanged = toggleChanged
     view.model.shortcutChanged = shortcutChanged
     view.model.fileTypeChanged = fileTypeChanged
+    view.model.terminalChanged = terminalChanged
     return Unmanaged.passRetained(view).toOpaque()
 }
 
@@ -115,6 +120,9 @@ private struct SettingsState: Equatable {
     var emptyFileTypes = ""
     var cardArgb: UInt32 = 0
     var strokeArgb: UInt32 = 0
+    var terminalIndex = 0
+    var terminalLabel = ""
+    var terminalOptions: [String] = []
 
     init() {}
 
@@ -152,6 +160,10 @@ private struct SettingsState: Equatable {
         fileTypeExt = at(typeLabels, 2)
         emptyFileTypes = at(typeLabels, 3)
         fileTypes = parseFileTypes(lines(data.fileTypes))
+        let terminalOptions = lines(data.terminalOptions)
+        terminalIndex = clamp(Int(data.terminalIndex), count: terminalOptions.count)
+        terminalLabel = cString(data.terminalLabel)
+        self.terminalOptions = terminalOptions
         cardArgb = data.cardArgb
         strokeArgb = data.strokeArgb
     }
@@ -167,6 +179,7 @@ private final class SettingsModel: ObservableObject {
     var toggleChanged: MXToggleCallback?
     var shortcutChanged: MXShortcutCallback?
     var fileTypeChanged: MXFileTypeCallback?
+    var terminalChanged: MXIntCallback?
 
     private var applying = false
     private var monitors: [Any] = []
@@ -197,6 +210,11 @@ private final class SettingsModel: ObservableObject {
         languageChanged?(context, Int32(value))
     }
 
+    func setTerminal(_ value: Int) {
+        guard !applying, value != state.terminalIndex else { return }
+        state.terminalIndex = value
+        terminalChanged?(context, Int32(value))
+    }
     func setFlag(_ index: Int, _ on: Bool) {
         guard !applying, (0..<Metrics.folderCount).contains(index) else { return }
         let bit = 1 << index
@@ -358,6 +376,7 @@ private struct SettingsPane: View {
                 case 1:
                     picker(state.languageLabel, state.languages, language)
                 case 2:
+                    picker(state.terminalLabel, state.terminalOptions, terminal, divider: true)
                     ForEach(0..<Metrics.folderCount, id: \.self) { index in
                         toggle(state.folderLabels[index], flag(index), divider: index + 1 < Metrics.folderCount)
                     }
@@ -499,8 +518,8 @@ private struct SettingsPane: View {
         }
     }
 
-    private func picker(_ title: String, _ options: [String], _ selection: Binding<Int>) -> some View {
-        SettingsRow(title: title) {
+    private func picker(_ title: String, _ options: [String], _ selection: Binding<Int>, divider: Bool = false) -> some View {
+        SettingsRow(title: title, divider: divider) {
             Picker(title, selection: selection) {
                 ForEach(options.indices, id: \.self) { index in
                     Text(options[index]).tag(index)
@@ -530,6 +549,10 @@ private struct SettingsPane: View {
 
     private var language: Binding<Int> {
         Binding(get: { model.state.languageIndex }, set: { model.setLanguage($0) })
+    }
+
+    private var terminal: Binding<Int> {
+        Binding(get: { model.state.terminalIndex }, set: { model.setTerminal($0) })
     }
 
     private func flag(_ index: Int) -> Binding<Bool> {

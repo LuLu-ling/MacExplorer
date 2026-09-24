@@ -23,7 +23,10 @@ internal readonly record struct MacSettingsSnapshot(
     string FileTypes,
     string FileTypeLabels,
     uint CardArgb,
-    uint StrokeArgb);
+    uint StrokeArgb,
+    string TerminalLabel,
+    string TerminalOptions,
+    int TerminalIndex);
 
 internal static class MacSettingsToggle
 {
@@ -66,6 +69,7 @@ internal sealed class MacSettingsPane : IDisposable
     private static readonly ToggleCallback ToggleNative = OnToggleNative;
     private static readonly ShortcutCallback ShortcutNative = OnShortcutNative;
     private static readonly FileTypeCallback FileTypeNative = OnFileTypeNative;
+    private static readonly IntCallback TerminalNative = OnTerminalNative;
 
     private IntPtr _handle;
     private GCHandle _self;
@@ -89,6 +93,7 @@ internal sealed class MacSettingsPane : IDisposable
 
     public event Action<int>? ThemeChanged;
     public event Action<int>? LanguageChanged;
+    public event Action<int>? TerminalChanged;
     public event Action<int, bool>? ToggleChanged;
     public event Action<int, int, int>? ShortcutChanged;
     public event Action<int, int, int, string?>? FileTypeChanged;
@@ -98,7 +103,8 @@ internal sealed class MacSettingsPane : IDisposable
         var pane = new MacSettingsPane();
         pane._self = GCHandle.Alloc(pane);
         pane._handle = Native.MXSettingsCreate(
-            GCHandle.ToIntPtr(pane._self), ThemeNative, LanguageNative, ToggleNative, ShortcutNative, FileTypeNative);
+            GCHandle.ToIntPtr(pane._self), ThemeNative, LanguageNative, ToggleNative, ShortcutNative, FileTypeNative,
+            TerminalNative);
         if (pane._handle == IntPtr.Zero)
         {
             pane._self.Free();
@@ -127,7 +133,9 @@ internal sealed class MacSettingsPane : IDisposable
             snapshot.ShortcutRows,
             snapshot.ShortcutLabels,
             snapshot.FileTypes,
-            snapshot.FileTypeLabels);
+            snapshot.FileTypeLabels,
+            snapshot.TerminalLabel,
+            snapshot.TerminalOptions);
         var payload = new Payload
         {
             Page = snapshot.Page,
@@ -149,7 +157,10 @@ internal sealed class MacSettingsPane : IDisposable
             ShortcutRows = utf8[10],
             ShortcutLabels = utf8[11],
             FileTypes = utf8[12],
-            FileTypeLabels = utf8[13]
+            FileTypeLabels = utf8[13],
+            TerminalLabel = utf8[14],
+            TerminalOptions = utf8[15],
+            TerminalIndex = snapshot.TerminalIndex
         };
         Native.MXSettingsApply(_handle, ref payload);
     }
@@ -161,6 +172,7 @@ internal sealed class MacSettingsPane : IDisposable
         _disposed = true;
         ThemeChanged = null;
         LanguageChanged = null;
+        TerminalChanged = null;
         ToggleChanged = null;
         ShortcutChanged = null;
         FileTypeChanged = null;
@@ -206,6 +218,9 @@ internal sealed class MacSettingsPane : IDisposable
         Dispatch(context, pane => pane.FileTypeChanged?.Invoke(op, index, dest, value));
     }
 
+    private static void OnTerminalNative(IntPtr context, int value) =>
+        Dispatch(context, pane => pane.TerminalChanged?.Invoke(value));
+
     private static void Dispatch(IntPtr context, Action<MacSettingsPane> action)
     {
         if (From(context) is not { } pane)
@@ -223,7 +238,8 @@ internal sealed class MacSettingsPane : IDisposable
         public int Page, Theme, LanguageIndex, Flags;
         public uint CardArgb, StrokeArgb;
         public IntPtr PageTitles, ThemeLabel, ThemeOptions, LanguageLabel, Languages, FolderLabels, AppName, Version, Description,
-            Categories, ShortcutRows, ShortcutLabels, FileTypes, FileTypeLabels;
+            Categories, ShortcutRows, ShortcutLabels, FileTypes, FileTypeLabels, TerminalLabel, TerminalOptions;
+        public int TerminalIndex;
     }
 
     private readonly struct Utf8 : IDisposable
@@ -250,7 +266,7 @@ internal sealed class MacSettingsPane : IDisposable
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr MXSettingsCreate(
             IntPtr context, IntCallback themeChanged, IntCallback languageChanged, ToggleCallback toggleChanged,
-            ShortcutCallback shortcutChanged, FileTypeCallback fileTypeChanged);
+            ShortcutCallback shortcutChanged, FileTypeCallback fileTypeChanged, IntCallback terminalChanged);
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void MXSettingsApply(IntPtr view, ref Payload data);

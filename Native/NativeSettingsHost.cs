@@ -45,6 +45,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.ToggleChanged += OnToggleChanged;
         _pane.ShortcutChanged += OnShortcutChanged;
         _pane.FileTypeChanged += OnFileTypeChanged;
+        _pane.TerminalChanged += OnTerminalChanged;
         AttachModel(DataContext as SettingsViewModel);
         MacAppearance.ApplyTo(_pane.View);
         return new PlatformHandle(_pane.View, "NSView");
@@ -63,6 +64,7 @@ public sealed class NativeSettingsHost : NativeControlHost
         _pane.ToggleChanged -= OnToggleChanged;
         _pane.ShortcutChanged -= OnShortcutChanged;
         _pane.FileTypeChanged -= OnFileTypeChanged;
+        _pane.TerminalChanged -= OnTerminalChanged;
         _pane.Dispose();
         _pane = null;
     }
@@ -154,6 +156,14 @@ public sealed class NativeSettingsHost : NativeControlHost
                 _model.ShowRecents = on;
                 break;
         }
+    });
+
+    private void OnTerminalChanged(int index) => FromNative(() =>
+    {
+        if (_model is null)
+            return;
+        var choices = MacTerminal.Choices();
+        _model.Terminal = (uint)index < (uint)choices.Count ? choices[index].Path : MacTerminal.BuiltInApp;
     });
     private void OnShortcutChanged(int id, int keyCode, int modifiers) =>
         MacExplorer.Input.Shortcuts.HandleNative(id, keyCode, modifiers);
@@ -249,10 +259,34 @@ public sealed class NativeSettingsHost : NativeControlHost
                 Lang.Text("Settings.NewFiles.Extension"),
                 Lang.Text("Settings.NewFiles.Empty")),
             CardArgb: Palette.Card,
-            StrokeArgb: Palette.Stroke);
+            StrokeArgb: Palette.Stroke,
+            TerminalLabel: Lang.Text("Settings.Folders.Terminal"),
+            TerminalOptions: Join(TerminalOptions(vm.Terminal, out var terminalIndex)),
+            TerminalIndex: terminalIndex);
     }
 
     private static string Join(params string[] parts) => string.Join('\n', parts);
+
+    private static string[] TerminalOptions(string selected, out int index)
+    {
+        var choices = MacTerminal.Choices();
+        var options = new string[choices.Count];
+        index = 0;
+        var matched = false;
+        for (var i = 0; i < choices.Count; i++)
+        {
+            options[i] = choices[i].Title;
+            if (string.Equals(choices[i].Path, selected, StringComparison.OrdinalIgnoreCase))
+            {
+                index = i;
+                matched = true;
+            }
+            else if (!matched && string.Equals(choices[i].Path, MacTerminal.BuiltInApp, StringComparison.OrdinalIgnoreCase))
+                index = i;
+        }
+
+        return options;
+    }
     private static string CaptureShortcuts(out string rows)
     {
         var categories = new List<string>();

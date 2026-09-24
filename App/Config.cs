@@ -16,6 +16,7 @@ public static class Config
         _ = Layout.KindConfig;
 
         _ = Files.ShowHiddenConfig;
+        _ = Files.TerminalConfig;
         _ = InfoPane.ShowConfig;
         _ = Settings.NavWidthConfig;
         _ = Home.RecentsConfig;
@@ -144,6 +145,8 @@ public static class Config
         public static ConfigItem<bool> ShowExtensionsConfig { get; } = ConfigService.Register("ShowExtensions", true);
         public static bool ShowHidden { get => ShowHiddenConfig.GetValue(); set => ShowHiddenConfig.SetValue(value); }
         public static bool ShowExtensions { get => ShowExtensionsConfig.GetValue(); set => ShowExtensionsConfig.SetValue(value); }
+        public static ConfigItem<string> TerminalConfig { get; } = ConfigService.Register("DefaultTerminal", "");
+        public static string Terminal { get => TerminalConfig.GetValue(); set => TerminalConfig.SetValue(value); }
         public static ConfigItem<List<NewFileKind>> NewKindsConfig { get; } =
             ConfigService.Register("NewFileKinds", static () => new List<NewFileKind>());
         public static List<NewFileKind> NewKinds

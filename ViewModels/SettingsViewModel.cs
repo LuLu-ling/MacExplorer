@@ -17,6 +17,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         ShowQuickAccess = Config.Home.ShowQuickAccess;
         ShowVolumes = Config.Home.ShowVolumes;
         ShowRecents = Config.Home.ShowRecents;
+        Terminal = Config.Files.Terminal;
         NavWidth = Config.Settings.NavWidth;
         LanguageOptions =
         [
@@ -36,6 +37,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] public partial bool ShowQuickAccess { get; set; }
     [ObservableProperty] public partial bool ShowVolumes { get; set; }
     [ObservableProperty] public partial bool ShowRecents { get; set; }
+    [ObservableProperty] public partial string Terminal { get; set; } = "";
     [ObservableProperty] public partial string SelectedPage { get; set; } = "Appearance";
     [ObservableProperty] public partial LanguageOption SelectedLanguage { get; set; } = null!;
     [ObservableProperty] public partial double NavWidth { get; set; }
@@ -56,6 +58,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     partial void OnShowQuickAccessChanged(bool value) => Config.Home.ShowQuickAccess = value;
     partial void OnShowVolumesChanged(bool value) => Config.Home.ShowVolumes = value;
     partial void OnShowRecentsChanged(bool value) => Config.Home.ShowRecents = value;
+    partial void OnTerminalChanged(string value) => Config.Files.Terminal = value;
 
     partial void OnSelectedLanguageChanged(LanguageOption value)
     {
