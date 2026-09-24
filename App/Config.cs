@@ -19,7 +19,6 @@ public static class Config
         _ = InfoPane.ShowConfig;
         _ = Settings.NavWidthConfig;
         _ = Home.RecentsConfig;
-        _ = Logging.MinLevelConfig;
         _ = Shortcuts.OverridesConfig;
         _ = Files.NewKindsConfig;
         _ = FileVersionConfig;
@@ -191,13 +190,4 @@ public static class Config
         public static List<string> Recents { get => RecentsConfig.GetValue(); set => RecentsConfig.SetValue(value); }
     }
 
-    public static class Logging
-    {
-        public static ConfigItem<int> MinLevelConfig { get; } = ConfigService.Register("LogMinLevel", (int)MacExplorer.Logging.LogLevel.Info);
-        public static MacExplorer.Logging.LogLevel MinLevel
-        {
-            get => (MacExplorer.Logging.LogLevel)MinLevelConfig.GetValue();
-            set => MinLevelConfig.SetValue((int)value);
-        }
-    }
 }

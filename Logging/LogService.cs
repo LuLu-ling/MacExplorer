@@ -11,7 +11,6 @@ public static partial class LogService
     private static bool _wrapperRegistered;
 
     public static Logger Logger { get; private set; } = null!;
-    public static LogLevel MinLevel { get; set; } = LogLevel.Info;
 
     [Flow.Task]
     [Flow.Run(After = "app:loading")]
@@ -44,8 +43,10 @@ public static partial class LogService
 
     private static void OnWrapperLog(LogLevel level, string msg, string? module, Exception? ex)
     {
-        if ((int)level.RealLevel() < (int)MinLevel.RealLevel())
+#if !TRACE
+        if (level.DefaultActionLevel() == ActionLevel.TraceLog)
             return;
+#endif
 
         var thread = Thread.CurrentThread.Name ?? $"#{Environment.CurrentManagedThreadId}";
         var moduleText = module is null ? string.Empty : $"[{module}] ";

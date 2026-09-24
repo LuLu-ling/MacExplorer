@@ -100,8 +100,7 @@ public static partial class ConfigService
             item.TriggerEvent(ConfigEvent.Init, null, true, true);
 
         IsInitialized = true;
-        LogService.MinLevel = Config.Logging.MinLevel;
-        LogWrapper.Info("Config", $"Config loaded from {LocalConfigPath} ({Items.Count} items, minLevel={LogService.MinLevel.PrintName()})");
+        LogWrapper.Info("Config", $"Config loaded from {LocalConfigPath} ({Items.Count} items)");
         return Task.CompletedTask;
     }
 
