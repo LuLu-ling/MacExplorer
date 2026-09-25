@@ -180,29 +180,19 @@ public partial class FolderView : UserControl
         await Tab.OpenAsync();
     }
 
-    private async void OnRenameKey(object? sender, KeyEventArgs e)
+    private async void OnRenameCommit(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox box || box.DataContext is not FileItem item || Tab is null)
+        if (sender is not RenameField { DataContext: FileItem item } || Tab is null)
             return;
-        if (e.Key == Key.Enter)
-        {
-            e.Handled = true;
-            await Tab.CommitRenameAsync(item);
-        }
-        else if (e.Key == Key.Escape)
-        {
-            e.Handled = true;
-            item.IsRenaming = false;
-        }
+        await Tab.CommitRenameAsync(item);
     }
 
-    private async void OnRenameLostFocus(object? sender, RoutedEventArgs e)
+    private void OnRenameCancel(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox box || box.DataContext is not FileItem item || Tab is null)
-            return;
-        if (item.IsRenaming)
-            await Tab.CommitRenameAsync(item);
+        if (sender is RenameField { DataContext: FileItem item })
+            item.IsRenaming = false;
     }
+
     private void OnRenameOutsidePointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (Tab is not { } tab)
@@ -211,7 +201,7 @@ public partial class FolderView : UserControl
         if (item is null)
             return;
         if (e.Source is Visual source &&
-            source.FindAncestorOfType<RenameTextBox>(includeSelf: true) is
+            source.FindAncestorOfType<RenameField>(includeSelf: true) is
                 { DataContext: FileItem editor } && ReferenceEquals(editor, item))
             return;
         _ = tab.CommitRenameAsync(item);
@@ -221,7 +211,7 @@ public partial class FolderView : UserControl
     {
         if (Tab is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
-        if (RenameTextBox.IsSource(e.Source) || e.Source is not Visual visual ||
+        if (RenameField.IsSource(e.Source) || e.Source is not Visual visual ||
             !IsInsideFileList(visual) || IsScrollChrome(visual))
             return;
         if (FindFileGroup(visual) is not null)
@@ -456,7 +446,7 @@ public partial class FolderView : UserControl
     {
         if (Tab is null)
             return;
-        if ((e.Source as Visual)?.FindAncestorOfType<TextBox>(includeSelf: true) is not null)
+        if (RenameField.IsSource(e.Source))
             return;
         if (e.Source is Visual source && IsInsideDetailsHeader(source))
         {
@@ -525,7 +515,7 @@ public partial class FolderView : UserControl
             new(Lang.Text("Common.Action.Copy"), () => tab.CopyCommand.Execute(null), Symbol: MacMenuSymbol.Copy),
             new(Lang.Text("Common.Action.Paste"), () => tab.PasteCommand.Execute(null), tab.PasteCommand.CanExecute(null), Symbol: MacMenuSymbol.Paste),
             new("", Separator: true),
-            new(Lang.Text("Common.Action.Rename"), () => tab.RenameCommand.Execute(null), Symbol: MacMenuSymbol.Rename),
+            ..RenameEntry(tab, selected),
             new(Lang.Text("Common.Action.Delete"), () => tab.DeleteCommand.Execute(null), Symbol: MacMenuSymbol.Trash),
             new("", Separator: true),
             new(Lang.Text("Context.Tags"), Children:
@@ -544,6 +534,11 @@ public partial class FolderView : UserControl
             new(Lang.Text("Menu.File.GetInfo"), OpenProperties, Symbol: MacMenuSymbol.Info),
         ];
     }
+
+    private static MacMenuEntry[] RenameEntry(ExplorerTabViewModel tab, IList<FileItem> selected) =>
+        selected.Count == 1
+            ? [new(Lang.Text("Common.Action.Rename"), () => tab.RenameCommand.Execute(null), Symbol: MacMenuSymbol.Rename)]
+            : [];
 
     private static MacMenuEntry[] OpenWindowEntry(IList<FileItem> selected)
     {

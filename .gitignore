@@ -347,5 +347,5 @@ MaskFiles/
 
 **/.DS_Store
 
-# Built from Native/Settings/*.swift; do not commit the binary.
+# Built from Native/Settings and Native/Rename Swift sources; do not commit the binary.
 /libMacExplorerSettings.dylib

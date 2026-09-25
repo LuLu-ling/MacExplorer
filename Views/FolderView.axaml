@@ -138,11 +138,11 @@
                                                    FontSize="{Binding #Root.Metrics.FontSize}"
                                                    IsVisible="{Binding !IsRenaming}"
                                                    ctrl:FileDragHandle.IsHandle="True" />
-                                        <ctrl:RenameTextBox Text="{Binding RenameText}"
-                                                            FontSize="{Binding #Root.Metrics.FontSize}"
-                                                            Margin="2,0" HorizontalAlignment="Stretch"
-                                                            IsVisible="{Binding IsRenaming}"
-                                                            KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                        <ctrl:RenameField Text="{Binding RenameText}"
+                                                          FontSize="{Binding #Root.Metrics.FontSize}"
+                                                          Margin="2,0" HorizontalAlignment="Stretch"
+                                                          IsVisible="{Binding IsRenaming}"
+                                                          Commit="OnRenameCommit" Cancel="OnRenameCancel" />
                                     </Panel>
                                     <Border Width="{x:Static vm:DetailsColumns.Splitter}" />
                                 </StackPanel>
@@ -243,11 +243,11 @@
                                                TextWrapping="NoWrap"
                                                IsVisible="{Binding !IsRenaming}"
                                                ctrl:FileDragHandle.IsHandle="True" />
-                                    <ctrl:RenameTextBox Text="{Binding RenameText}"
-                                                        FontSize="{Binding #Root.Metrics.FontSize}"
-                                                        Margin="-1,0" HorizontalAlignment="Stretch"
-                                                        IsVisible="{Binding IsRenaming}"
-                                                        KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                    <ctrl:RenameField Text="{Binding RenameText}"
+                                                      FontSize="{Binding #Root.Metrics.FontSize}"
+                                                      Margin="-1,0" HorizontalAlignment="Stretch"
+                                                      IsVisible="{Binding IsRenaming}"
+                                                      Commit="OnRenameCommit" Cancel="OnRenameCancel" />
                                 </Panel>
                             </DockPanel>
                         </Grid>
@@ -300,13 +300,13 @@
                                                        IsVisible="{Binding !IsRenaming}"
                                                        ctrl:FileDragHandle.IsHandle="True" />
                                         </Panel>
-                                        <ctrl:RenameTextBox Text="{Binding RenameText}"
-                                                            FontSize="{Binding #Root.Metrics.FontSize}"
-                                                            Margin="-6,0"
-                                                            HorizontalAlignment="Stretch"
-                                                            VerticalAlignment="Center"
-                                                            IsVisible="{Binding IsRenaming}"
-                                                            KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                        <ctrl:RenameField Text="{Binding RenameText}"
+                                                          FontSize="{Binding #Root.Metrics.FontSize}"
+                                                          Margin="-6,0"
+                                                          HorizontalAlignment="Stretch"
+                                                          VerticalAlignment="Center"
+                                                          IsVisible="{Binding IsRenaming}"
+                                                          Commit="OnRenameCommit" Cancel="OnRenameCancel" />
                                     </Grid>
                                 </DockPanel>
                                 <Panel Grid.Row="2" ClipToBounds="True">
@@ -351,11 +351,11 @@
                                                FontSize="{Binding #Root.Metrics.FontSize}"
                                                ctrl:FileDragHandle.IsHandle="True" />
                                 </DockPanel>
-                                <ctrl:RenameTextBox Text="{Binding RenameText}"
-                                                    FontSize="{Binding #Root.Metrics.FontSize}"
-                                                    TextAlignment="Center" HorizontalAlignment="Stretch"
-                                                    IsVisible="{Binding IsRenaming}"
-                                                    KeyDown="OnRenameKey" LostFocus="OnRenameLostFocus" />
+                                <ctrl:RenameField Text="{Binding RenameText}"
+                                                  FontSize="{Binding #Root.Metrics.FontSize}"
+                                                  TextAlignment="Center" HorizontalAlignment="Stretch"
+                                                  IsVisible="{Binding IsRenaming}"
+                                                  Commit="OnRenameCommit" Cancel="OnRenameCancel" />
                             </Panel>
                         </StackPanel>
                     </Border>

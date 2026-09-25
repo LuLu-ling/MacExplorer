@@ -60,9 +60,10 @@
                                                Text="{Binding Title}"
                                                TextTrimming="CharacterEllipsis"
                                                IsVisible="{Binding !IsRenaming}" />
-                                    <ctrl:RenameTextBox Classes="SidebarRename"
-                                                         Text="{Binding RenameText}" IsVisible="{Binding IsRenaming}"
-                                                         KeyDown="OnTagRenameKey" LostFocus="OnTagRenameLostFocus" />
+                                    <ctrl:RenameField Classes="SidebarRename"
+                                                      Text="{Binding RenameText}"
+                                                      IsVisible="{Binding IsRenaming}"
+                                                      Commit="OnTagRenameCommit" Cancel="OnTagRenameCancel" />
                                 </Panel>
                             </Grid>
                         </Border>

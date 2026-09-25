@@ -48,10 +48,30 @@ internal static class MacSettingsToggle
     }
 }
 
+internal static class MacSettingsLibrary
+{
+    internal const string Name = "MacExplorerSettings";
+
+    private static int _ready;
+
+    internal static void Ensure()
+    {
+        if (Interlocked.Exchange(ref _ready, 1) != 0)
+            return;
+        NativeLibrary.SetDllImportResolver(typeof(MacSettingsLibrary).Assembly, static (name, _, _) =>
+        {
+            if (name != Name)
+                return IntPtr.Zero;
+            var path = Path.Combine(AppContext.BaseDirectory, "libMacExplorerSettings.dylib");
+            return File.Exists(path) ? NativeLibrary.Load(path) : IntPtr.Zero;
+        });
+    }
+}
+
 /// <summary>Owns one SwiftUI settings pane and forwards mutations to C#.</summary>
 internal sealed class MacSettingsPane : IDisposable
 {
-    private const string Lib = "MacExplorerSettings";
+    private const string Lib = MacSettingsLibrary.Name;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate void IntCallback(IntPtr context, int value);
@@ -76,16 +96,7 @@ internal sealed class MacSettingsPane : IDisposable
     private MacSettingsSnapshot _applied;
     private bool _disposed;
 
-    static MacSettingsPane()
-    {
-        NativeLibrary.SetDllImportResolver(typeof(MacSettingsPane).Assembly, static (name, _, _) =>
-        {
-            if (name != Lib)
-                return IntPtr.Zero;
-            var path = Path.Combine(AppContext.BaseDirectory, "libMacExplorerSettings.dylib");
-            return File.Exists(path) ? NativeLibrary.Load(path) : IntPtr.Zero;
-        });
-    }
+    static MacSettingsPane() => MacSettingsLibrary.Ensure();
 
     private MacSettingsPane() { }
 

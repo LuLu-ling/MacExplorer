@@ -55,7 +55,7 @@ public partial class SidebarPane : UserControl
     {
         if (sender is not Border { Tag: SidebarItem item } row || VM is null)
             return;
-        if (item.IsRenaming || RenameTextBox.IsSource(e.Source))
+        if (item.IsRenaming || RenameField.IsSource(e.Source))
             return;
         if (!e.GetCurrentPoint(row).Properties.IsLeftButtonPressed)
             return;
@@ -77,7 +77,7 @@ public partial class SidebarPane : UserControl
     {
         if (_from < 0 || _source is null || VM is null || ListPanel is not { } panel)
             return;
-        if (RenameTextBox.IsSource(e.Source))
+        if (RenameField.IsSource(e.Source))
             return;
         if (!e.GetCurrentPoint(_source).Properties.IsLeftButtonPressed)
             return;
@@ -125,7 +125,7 @@ public partial class SidebarPane : UserControl
 
     private void Row_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (RenameTextBox.IsSource(e.Source))
+        if (RenameField.IsSource(e.Source))
         {
             FinishReorder();
             e.Pointer.Capture(null);
@@ -259,32 +259,22 @@ public partial class SidebarPane : UserControl
         if (VM?.Sidebar.Items.FirstOrDefault(static item => item.IsRenaming) is not { } item)
             return;
         if (e.Source is Visual source &&
-            source.FindAncestorOfType<RenameTextBox>(includeSelf: true) is
+            source.FindAncestorOfType<RenameField>(includeSelf: true) is
                 { DataContext: SidebarItem editor } && ReferenceEquals(editor, item))
             return;
         _ = CommitTagRename(item);
     }
 
-    private async void OnTagRenameKey(object? sender, KeyEventArgs e)
+    private async void OnTagRenameCommit(object? sender, RoutedEventArgs e)
     {
-        if (sender is not TextBox { DataContext: SidebarItem item })
-            return;
-        if (e.Key == Key.Enter)
-        {
-            e.Handled = true;
+        if (sender is RenameField { DataContext: SidebarItem item })
             await CommitTagRename(item);
-        }
-        else if (e.Key == Key.Escape)
-        {
-            e.Handled = true;
-            item.IsRenaming = false;
-        }
     }
 
-    private async void OnTagRenameLostFocus(object? sender, RoutedEventArgs e)
+    private void OnTagRenameCancel(object? sender, RoutedEventArgs e)
     {
-        if (sender is TextBox { DataContext: SidebarItem item })
-            await CommitTagRename(item);
+        if (sender is RenameField { DataContext: SidebarItem item })
+            item.IsRenaming = false;
     }
 
     private async Task CommitTagRename(SidebarItem item)

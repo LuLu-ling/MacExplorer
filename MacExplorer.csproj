@@ -21,7 +21,9 @@
     </ItemGroup>
     <ItemGroup>
         <None Include="Native/Settings/**/*.swift" />
+        <None Include="Native/Rename/**/*.swift" />
         <MacSettingsSwift Include="Native/Settings/**/*.swift" />
+        <MacSettingsSwift Include="Native/Rename/**/*.swift" />
         <None Remove="libMacExplorerSettings.dylib" />
     </ItemGroup>
 

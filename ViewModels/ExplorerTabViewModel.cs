@@ -364,6 +364,8 @@ public sealed partial class ExplorerTabViewModel : ViewModelBase, IDisposable
 
     public async Task CommitRenameAsync(FileItem item)
     {
+        if (!item.IsRenaming)
+            return;
         item.IsRenaming = false;
         var name = item.RenameText.Trim();
         if (string.IsNullOrEmpty(name) || name == item.Name)
