@@ -240,10 +240,14 @@ public partial class FolderView : UserControl
         _pressArgs = null;
         _marqueeArmed = false;
 
-        if (item is not null && !item.IsRenaming && item.IsSelected
-            && !IsToggle(e.KeyModifiers) && !IsRange(e.KeyModifiers))
+        if (item is { IsRenaming: false } file
+            && !IsToggle(e.KeyModifiers) && !IsRange(e.KeyModifiers)
+            && (file.IsSelected || FileDragHandle.Hit(visual, e.GetPosition(visual))))
         {
-            _deferSingleSelect = true;
+            if (file.IsSelected)
+                _deferSingleSelect = true;
+            else
+                ApplyItemPointer(file, e.KeyModifiers);
             _dragArmed = true;
             _pressArgs = e;
         }

@@ -128,14 +128,16 @@
                                         <Image Width="{Binding #Root.Metrics.DetailsIconSize}"
                                                Height="{Binding #Root.Metrics.DetailsIconSize}"
                                                Source="{Binding Icon}" Stretch="Uniform"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               ctrl:FileDragHandle.IsHandle="True" />
                                     </Border>
                                     <Panel Width="{Binding #Root.Columns.Name}" ClipToBounds="False">
                                         <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center"
                                                    TextAlignment="Left"
                                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Margin="8,0"
                                                    FontSize="{Binding #Root.Metrics.FontSize}"
-                                                   IsVisible="{Binding !IsRenaming}" />
+                                                   IsVisible="{Binding !IsRenaming}"
+                                                   ctrl:FileDragHandle.IsHandle="True" />
                                         <ctrl:RenameTextBox Text="{Binding RenameText}"
                                                             FontSize="{Binding #Root.Metrics.FontSize}"
                                                             Margin="2,0" HorizontalAlignment="Stretch"
@@ -224,7 +226,8 @@
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        Source="{Binding Icon}"
-                                       Stretch="Uniform" />
+                                       Stretch="Uniform"
+                                       ctrl:FileDragHandle.IsHandle="True" />
                             </Grid>
                             <DockPanel Grid.Column="1">
                                 <ctrl:TagDots DockPanel.Dock="Left" Margin="5,0,4,0"
@@ -238,7 +241,8 @@
                                                FontSize="{Binding #Root.Metrics.FontSize}"
                                                TextTrimming="CharacterEllipsis"
                                                TextWrapping="NoWrap"
-                                               IsVisible="{Binding !IsRenaming}" />
+                                               IsVisible="{Binding !IsRenaming}"
+                                               ctrl:FileDragHandle.IsHandle="True" />
                                     <ctrl:RenameTextBox Text="{Binding RenameText}"
                                                         FontSize="{Binding #Root.Metrics.FontSize}"
                                                         Margin="-1,0" HorizontalAlignment="Stretch"
@@ -275,7 +279,8 @@
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
                             <Image Width="{Binding #Root.Metrics.CardIconSize}"
                                    Height="{Binding #Root.Metrics.CardIconSize}"
-                                   Source="{Binding Icon}" Stretch="Uniform" VerticalAlignment="Center" />
+                                   Source="{Binding Icon}" Stretch="Uniform" VerticalAlignment="Center"
+                                   ctrl:FileDragHandle.IsHandle="True" />
                             <Grid Grid.Column="1" VerticalAlignment="Center">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="16" />
@@ -292,7 +297,8 @@
                                                        TextWrapping="NoWrap" MaxLines="1"
                                                        FontSize="{Binding #Root.Metrics.FontSize}"
                                                        VerticalAlignment="Center"
-                                                       IsVisible="{Binding !IsRenaming}" />
+                                                       IsVisible="{Binding !IsRenaming}"
+                                                       ctrl:FileDragHandle.IsHandle="True" />
                                         </Panel>
                                         <ctrl:RenameTextBox Text="{Binding RenameText}"
                                                             FontSize="{Binding #Root.Metrics.FontSize}"
@@ -333,7 +339,8 @@
                                     Opacity="{Binding CutOpacity}">
                             <Image Width="{Binding #Root.Metrics.GridItemSize}"
                                    Height="{Binding #Root.Metrics.GridItemSize}"
-                                   Source="{Binding Icon}" Stretch="Uniform" HorizontalAlignment="Center" />
+                                   Source="{Binding Icon}" Stretch="Uniform" HorizontalAlignment="Center"
+                                   ctrl:FileDragHandle.IsHandle="True" />
                             <Panel Margin="0,4,0,0" HorizontalAlignment="Stretch">
                                 <DockPanel HorizontalAlignment="Center" IsVisible="{Binding !IsRenaming}">
                                     <ctrl:TagDots DockPanel.Dock="Left" Margin="0,0,4,0"
@@ -341,7 +348,8 @@
                                                   IsVisible="{Binding HasNameDots}" />
                                     <TextBlock Text="{Binding DisplayName}" TextAlignment="Center"
                                                TextTrimming="CharacterEllipsis"
-                                               FontSize="{Binding #Root.Metrics.FontSize}" />
+                                               FontSize="{Binding #Root.Metrics.FontSize}"
+                                               ctrl:FileDragHandle.IsHandle="True" />
                                 </DockPanel>
                                 <ctrl:RenameTextBox Text="{Binding RenameText}"
                                                     FontSize="{Binding #Root.Metrics.FontSize}"
