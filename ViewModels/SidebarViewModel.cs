@@ -91,9 +91,12 @@ public sealed partial class SidebarViewModel : ViewModelBase
             ]));
         }
 
-        blocks.Add(("favorites", favorites));
+        if (favorites.Count > 0)
+            blocks.Add(("favorites", favorites));
         blocks.Add(("locations", Section("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations)));
-        blocks.Add(("tags", Section("tags", Lang.Text("Places.FileTags"), Glyphs.Tag, MacTags.All().Select(Tag))));
+        var tags = Section("tags", Lang.Text("Places.FileTags"), Glyphs.Tag, MacTags.All().Select(Tag));
+        if (tags.Count > 0)
+            blocks.Add(("tags", tags));
         ApplyOrder(blocks, Config.Sidebar.SectionOrder, static b => b.Id);
 
         foreach (var block in blocks)
@@ -215,21 +218,24 @@ public sealed partial class SidebarViewModel : ViewModelBase
     private static bool IsBlockStart(SidebarItem item) =>
         item.IsSection || item.Kind == SidebarKind.Home;
 
+    private static readonly string[] SectionIds = ["home", "favorites", "locations", "tags"];
+
     private static List<SidebarItem> Section(string id, string title, string glyph, IEnumerable<SidebarItem> children)
     {
-        var rows = new List<SidebarItem>
-        {
-            new()
-            {
-                Id = id,
-                Title = title,
-                Glyph = glyph,
-                Kind = SidebarKind.Section,
-                IsSection = true,
-                IsExpanded = true
-            }
-        };
+        var rows = new List<SidebarItem>();
         rows.AddRange(children);
+        if (rows.Count == 0)
+            return rows;
+
+        rows.Insert(0, new SidebarItem
+        {
+            Id = id,
+            Title = title,
+            Glyph = glyph,
+            Kind = SidebarKind.Section,
+            IsSection = true,
+            IsExpanded = true
+        });
         return rows;
     }
 
@@ -266,13 +272,31 @@ public sealed partial class SidebarViewModel : ViewModelBase
 
     private List<string> CurrentSectionOrder()
     {
-        var ids = BlockUnits().Select(u => Items[u.Start].Id).ToList();
-        if (ids.Contains("home"))
-            return ids;
+        var visible = BlockUnits().Select(u => Items[u.Start].Id).ToList();
+        var saved = Config.Sidebar.SectionOrder;
+        IReadOnlyList<string> basis = saved.Count == 0 ? SectionIds : saved;
+        var pending = new Queue<string>(visible);
+        var visibleIds = visible.ToHashSet(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var result = new List<string>(basis.Count);
 
-        var at = Config.Sidebar.SectionOrder.IndexOf("home");
-        ids.Insert(at < 0 ? 0 : Math.Min(at, ids.Count), "home");
-        return ids;
+        foreach (var id in basis)
+        {
+            if (!seen.Add(id))
+                continue;
+            if (visibleIds.Contains(id))
+            {
+                if (pending.Count > 0)
+                    result.Add(pending.Dequeue());
+            }
+            else if (id is "home" or "favorites" or "tags")
+                result.Add(id);
+        }
+
+        while (pending.Count > 0)
+            result.Add(pending.Dequeue());
+
+        return result;
     }
 
     private (int Lo, int Hi)? ReorderRange(int index)
