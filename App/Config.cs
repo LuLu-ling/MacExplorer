@@ -191,6 +191,24 @@ public static class Config
         public static bool ShowVolumes { get => ShowVolumesConfig.GetValue(); set => ShowVolumesConfig.SetValue(value); }
         public static bool ShowRecents { get => ShowRecentsConfig.GetValue(); set => ShowRecentsConfig.SetValue(value); }
         public static List<string> Recents { get => RecentsConfig.GetValue(); set => RecentsConfig.SetValue(value); }
+
+        public static bool AnyVisible => ShowQuickAccess || ShowVolumes || ShowRecents;
+
+        public static string DefaultPath => AnyVisible ? SpecialFolders.HomeKey : SpecialFolders.Computer;
+
+        public static void ObserveVisibility(ConfigObserver observer)
+        {
+            ShowQuickAccessConfig.Observe(observer);
+            ShowVolumesConfig.Observe(observer);
+            ShowRecentsConfig.Observe(observer);
+        }
+
+        public static void UnobserveVisibility(ConfigObserver observer)
+        {
+            ShowQuickAccessConfig.Unobserve(observer);
+            ShowVolumesConfig.Unobserve(observer);
+            ShowRecentsConfig.Unobserve(observer);
+        }
     }
 
 }

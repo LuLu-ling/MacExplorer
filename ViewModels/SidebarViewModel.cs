@@ -30,15 +30,6 @@ public sealed partial class SidebarViewModel : ViewModelBase
         var selectedId = SelectedItem?.Id;
         Items.Clear();
 
-        var home = new SidebarItem
-        {
-            Id = "home",
-            Title = Lang.Text("Places.Home"),
-            Glyph = Glyphs.ForPath(SpecialFolders.HomeKey),
-            Kind = SidebarKind.Home,
-            Path = SpecialFolders.HomeKey
-        };
-
         var favorites = Section("favorites", Lang.Text("Places.Favorites"), Glyphs.Pin,
             MacFinder.FavoriteFolders().Select(pin => new SidebarItem
             {
@@ -84,13 +75,25 @@ public sealed partial class SidebarViewModel : ViewModelBase
         });
         ApplyOrder(locations, Config.Sidebar.LocationOrder);
 
-        var blocks = new List<(string Id, List<SidebarItem> Rows)>
+        var blocks = new List<(string Id, List<SidebarItem> Rows)>();
+        if (Config.Home.AnyVisible)
         {
-            ("home", [home]),
-            ("favorites", favorites),
-            ("locations", Section("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations)),
-            ("tags", Section("tags", Lang.Text("Places.FileTags"), Glyphs.Tag, MacTags.All().Select(Tag))),
-        };
+            blocks.Add(("home",
+            [
+                new SidebarItem
+                {
+                    Id = "home",
+                    Title = Lang.Text("Places.Home"),
+                    Glyph = Glyphs.ForPath(SpecialFolders.HomeKey),
+                    Kind = SidebarKind.Home,
+                    Path = SpecialFolders.HomeKey
+                }
+            ]));
+        }
+
+        blocks.Add(("favorites", favorites));
+        blocks.Add(("locations", Section("locations", Lang.Text("Places.Locations"), Glyphs.Drive, locations)));
+        blocks.Add(("tags", Section("tags", Lang.Text("Places.FileTags"), Glyphs.Tag, MacTags.All().Select(Tag))));
         ApplyOrder(blocks, Config.Sidebar.SectionOrder, static b => b.Id);
 
         foreach (var block in blocks)
@@ -256,12 +259,20 @@ public sealed partial class SidebarViewModel : ViewModelBase
                 break;
             case SidebarKind.Home:
             case SidebarKind.Section:
-                Config.Sidebar.SectionOrder =
-                [
-                    .. BlockUnits().Select(u => Items[u.Start].Id)
-                ];
+                Config.Sidebar.SectionOrder = CurrentSectionOrder();
                 break;
         }
+    }
+
+    private List<string> CurrentSectionOrder()
+    {
+        var ids = BlockUnits().Select(u => Items[u.Start].Id).ToList();
+        if (ids.Contains("home"))
+            return ids;
+
+        var at = Config.Sidebar.SectionOrder.IndexOf("home");
+        ids.Insert(at < 0 ? 0 : Math.Min(at, ids.Count), "home");
+        return ids;
     }
 
     private (int Lo, int Hi)? ReorderRange(int index)

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MacExplorer.Configuration;
 using MacExplorer.Controls;
 using MacExplorer.Infrastructure;
 using MacExplorer.Localization;
@@ -23,6 +24,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     private readonly VolumeService _volumes;
     private ExplorerTabViewModel? _trackedTab;
     private bool _disposed;
+    private readonly ConfigObserver _homeCards;
 
     public MainViewModel(
         FileService files,
@@ -48,6 +50,8 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         ShowExtensions = Config.Files.ShowExtensions;
         MacFinder.FavoritesChanged += OnFavoritesChanged;
         Shortcuts.Changed += OnShortcutsChanged;
+        _homeCards = new ConfigObserver(ConfigEvent.Changed, OnHomeCardsChanged);
+        Config.Home.ObserveVisibility(_homeCards);
     }
 
     public ObservableCollection<ExplorerTabViewModel> Tabs { get; }
@@ -141,7 +145,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     public void NewTab(string? path = null)
     {
-        var resolved = path ?? SpecialFolders.HomeKey;
+        var resolved = path ?? Config.Home.DefaultPath;
         var tab = new ExplorerTabViewModel(_files, _listing, _icons, _dialogs, resolved);
         Tabs.Add(tab);
         SelectedTab = tab;
@@ -387,6 +391,33 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
             RefreshPlaces();
     }, DispatcherPriority.Background);
 
+    private void OnHomeCardsChanged(ConfigEventArgs e) => Dispatcher.UIThread.Post(() =>
+    {
+        if (!_disposed)
+            _ = ApplyHomeVisibilityAsync();
+    }, DispatcherPriority.Background);
+
+    private async Task ApplyHomeVisibilityAsync()
+    {
+        try
+        {
+            if (!Config.Home.AnyVisible)
+            {
+                var disk = SpecialFolders.Computer;
+                foreach (var tab in Tabs.ToArray())
+                {
+                    if (tab.IsHome)
+                        await tab.NavigateAsync(disk);
+                }
+            }
+        }
+        finally
+        {
+            if (!_disposed)
+                RefreshPlaces();
+        }
+    }
+
     public void RefreshPlaces()
     {
         Sidebar.Rebuild();
@@ -409,7 +440,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
         foreach (var tab in Tabs.ToArray())
         {
             if (MacWorkspace.PathOnVolume(tab.CurrentPath, path))
-                await tab.NavigateAsync(SpecialFolders.HomeKey);
+                await tab.NavigateAsync(Config.Home.DefaultPath);
         }
 
         RefreshPlaces();
@@ -467,7 +498,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     private async Task RetargetTagAsync(string from, string? to)
     {
         var oldPath = SpecialFolders.TagPath(from);
-        var next = to is null ? SpecialFolders.HomeKey : SpecialFolders.TagPath(to);
+        var next = to is null ? Config.Home.DefaultPath : SpecialFolders.TagPath(to);
         foreach (var tab in Tabs.ToArray())
         {
             if (tab.CurrentPath == oldPath)
@@ -588,6 +619,7 @@ public sealed partial class MainViewModel : ViewModelBase, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        Config.Home.UnobserveVisibility(_homeCards);
         MacFinder.FavoritesChanged -= OnFavoritesChanged;
         Shortcuts.Changed -= OnShortcutsChanged;
         SelectedTab = null;
