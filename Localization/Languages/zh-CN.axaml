@@ -38,7 +38,7 @@
     <x:String x:Key="Places.Applications">应用程序</x:String>
     <x:String x:Key="Places.Computer">电脑</x:String>
     <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
-    <x:String x:Key="Places.QuickAccess">快速访问</x:String>
+    <x:String x:Key="Places.QuickAccess">最近使用</x:String>
     <x:String x:Key="Places.Drives">磁盘</x:String>
     <x:String x:Key="Places.RecentFiles">最近使用</x:String>
 
@@ -160,7 +160,7 @@
     <x:String x:Key="Address.FolderPath">文件夹路径</x:String>
     <x:String x:Key="Address.ShowHiddenComponents">显示隐藏的路径分量</x:String>
     <x:String x:Key="Address.ShowSubfolders">显示 {0} 的子文件夹</x:String>
-    <x:String x:Key="Address.ShowQuickAccessAndDrives">显示快速访问和磁盘</x:String>
+    <x:String x:Key="Address.ShowQuickAccessAndDrives">显示最近使用和磁盘</x:String>
 
     <!-- Settings -->
     <x:String x:Key="Settings.Title">设置</x:String>
@@ -179,7 +179,7 @@
     <x:String x:Key="Settings.Language.Auto">跟随系统</x:String>
     <x:String x:Key="Settings.Folders.ShowHidden">显示隐藏项目</x:String>
     <x:String x:Key="Settings.Folders.ShowExtensions">显示文件扩展名</x:String>
-    <x:String x:Key="Settings.Folders.ShowQuickAccess">显示“快速访问”小组件</x:String>
+    <x:String x:Key="Settings.Folders.ShowQuickAccess">显示“最近使用”小组件</x:String>
     <x:String x:Key="Settings.Folders.ShowVolumes">显示“磁盘”小组件</x:String>
     <x:String x:Key="Settings.Folders.ShowRecents">显示“最近使用”小组件</x:String>
     <x:String x:Key="Settings.Folders.Terminal">默认终端</x:String>

@@ -38,7 +38,7 @@
     <x:String x:Key="Places.Applications">Applications</x:String>
     <x:String x:Key="Places.Computer">Computer</x:String>
     <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
-    <x:String x:Key="Places.QuickAccess">Quick Access</x:String>
+    <x:String x:Key="Places.QuickAccess">Recents</x:String>
     <x:String x:Key="Places.Drives">Drives</x:String>
     <x:String x:Key="Places.RecentFiles">Recents</x:String>
 
@@ -160,7 +160,7 @@
     <x:String x:Key="Address.FolderPath">Folder path</x:String>
     <x:String x:Key="Address.ShowHiddenComponents">Show hidden path components</x:String>
     <x:String x:Key="Address.ShowSubfolders">Show subfolders of {0}</x:String>
-    <x:String x:Key="Address.ShowQuickAccessAndDrives">Show Quick Access and Drives</x:String>
+    <x:String x:Key="Address.ShowQuickAccessAndDrives">Show Recents and Drives</x:String>
 
     <!-- Settings -->
     <x:String x:Key="Settings.Title">Settings</x:String>
@@ -179,7 +179,7 @@
     <x:String x:Key="Settings.Language.Auto">Follow system</x:String>
     <x:String x:Key="Settings.Folders.ShowHidden">Show hidden items</x:String>
     <x:String x:Key="Settings.Folders.ShowExtensions">Show file extensions</x:String>
-    <x:String x:Key="Settings.Folders.ShowQuickAccess">Show Quick Access widget</x:String>
+    <x:String x:Key="Settings.Folders.ShowQuickAccess">Show Recents widget</x:String>
     <x:String x:Key="Settings.Folders.ShowVolumes">Show Drives widget</x:String>
     <x:String x:Key="Settings.Folders.ShowRecents">Show Recents widget</x:String>
     <x:String x:Key="Settings.Folders.Terminal">Default Terminal</x:String>
