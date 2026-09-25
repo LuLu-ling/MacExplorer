@@ -40,7 +40,7 @@
     <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
     <x:String x:Key="Places.QuickAccess">快速访问</x:String>
     <x:String x:Key="Places.Drives">磁盘</x:String>
-    <x:String x:Key="Places.RecentFiles">最近的文件</x:String>
+    <x:String x:Key="Places.RecentFiles">最近使用</x:String>
 
     <!-- Window -->
     <x:String x:Key="Window.Title.Format">{0} – MacExplorer</x:String>
@@ -181,7 +181,7 @@
     <x:String x:Key="Settings.Folders.ShowExtensions">显示文件扩展名</x:String>
     <x:String x:Key="Settings.Folders.ShowQuickAccess">显示“快速访问”小组件</x:String>
     <x:String x:Key="Settings.Folders.ShowVolumes">显示“磁盘”小组件</x:String>
-    <x:String x:Key="Settings.Folders.ShowRecents">显示“最近的文件”小组件</x:String>
+    <x:String x:Key="Settings.Folders.ShowRecents">显示“最近使用”小组件</x:String>
     <x:String x:Key="Settings.Folders.Terminal">默认终端</x:String>
     <x:String x:Key="Settings.About.Version">版本 {0}</x:String>
     <x:String x:Key="Settings.About.Description">一款采用 Files Community 界面、FluentAvalonia 外观，并兼容 Finder 拷贝、剪切、粘贴、重命名和废纸篓操作的 macOS 文件管理器。</x:String>

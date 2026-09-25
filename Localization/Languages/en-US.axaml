@@ -40,7 +40,7 @@
     <x:String x:Key="Places.MacintoshHD">Macintosh HD</x:String>
     <x:String x:Key="Places.QuickAccess">Quick Access</x:String>
     <x:String x:Key="Places.Drives">Drives</x:String>
-    <x:String x:Key="Places.RecentFiles">Recent files</x:String>
+    <x:String x:Key="Places.RecentFiles">Recents</x:String>
 
     <!-- Window -->
     <x:String x:Key="Window.Title.Format">{0} – MacExplorer</x:String>
@@ -181,7 +181,7 @@
     <x:String x:Key="Settings.Folders.ShowExtensions">Show file extensions</x:String>
     <x:String x:Key="Settings.Folders.ShowQuickAccess">Show Quick Access widget</x:String>
     <x:String x:Key="Settings.Folders.ShowVolumes">Show Drives widget</x:String>
-    <x:String x:Key="Settings.Folders.ShowRecents">Show Recent files widget</x:String>
+    <x:String x:Key="Settings.Folders.ShowRecents">Show Recents widget</x:String>
     <x:String x:Key="Settings.Folders.Terminal">Default Terminal</x:String>
     <x:String x:Key="Settings.About.Version">Version {0}</x:String>
     <x:String x:Key="Settings.About.Description">A macOS file manager with the Files Community interface, FluentAvalonia chrome, and Finder-compatible copy, cut, paste, rename, and Trash.</x:String>
