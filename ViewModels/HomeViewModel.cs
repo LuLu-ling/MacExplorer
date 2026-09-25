@@ -25,7 +25,7 @@ public sealed partial class HomeCard : ObservableObject
     [ObservableProperty] public partial Bitmap? Icon { get; set; }
 }
 
-public sealed class HomeViewModel : ViewModelBase
+public sealed partial class HomeViewModel : ViewModelBase
 {
     private readonly VolumeService _volumes;
     private readonly IconService _icons;
@@ -47,6 +47,9 @@ public sealed class HomeViewModel : ViewModelBase
     public bool ShowQuickAccess => Config.Home.ShowQuickAccess;
     public bool ShowVolumes => Config.Home.ShowVolumes;
     public bool ShowRecents => Config.Home.ShowRecents;
+    [ObservableProperty] public partial bool FavoritesOpen { get; set; } = true;
+    [ObservableProperty] public partial bool DrivesOpen { get; set; } = true;
+    [ObservableProperty] public partial bool RecentsOpen { get; set; } = true;
 
     public void Refresh()
     {

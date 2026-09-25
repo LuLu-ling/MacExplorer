@@ -84,6 +84,34 @@
                 </ControlTemplate>
             </Setter>
         </ControlTheme>
+        <ControlTheme x:Key="SectionExpanderTheme" TargetType="ctrl:SectionExpander">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <StackPanel Spacing="0">
+                        <Border Name="PART_Header" Classes="SidebarRow section" Background="Transparent"
+                                Margin="1.6,2,1.6,2">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  Margin="1.6,0,2,0">
+                                <TextBlock Classes="SidebarChevron"
+                                           Classes.expanded="{TemplateBinding IsExpanded}"
+                                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                           Text="&#xE76C;" />
+                                <TextBlock Grid.Column="1" Classes="SidebarTitle"
+                                           Text="{TemplateBinding Title}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </Border>
+                        <ctrl:FoldHost IsExpanded="{TemplateBinding IsExpanded}" Margin="0,1.6,0,1.6">
+                            <ContentPresenter Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </ctrl:FoldHost>
+                    </StackPanel>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
     </Styles.Resources>
 
     <Style Selector="TextBlock">
@@ -193,6 +221,18 @@
         <Setter Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}" />
     </Style>
 
+    <Style Selector="Border.SidebarRow, ctrl|FoldHost">
+        <Setter Property="ClipToBounds" Value="True" />
+        <Setter Property="MinHeight" Value="0" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Height" Duration="{x:Static ctrl:SectionMotion.Move}" Easing="CubicEaseOut" />
+                <DoubleTransition Property="Opacity" Duration="{x:Static ctrl:SectionMotion.Fade}" Easing="CubicEaseOut" />
+                <ThicknessTransition Property="Margin" Duration="{x:Static ctrl:SectionMotion.Move}" Easing="CubicEaseOut" />
+            </Transitions>
+        </Setter>
+    </Style>
     <Style Selector="Border.SidebarRow">
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Top" />
@@ -201,22 +241,18 @@
         <Setter Property="CornerRadius" Value="10" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Height" Value="32" />
-        <Setter Property="MinHeight" Value="0" />
         <Setter Property="Margin" Value="8,1" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="ClipToBounds" Value="True" />
-        <Setter Property="UseLayoutRounding" Value="True" />
-        <Setter Property="Transitions">
-            <Transitions>
-                <DoubleTransition Property="Height" Duration="0:0:0.22" Easing="CubicEaseOut" />
-                <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut" />
-                <ThicknessTransition Property="Margin" Duration="0:0:0.22" Easing="CubicEaseOut" />
-            </Transitions>
-        </Setter>
+    </Style>
+    <Style Selector="ctrl|SectionExpander">
+        <Setter Property="Theme" Value="{StaticResource SectionExpanderTheme}" />
     </Style>
     <Style Selector="Border.SidebarRow.section">
         <Setter Property="Height" Value="28" />
         <Setter Property="Margin" Value="8,10,8,2" />
+    </Style>
+    <Style Selector="ctrl|SectionExpander Border.SidebarRow.section">
+        <Setter Property="Margin" Value="1.6,2,1.6,2" />
     </Style>
     <Style Selector="Border.SidebarRow.collapsed">
         <Setter Property="Height" Value="0" />
@@ -293,7 +329,7 @@
         <Setter Property="RenderTransform" Value="rotate(0deg)" />
         <Setter Property="Transitions">
             <Transitions>
-                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.22" Easing="CubicEaseOut" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="{x:Static ctrl:SectionMotion.Move}" Easing="CubicEaseOut" />
             </Transitions>
         </Setter>
     </Style>

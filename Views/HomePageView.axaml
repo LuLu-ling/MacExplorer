@@ -1,12 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:MacExplorer.ViewModels"
+             xmlns:ctrl="using:MacExplorer.Controls"
              x:Class="MacExplorer.Views.HomePageView"
              x:DataType="vm:HomeViewModel">
     <ScrollViewer>
-        <StackPanel Margin="0,8,16,16" Spacing="20">
-            <StackPanel Spacing="8" IsVisible="{Binding ShowQuickAccess}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.QuickAccess}" />
+        <StackPanel Margin="0,8,16,16" Spacing="10">
+            <ctrl:SectionExpander IsVisible="{Binding ShowQuickAccess}"
+                                  Title="{DynamicResource Places.Favorites}"
+                                  IsExpanded="{Binding FavoritesOpen, Mode=TwoWay}">
                 <ItemsControl ItemsSource="{Binding QuickAccess}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -33,10 +35,11 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
+            </ctrl:SectionExpander>
 
-            <StackPanel Spacing="8" IsVisible="{Binding ShowVolumes}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.Drives}" />
+            <ctrl:SectionExpander IsVisible="{Binding ShowVolumes}"
+                                  Title="{DynamicResource Places.Drives}"
+                                  IsExpanded="{Binding DrivesOpen, Mode=TwoWay}">
                 <ItemsControl ItemsSource="{Binding Drives}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -63,10 +66,11 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
+            </ctrl:SectionExpander>
 
-            <StackPanel Spacing="8" IsVisible="{Binding ShowRecents}">
-                <TextBlock Classes="Caption" Margin="16,0,0,0" Text="{DynamicResource Places.RecentFiles}" />
+            <ctrl:SectionExpander IsVisible="{Binding ShowRecents}"
+                                  Title="{DynamicResource Places.RecentFiles}"
+                                  IsExpanded="{Binding RecentsOpen, Mode=TwoWay}">
                 <ItemsControl ItemsSource="{Binding Recents}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:HomeCard">
@@ -84,7 +88,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
+            </ctrl:SectionExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
